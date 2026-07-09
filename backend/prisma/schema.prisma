@@ -1,0 +1,102 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String             @id @default(uuid())
+  email     String             @unique
+  password  String
+  name      String
+  role      String             @default("STUDENT") // STUDENT, INSTRUCTOR, ADMIN
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  
+  enrollments CourseEnrollment[]
+  progress    UserProgress[]
+}
+
+model Course {
+  id          String             @id @default(uuid())
+  title       String
+  description String
+  thumbnail   String?
+  price       Float              @default(0)
+  published   Boolean            @default(false)
+  category    String             @default("General")
+  duration    String             @default("0h")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  sections    Section[]
+  enrollments CourseEnrollment[]
+}
+
+model Section {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons   Lesson[]
+}
+
+model Lesson {
+  id        String   @id @default(uuid())
+  title     String
+  content   String?
+  videoUrl  String?
+  duration  String   @default("0:00")
+  order     Int
+  sectionId String
+  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  
+  quizzes   Quiz[]
+  progress  UserProgress[]
+}
+
+model Quiz {
+  id           String     @id @default(uuid())
+  title        String
+  passingScore Float      @default(80)
+  lessonId     String
+  lesson       Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions    Question[]
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  quizId        String
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text          String
+  options       String   // JSON-serialized string of options e.g., '["A", "B", "C"]'
+  correctAnswer Int
+}
+
+model CourseEnrollment {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime @default(now())
+  progress   Float    @default(0.0)
+
+  @@unique([userId, courseId])
+}
+
+model UserProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed   Boolean  @default(false)
+  completedAt DateTime @default(now())
+
+  @@unique([userId, lessonId])
+}
