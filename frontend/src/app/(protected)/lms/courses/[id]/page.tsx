@@ -3,6 +3,11 @@ import CourseDetailPage from '@/features/lms/pages/CourseDetailPage'
 
 export const metadata: Metadata = { title: 'Course Details | LogiX' }
 
-export default function Page() {
-  return <CourseDetailPage />
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function Page({ params }: PageProps) {
+  const { id } = await params
+  return <CourseDetailPage courseId={id} />
 }

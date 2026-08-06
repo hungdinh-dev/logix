@@ -46,7 +46,7 @@ export default function RootLayout({
       className={`${dmSans.variable} ${lora.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col font-sans">
+      <body className="flex min-h-full flex-col font-sans" suppressHydrationWarning>
         <NextTopLoader
           color="var(--primary)"
           showSpinner={false}

@@ -125,28 +125,44 @@ function AiAssistantPanel({ initialMessages }: { initialMessages: readonly ChatM
 }
 
 /* ── Main ── */
+import { ChevronRight } from 'lucide-react';
+
 interface LessonRightPanelProps {
   readonly comments: readonly DiscussionComment[];
   readonly initialAiMessages: readonly ChatMessage[];
+  readonly onClose?: () => void;
 }
 
-export function LessonRightPanel({ comments, initialAiMessages }: LessonRightPanelProps) {
+export function LessonRightPanel({ comments, initialAiMessages, onClose }: LessonRightPanelProps) {
   return (
     <div className="flex h-full w-[320px] shrink-0 flex-col border-l border-border bg-card">
       <Tabs defaultValue="discussion" className="flex h-full flex-col overflow-hidden">
         <TabsList
           variant="line"
-          className="h-auto w-full shrink-0 gap-0 rounded-none border-b border-border bg-transparent p-0"
+          className="h-auto w-full shrink-0 gap-0 rounded-none border-b border-border bg-transparent p-0 flex items-center justify-between"
         >
-          {(['discussion', 'ai'] as const).map((tab) => (
-            <TabsTrigger
-              key={tab}
-              value={tab}
-              className="flex-1 h-11 rounded-none border-b-2 border-transparent text-xs font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-primary"
+          <div className="flex flex-1">
+            {(['discussion', 'ai'] as const).map((tab) => (
+              <TabsTrigger
+                key={tab}
+                value={tab}
+                className="flex-1 h-11 rounded-none border-b-2 border-transparent text-xs font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-primary"
+              >
+                {tab === 'ai' ? 'AI Assistant' : 'Discussion'}
+              </TabsTrigger>
+            ))}
+          </div>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-11 w-11 flex shrink-0 items-center justify-center border-l border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Collapse panel"
+              title="Thu nhỏ khung"
             >
-              {tab === 'ai' ? 'AI Assistant' : 'Discussion'}
-            </TabsTrigger>
-          ))}
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          )}
         </TabsList>
 
         <TabsContent value="discussion" className="flex flex-1 flex-col overflow-hidden px-4 pb-4 pt-2">

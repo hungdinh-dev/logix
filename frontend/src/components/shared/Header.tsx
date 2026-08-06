@@ -15,6 +15,7 @@ import {
   Layers,
   LogIn,
   UserPlus,
+  Type,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -41,12 +42,35 @@ export function Header() {
   const { user, isAuthenticated, logout } = useAuth()
 
   const [mounted, setMounted] = useState(false)
+  const [activeSize, setActiveSize] = useState('16px')
 
   // Avoid hydration mismatch for next-themes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
+
+    // Load saved font size preferences
+    const savedSize = localStorage.getItem('lms-reader-font-size') || '16px'
+    const savedCodeSize = localStorage.getItem('lms-code-font-size') || '13px'
+    setActiveSize(savedSize)
+    document.documentElement.style.setProperty('--lms-reader-font-size', savedSize)
+    document.documentElement.style.setProperty('--lms-code-font-size', savedCodeSize)
   }, [])
+
+  const changeFontSize = (size: string) => {
+    setActiveSize(size)
+    localStorage.setItem('lms-reader-font-size', size)
+    document.documentElement.style.setProperty('--lms-reader-font-size', size)
+
+    // Co-scale code playground font size
+    let codeSize = '13px'
+    if (size === '14px') codeSize = '12px'
+    if (size === '16px') codeSize = '13px'
+    if (size === '18px') codeSize = '14px'
+    if (size === '20px') codeSize = '15px'
+    document.documentElement.style.setProperty('--lms-code-font-size', codeSize)
+    localStorage.setItem('lms-code-font-size', codeSize)
+  }
 
   const toggleLanguage = () => {
     const nextLang = i18n.language === 'vi' ? 'en' : 'vi'
@@ -67,7 +91,15 @@ export function Header() {
     }
   }
 
-  const isEn = i18n.language === 'en'
+  const isEn = mounted ? i18n.language === 'en' : false
+  const showAuthenticated = mounted && isAuthenticated
+
+  const fontSizes = [
+    { value: '14px', label: isEn ? 'Small' : 'Nhỏ', desc: '14px' },
+    { value: '16px', label: isEn ? 'Medium' : 'Vừa', desc: '16px' },
+    { value: '18px', label: isEn ? 'Large' : 'Lớn', desc: '18px' },
+    { value: '20px', label: isEn ? 'Extra Large' : 'Rất lớn', desc: '20px' },
+  ]
 
   // User details fallback
   const displayName = user?.name || 'Huy Q.'
@@ -130,12 +162,45 @@ export function Header() {
                 {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
 
+              {/* Quick Font Size Configuration */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground h-9 w-9 cursor-pointer"
+                    title={isEn ? 'Font Size Settings' : 'Cấu hình cỡ chữ bài học'}
+                  >
+                    <Type className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuLabel className="text-xs font-semibold">
+                    {isEn ? 'Reader Font Size' : 'Cỡ chữ bài đọc'}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {fontSizes.map((size) => (
+                    <DropdownMenuItem
+                      key={size.value}
+                      onClick={() => changeFontSize(size.value)}
+                      className={cn(
+                        "cursor-pointer flex items-center justify-between text-xs",
+                        activeSize === size.value && "font-semibold text-primary"
+                      )}
+                    >
+                      <span>{size.label}</span>
+                      <span className="text-[10px] text-muted-foreground">{size.desc}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Separator orientation="vertical" className="mx-1 h-6" />
             </div>
           )}
 
           {/* User Auth Menu (Dropdown / Login-Signup buttons) */}
-          {isAuthenticated ? (
+          {showAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

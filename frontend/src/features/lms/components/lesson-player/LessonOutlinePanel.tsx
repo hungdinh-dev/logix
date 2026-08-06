@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, CheckCircle, Lock, PlayCircle, FileText, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Lock, PlayCircle, FileText, HelpCircle, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import type { LessonChapter, LessonItem, LessonStatus, LessonType } from '../../types/lesson-player.types';
@@ -110,24 +110,38 @@ interface LessonOutlinePanelProps {
   readonly courseTitle: string;
   readonly chapters: readonly LessonChapter[];
   readonly currentLessonId: string;
+  readonly onClose?: () => void;
 }
 
-export function LessonOutlinePanel({ courseId, courseTitle, chapters, currentLessonId }: LessonOutlinePanelProps) {
+export function LessonOutlinePanel({ courseId, courseTitle, chapters, currentLessonId, onClose }: LessonOutlinePanelProps) {
   const router = useRouter();
 
   return (
     <div className="flex h-full w-[280px] shrink-0 flex-col border-r border-border bg-card">
       {/* Header */}
-      <div className="shrink-0 border-b border-border px-3 py-3">
-        <button
-          type="button"
-          onClick={() => router.push(`/lms/courses/${courseId}`)}
-          className="mb-2 flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back to Course
-        </button>
-        <p className="truncate text-sm font-semibold text-foreground">{courseTitle}</p>
+      <div className="shrink-0 border-b border-border px-3 py-3 flex items-start justify-between">
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={() => router.push(`/lms/courses/${courseId}`)}
+            className="mb-2 flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to Course
+          </button>
+          <p className="truncate text-sm font-semibold text-foreground">{courseTitle}</p>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-8 w-8 flex shrink-0 items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors ml-2"
+            aria-label="Collapse outline"
+            title="Thu nhỏ Outline"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Chapter list */}

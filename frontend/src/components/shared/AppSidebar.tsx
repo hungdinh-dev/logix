@@ -100,6 +100,12 @@ const NAV_TREE: NavItem[] = [
     label: 'sidebar.progress',
     href: routePath.progress,
   },
+  {
+    kind: 'leaf',
+    icon: FileText,
+    label: 'sidebar.reports',
+    href: '/lms/reports',
+  },
 ]
 
 // ─── NavLeafButton ────────────────────────────────────────────────────────────
@@ -272,7 +278,7 @@ export function AppSidebar() {
     setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
-  const isEn = i18n.language === 'en'
+  const isEn = mounted ? i18n.language === 'en' : false
 
   const themeList = [
     { value: 'light', label: isEn ? 'Light' : 'Sáng', icon: Sun },

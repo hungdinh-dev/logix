@@ -60,6 +60,10 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0 0);
   --primary: oklch(0.638 0.187 40.2);
+  
+  /* LMS Reader variables */
+  --lms-reader-font-size: 16px;
+  --lms-code-font-size: 13px;
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.94 0.005 75);
   --secondary-foreground: oklch(0.18 0 0);
@@ -176,5 +180,26 @@
   }
   html {
     @apply font-sans;
+  }
+
+  /* Custom scrollbars for premium look & feel */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 9999px;
+    transition: background 0.15s ease-in-out;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
 }
