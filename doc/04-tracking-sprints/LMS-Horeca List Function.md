@@ -1,0 +1,64 @@
+|   |   |   |   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|---|---|---|
+|Mã CN|Hệ Thống|Module|Nhóm|Tên chức năng|Mô tả chi tiết|Đối tượng sử dụng|Giai đoạn|Độ khó (1-10)|Ghi chú|
+|LMS-001|LMS|Hệ thống học trực tuyến|Truy cập|Đăng nhập / Đăng ký|Đăng nhập, đăng ký tài khoản trên hệ thống|Học viên|1|6||
+|LMS-002|LMS|Hệ thống học trực tuyến|Truy cập|Trang chủ|Giao diện trang chủ hiển thị các khóa học nổi bật|Học viên|1|6||
+|LMS-003|LMS|Hệ thống học trực tuyến|Truy cập|Tìm kiếm khóa học|Tìm kiếm khóa học theo tên, danh mục|Học viên|1|6||
+|LMS-004|LMS|Hệ thống học trực tuyến|Truy cập|Dashboard học viên|Trang tổng quan cá nhân của học viên|Học viên|1|6||
+|LMS-005|LMS|Quản lý khóa học|Khóa học|Tạo mới khóa học|Tạo khóa học với các thông tin cơ bản|Admin|1|3||
+|LMS-006|LMS|Quản lý khóa học|Khóa học|Chỉnh sửa thông tin khóa học|Cập nhật nội dung, hình ảnh khóa học|Admin|1|5||
+|LMS-007|LMS|Quản lý khóa học|Khóa học|Xóa / Ẩn khóa học|Ẩn khóa học không cho hiển thị|Admin|1|7||
+|LMS-008|LMS|Quản lý khóa học|Khóa học|Quản lý danh mục khóa học|Tạo, sửa, xóa danh mục khóa học|Admin|1|5||
+|LMS-009|LMS|Quản lý video đào tạo|Video|Tải lên video|Upload video bài giảng trực tiếp lên server|Admin / Trainer|1|4||
+|LMS-010|LMS|Quản lý video đào tạo|Video|Nhúng video từ Youtube|Sử dụng link video từ nền tảng khác|Admin / Trainer|1|5||
+|LMS-011|LMS|Quản lý video đào tạo|Video|Quản lý chất lượng video|Tự động convert nhiều độ phân giải|Hệ thống|2|5||
+|LMS-012|LMS|Quản lý video đào tạo|Video|Bảo mật video|Chống tải xuống video trái phép|Hệ thống|2|3||
+|LMS-013|LMS|Webinar|Webinar|Tạo phòng học trực tuyến|Tạo phòng họp trực tuyến qua Zoom/Meet API|Admin / Trainer|3|5||
+|LMS-014|LMS|Webinar|Webinar|Quản lý người tham gia|Duyệt, mời người tham gia webinar|Trainer|3|8||
+|LMS-015|LMS|Học theo phân quyền|Phân quyền|Phân quyền theo chức danh|Gán khóa học tự động theo chức danh|Admin|2|5||
+|LMS-016|LMS|Học theo phân quyền|Phân quyền|Phân quyền theo phòng ban|Gán khóa học theo phòng ban|Admin|2|5||
+|LMS-017|LMS|Học theo phân quyền|Phân quyền|Lộ trình học tập theo vị trí|Xây dựng lộ trình học tập riêng cho từng vị trí|Admin|2|5||
+|LMS-018|LMS|Học theo phân quyền|Phân quyền|Giới hạn truy cập nội dung|Chỉ người có quyền mới xem được khóa học|Hệ thống|2|6||
+|LMS-019|LMS|Đào tạo nội bộ|Nội bộ|Tích hợp dữ liệu nhân sự|Đồng bộ danh sách nhân viên từ HRM|Hệ thống|3|5||
+|LMS-020|LMS|Đào tạo nội bộ|Nội bộ|Khóa học onboarding|Lộ trình đào tạo cho nhân viên mới|Admin|2|6||
+|LMS-021|LMS|Đào tạo nội bộ|Nội bộ|Đánh giá năng lực nhân viên|Làm bài test đánh giá định kỳ|Trainer|2|6||
+|LMS-022|LMS|Đào tạo nội bộ|Nội bộ|Báo cáo kết quả đào tạo nội bộ|Thống kê kết quả học tập của nhân viên|Admin|2|4||
+|LMS-023|LMS|Đào tạo khách hàng|Khách hàng|Tạo tài khoản khách hàng|Khách hàng tự đăng ký hoặc được cấp tài khoản|Khách hàng|2|4||
+|LMS-024|LMS|Đào tạo khách hàng|Khách hàng|Khóa học hướng dẫn sử dụng sản phẩm|Các khóa học public cho khách hàng|Admin|2|4||
+|LMS-025|LMS|Đào tạo khách hàng|Khách hàng|Cấp chứng chỉ cho khách hàng|Cấp chứng nhận sau khi hoàn thành khóa học|Hệ thống|2|3||
+|LMS-026|LMS|Đào tạo khách hàng|Khách hàng|Thu thập phản hồi từ khách hàng|Form khảo sát chất lượng khóa học|Khách hàng|2|5||
+|LMS-027|LMS|Theo dõi tiến độ học tập|Tiến độ|Thanh tiến độ khóa học|Hiển thị % hoàn thành khóa học|Học viên|1|4||
+|LMS-028|LMS|Theo dõi tiến độ học tập|Tiến độ|Lưu vị trí học tập|Lưu lại bài học đang xem dở|Hệ thống|1|4||
+|LMS-029|LMS|Theo dõi tiến độ học tập|Tiến độ|Cảnh báo học viên chậm tiến độ|Gửi email/noti nhắc nhở học viên|Hệ thống|2|5||
+|LMS-030|LMS|Theo dõi tiến độ học tập|Tiến độ|Báo cáo tiến độ cá nhân|Học viên tự xem được báo cáo tiến độ của mình|Học viên|1|7||
+|LMS-031|LMS|Theo dõi video đã xem|Tiến độ|Đánh dấu video đã xem|Tự động đánh dấu hoàn thành khi xem hết video|Hệ thống|1|6||
+|LMS-032|LMS|Theo dõi video đã xem|Tiến độ|Chống tua video|Bắt buộc học viên xem tuần tự, không được tua|Hệ thống|2|6||
+|LMS-033|LMS|Theo dõi video đã xem|Tiến độ|Báo cáo thời lượng xem video|Thống kê tổng thời gian học viên xem video|Admin|2|7||
+|LMS-034|LMS|Theo dõi video đã xem|Tiến độ|Tiếp tục xem từ điểm dừng|Mở lại video đúng thời điểm đã tắt trước đó|Hệ thống|1|5||
+|LMS-035|LMS|Phân tích hiệu quả nội dung đào tạo|Báo cáo|Thống kê tỷ lệ hoàn thành khóa học|Báo cáo số lượng học viên pass/fail|Admin|2|5||
+|LMS-036|LMS|Phân tích hiệu quả nội dung đào tạo|Báo cáo|Thống kê điểm số trung bình|Biểu đồ phân bổ điểm số của học viên|Admin|2|7||
+|LMS-037|LMS|Phân tích hiệu quả nội dung đào tạo|Báo cáo|Phân tích câu hỏi kiểm tra khó|Thống kê các câu hỏi học viên hay làm sai nhất|Trainer|3|7||
+|LMS-038|LMS|Phân tích hiệu quả nội dung đào tạo|Báo cáo|Báo cáo đánh giá khóa học|Tổng hợp rating, feedback từ học viên|Admin|2|7||
+|LMS-039|LMS|Quản lý học viên|Học viên|Thêm mới học viên|Tạo tài khoản học viên thủ công|Admin|1|6||
+|LMS-040|LMS|Quản lý học viên|Học viên|Import danh sách học viên|Thêm hàng loạt học viên từ file Excel|Admin|1|5||
+|LMS-041|LMS|Quản lý học viên|Học viên|Khóa/Mở khóa tài khoản|Ngừng cấp quyền truy cập cho học viên|Admin|1|5||
+|LMS-042|LMS|Quản lý học viên|Học viên|Xem hồ sơ và lịch sử học tập|Xem chi tiết quá trình học của 1 user|Admin|1|4||
+|LMS-043|LMS|Bán khóa học|Thương mại|Cài đặt giá khóa học|Cấu hình giá bán cho từng khóa|Admin|3|7||
+|LMS-044|LMS|Bán khóa học|Thương mại|Tích hợp cổng thanh toán|Thanh toán qua VNPay, Momo, Chuyển khoản|Hệ thống|3|6||
+|LMS-045|LMS|Bán khóa học|Thương mại|Quản lý mã giảm giá|Tạo coupon, voucher giảm giá|Admin|3|6||
+|LMS-046|LMS|Bán khóa học|Thương mại|Báo cáo doanh thu|Thống kê doanh thu bán khóa học theo tháng|Admin|3|4||
+|LMS-047|LMS|Kết nối & Xử lý Dữ liệu Hệ thống Cũ|Migration|Kết nối an toàn với hệ thống cũ|Kết nối an toàn với hệ thống cũ để bóc tách dữ liệu|IT / Admin|3|5||
+|LMS-048|LMS|Kết nối & Xử lý Dữ liệu Hệ thống Cũ|Migration|Phân tích và làm sạch dữ liệu cũ|Làm sạch dữ liệu cũ để tương thích với cấu trúc LMS mới|IT / Admin|3|8||
+|LMS-049|LMS|Kết nối & Xử lý Dữ liệu Hệ thống Cũ|Migration|Nghiên cứu & Thiết lập hệ thống trục kết nối ngầm|Thiết lập hệ thống trục kết nối ngầm|IT / Admin|3|6||
+|LMS-050|LMS|Tự động Đồng bộ Khóa học & Bài tập|Migration|Tự động kéo toàn bộ danh mục|Tự động kéo toàn bộ danh mục, tiêu đề bài học và cấu trúc khóa học qua hệ thống mới|Hệ thống|3|6||
+|LMS-051|LMS|Tự động Đồng bộ Khóa học & Bài tập|Migration|Giao diện trực quan kiểm tra nội dung|Nhân viên không cần nhập tay từng bài học, chỉ cần kiểm tra lại giao diện trực quan|Admin|3|6||
+|LMS-052|LMS|Tự động Đồng bộ Khóa học & Bài tập|Migration|Xây dựng luồng xử lý nội dung|Xây dựng luồng xử lý nội dung|Hệ thống|3|6||
+|LMS-053|LMS|Tự động Đồng bộ Học viên & Tài khoản|Migration|Chuyển toàn bộ danh sách học viên cũ|Chuyển toàn bộ danh sách học viên cũ sang LMS mới|Hệ thống|3|5||
+|LMS-054|LMS|Tự động Đồng bộ Học viên & Tài khoản|Migration|Tự động kích hoạt đúng khóa học|Thiết lập cơ chế tự động kích hoạt đúng khóa học họ đã mua|Hệ thống|3|5||
+|LMS-055|LMS|Tự động Đồng bộ Học viên & Tài khoản|Migration|Cài đặt luồng đăng nhập mới bảo mật|Cài đặt luồng đăng nhập mới bảo mật cho user cũ (không bị mất tài khoản)|Hệ thống|3|5||
+|LMS-056|LMS|Bảo toàn Tiến độ Học tập của Học viên|Migration|Học viên cũ không phải học lại|Học viên cũ sang hệ thống mới không phải học lại từ đầu|Hệ thống|3|8||
+|LMS-057|LMS|Bảo toàn Tiến độ Học tập của Học viên|Migration|Tự nhận diện bài học đã hoàn thành|Hệ thống tự nhận diện họ đã học đến bài nào, làm bài tập nào để mở khóa bài tiếp theo|Hệ thống|3|7||
+|LMS-058|LMS|Bảo toàn Tiến độ Học tập của Học viên|Migration|Xây dựng luồng xử lý tiến độ học|Xây dựng luồng xử lý tiến độ học|Hệ thống|3|5||
+|LMS-059|LMS|Trang Quản lý & Báo lỗi cho Admin|Migration|Giao diện trực quan hiển thị tiến trình|Giao diện trực quan hiển thị tiến trình đang đồng bộ (Bao nhiêu % học viên đã qua)|Admin|3|4||
+|LMS-060|LMS|Trang Quản lý & Báo lỗi cho Admin|Migration|Tự động gom riêng các tài khoản bị lỗi|Tự động gom riêng các tài khoản bị lỗi dữ liệu (ví dụ: sai số điện thoại, thiếu email)|Hệ thống|3|7||
+|LMS-061|LMS|Trang Quản lý & Báo lỗi cho Admin|Migration|Xử lý nhanh tài khoản lỗi|Admin xử lý nhanh, không làm nghẽn hệ thống|Admin|3|4||
