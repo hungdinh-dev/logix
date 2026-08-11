@@ -1,56 +1,106 @@
-# 📚 LogiX LMS — Hướng dẫn Workflow Toàn diện cho Intern
+# 📚 LogiX LMS — Hướng dẫn Workflow Toàn diện cho Developer & Intern
 
-> Tài liệu này giải thích chi tiết **toàn bộ flow** của 2 chức năng chính: **Login** và **Roles (RBAC)**, cùng với tổng hợp các thay đổi trong ngày 07/08/2026.
+> Tài liệu này giải thích chi tiết **toàn bộ flow** của các chức năng cốt lõi: **Authentication (Login/JWT)**, **RBAC (Roles & Permissions)**, **Cơ chế Xóa mềm (Soft Delete)**, và **Hệ thống Modular Swagger API Documentation**, kèm tổng hợp cập nhật kiến trúc mới nhất (11/08/2026).
 
 ---
 
-## 📁 Cấu trúc Tổng quan Dự án
+## 📁 Cấu trúc Tổng quan Dự án (Modular Feature-based Architecture)
 
 ```
 LogiX/
-├── backend/                  # Express.js + Prisma + PostgreSQL
+├── backend/                             # Express.js + Prisma + PostgreSQL (Supabase) + Swagger
 │   ├── prisma/
-│   │   └── schema.prisma     # 🗃️ Database Schema (nguồn sự thật)
-│   └── src/
-│       ├── config/prisma.ts  # Prisma Client instance
-│       ├── index.ts          # Entry point Express app
-│       ├── middlewares/
-│       │   ├── auth.middleware.ts       # JWT verify + gắn user vào req
-│       │   └── permission.middleware.ts # Kiểm tra quyền hạn
-│       ├── routes/
-│       │   ├── auth.ts              # Login, Refresh, Me, Logout
-│       │   ├── role.routes.ts       # CRUD Roles + Assign Permissions/Users
-│       │   ├── permission.routes.ts # List Permissions
-│       │   ├── user.routes.ts       # List/Create Users
-│       │   └── ...
-│       ├── services/
-│       │   └── permission.service.ts # Cache & query permissions
-│       └── seed.ts           # Dữ liệu mẫu ban đầu
-│
-├── frontend/                 # Next.js 15 + React + TailwindCSS
-│   ├── middleware.ts         # 🛡️ Next.js Edge Middleware (route guard)
+│   │   ├── schema.prisma                # 🗃️ Database Schema (15 models chuẩn ERP-v2)
+│   │   ├── client/                      # ⚡ Generated Type-safe Prisma Client (Local output)
+│   │   └── migrations/                  # 📜 Versioned PostgreSQL Migrations cho Supabase
+│   │       ├── 20260811000000_init_postgresql_schema/migration.sql
+│   │       └── migration_lock.toml      # Khóa provider: postgresql
 │   └── src/
 │       ├── config/
-│       │   ├── api-routes.ts     # Map URL các API endpoints
-│       │   ├── route-path.ts     # Map URL các trang frontend
-│       │   └── routes/           # Role-based route access config
+│       │   ├── prisma.ts                # Prisma Client instance
+│       │   └── swagger.ts               # 📘 Modular Swagger Root Config & Setup
+│       ├── common/
+│       │   ├── errors/app.error.ts      # Custom Error Classes (400, 401, 403, 404, 409)
+│       │   ├── responses/api-response.ts # Standard API Response Format (ApiResponse)
+│       │   ├── middlewares/             # Global Error Handler & Zod Validation Middleware
+│       │   └── utils/async-handler.ts   # Async route wrapper
+│       ├── middlewares/
+│       │   ├── auth.middleware.ts       # JWT verify + gắn req.user
+│       │   └── permission.middleware.ts # Kiểm tra quyền hạn RBAC (requirePermission)
+│       ├── modules/                     # 📦 Feature-based Modular Architecture
+│       │   ├── auth/                    # 🔐 Auth Module
+│       │   │   ├── auth.controller.ts   # Xử lý request HTTP & gọi service
+│       │   │   ├── auth.routes.ts       # Định nghĩa endpoints Auth
+│       │   │   ├── auth.service.ts      # Logic đăng nhập, bcrypt, jwt, failedCount
+│       │   │   ├── auth.dto.ts          # Zod validation schemas
+│       │   │   └── auth.swagger.ts      # 📘 Swagger OpenAPI docs cho Auth
+│       │   ├── roles/                   # 🎭 Role Management Module (Soft Delete)
+│       │   │   ├── role.controller.ts
+│       │   │   ├── role.routes.ts
+│       │   │   ├── role.service.ts      # Soft Delete (isActive: false) & Cache invalidation
+│       │   │   ├── role.dto.ts
+│       │   │   └── role.swagger.ts      # 📘 Swagger OpenAPI docs cho Roles
+│       │   ├── permissions/             # 🔑 Permissions Catalog
+│       │   │   ├── permission.controller.ts
+│       │   │   ├── permission.routes.ts
+│       │   │   └── permission.swagger.ts
+│       │   ├── departments/             # 🏢 Department Module (Soft Delete)
+│       │   │   ├── department.controller.ts
+│       │   │   ├── department.routes.ts
+│       │   │   ├── department.service.ts
+│       │   │   └── department.swagger.ts
+│       │   ├── users/                   # 👥 Users & Employees Module
+│       │   │   ├── user.controller.ts
+│       │   │   ├── user.routes.ts
+│       │   │   ├── user.service.ts
+│       │   │   └── user.swagger.ts
+│       │   ├── job-levels/              # 🎖️ Job Levels / Positions Module (Soft Delete)
+│       │   │   ├── job-level.controller.ts
+│       │   │   ├── job-level.routes.ts
+│       │   │   ├── job-level.service.ts
+│       │   │   └── job-level.swagger.ts
+│       │   ├── custom-fields/           # 🧩 Dynamic Custom Fields
+│       │   │   └── custom-field.swagger.ts
+│       │   ├── courses/                 # 🎓 LMS Courses Module
+│       │   │   ├── course.controller.ts
+│       │   │   ├── course.routes.ts
+│       │   │   ├── course.service.ts
+│       │   │   └── course.swagger.ts
+│       │   ├── lessons/                 # 📖 LMS Lessons Module
+│       │   │   └── lesson.swagger.ts
+│       │   ├── quizzes/                 # ❓ LMS Quizzes Module
+│       │   │   └── quiz.swagger.ts
+│       │   └── progress/                # 📊 Learning Progress Dashboard
+│       │       └── progress.swagger.ts
+│       ├── services/
+│       │   └── permission.service.ts    # In-Memory Cache & Query User Permissions
+│       ├── index.ts                     # Entry point Express app (Mount Swagger UI + Routes)
+│       └── seed.ts                      # Dữ liệu mẫu ban đầu
+│
+├── frontend/                            # Next.js 15 + React + TailwindCSS + Zustand + TanStack Query
+│   ├── middleware.ts                    # 🛡️ Next.js Edge Middleware (Cookie route guard)
+│   └── src/
+│       ├── config/
+│       │   ├── api-routes.ts            # Map URL các API endpoints
+│       │   ├── route-path.ts            # Map URL các trang frontend
+│       │   └── routes/                  # Role-based route access config
 │       ├── lib/
-│       │   ├── axios.ts          # Axios instance + interceptors
-│       │   └── api.ts            # Utility wrapper cho API calls
+│       │   ├── axios.ts                 # Axios instance + interceptors + auto refresh
+│       │   └── api.ts                   # Utility wrapper cho API calls
 │       ├── stores/
-│       │   └── auth.store.ts     # Zustand global auth state
+│       │   └── auth.store.ts            # Zustand global auth state + persist
 │       └── features/
-│           ├── auth/             # 🔐 Authentication feature module
-│           │   ├── auth.utils.ts       # JWT decode utilities
-│           │   ├── schemas/login.schema.ts  # Zod validation
-│           │   ├── types/auth.types.ts      # Role enum, User type
+│           ├── auth/                    # 🔐 Authentication feature module
+│           │   ├── auth.utils.ts        # JWT decode utilities
+│           │   ├── schemas/login.schema.ts # Zod validation
+│           │   ├── types/auth.types.ts  # Role enum, User type
 │           │   ├── services/auth.service.ts # API calls (login, me, logout)
-│           │   ├── hooks/use-auth.ts        # React hook (login, logout, hasPermission)
+│           │   ├── hooks/use-auth.ts    # React hook (login, logout, hasPermission)
 │           │   ├── components/
-│           │   │   ├── login/LoginForm.tsx   # Form component
-│           │   │   └── AuthGuard.tsx         # Client-side route guard
-│           │   └── pages/LoginPages.tsx      # Login page layout
-│           └── admin/            # 👑 Admin feature module
+│           │   │   ├── login/LoginForm.tsx # Form component
+│           │   │   └── AuthGuard.tsx    # Client-side route guard
+│           │   └── pages/LoginPages.tsx # Login page layout
+│           └── admin/                   # 👑 Admin feature module
 │               ├── types/admin.types.ts
 │               ├── services/roles.service.ts
 │               ├── services/permissions.service.ts
@@ -60,9 +110,9 @@ LogiX/
 
 ---
 
-## 🏗️ PHẦN 1: DATABASE SCHEMA (Prisma)
+## 🏗️ PHẦN 1: DATABASE SCHEMA & MÔ HÌNH RBAC (Prisma)
 
-### 1.1 Quan hệ giữa các bảng Auth
+### 1.1 Quan hệ giữa các bảng Auth & Cơ cấu tổ chức
 
 ```mermaid
 erDiagram
@@ -71,6 +121,8 @@ erDiagram
     auth_roles ||--o{ auth_user_roles : "1 Role gán cho nhiều User"
     auth_roles ||--o{ auth_role_permissions : "1 Role có nhiều Permission"
     auth_permissions ||--o{ auth_role_permissions : "1 Permission thuộc nhiều Role"
+    org_departments ||--o{ auth_users : "1 Phòng ban có nhiều User"
+    org_positions ||--o{ auth_users : "1 Cấp bậc có nhiều User"
 
     auth_users {
         uuid id PK
@@ -78,7 +130,7 @@ erDiagram
         string fullName
         string email UK
         string status "ACTIVE | LOCKED | PENDING"
-        boolean isActive
+        boolean isActive "Xóa mềm user"
         string userType "EMPLOYEE | CUSTOMER | SYSTEM_ADMIN"
         string employmentStatus "PROBATION | OFFICIAL | TEMPORARY | RESIGNED"
         uuid storeId FK
@@ -102,9 +154,9 @@ erDiagram
         uuid id PK
         string roleName UK "VD: ADMIN, STUDENT"
         string displayName "Tên hiển thị"
-        boolean isSystemRole "Không thể xóa"
+        boolean isSystemRole "Không thể xóa vai trò hệ thống"
         boolean bypassDataScope "Bỏ qua data scope"
-        boolean isActive
+        boolean isActive "Xóa mềm: false khi xóa"
     }
 
     auth_permissions {
@@ -114,6 +166,7 @@ erDiagram
         string module "HRM, LMS, SYSTEM, ATTP"
         string action "READ, CREATE, UPDATE, MANAGE"
         string resource "USER, COURSE, ROLE"
+        boolean isActive
     }
 
     auth_user_roles {
@@ -130,20 +183,43 @@ erDiagram
         uuid id PK
         uuid roleId FK
         uuid permissionId FK
+        datetime assignedAt
+    }
+
+    org_departments {
+        uuid id PK
+        string deptCode UK
+        string deptName
+        boolean isFactoryDept
+        boolean isActive "Xóa mềm phòng ban"
+    }
+
+    org_positions {
+        uuid id PK
+        string positionCode UK
+        string positionName
+        int levelRank
+        boolean isActive "Xóa mềm cấp bậc"
     }
 ```
 
-### 1.2 Giải thích thiết kế
+### 1.2 Giải thích thiết kế & Nguyên tắc Xóa mềm (Soft Delete)
 
-> **Tại sao tách `User` và `UserAccount`?**
-> - `User` = hồ sơ nhân sự (tên, email, chức vụ, phòng ban) — có thể tồn tại TRƯỚC khi có tài khoản đăng nhập
-> - `UserAccount` = thông tin đăng nhập (email login, password hash, refresh token) — tạo SAU khi cấp quyền đăng nhập
-> - Quan hệ **1-to-1** (`userId` là `@unique` trong `UserAccount`)
+> **1. Tại sao tách `User` và `UserAccount`?**
+> - `User` = hồ sơ nhân sự (tên, email, chức vụ, phòng ban) — có thể tồn tại TRƯỚC khi có tài khoản đăng nhập.
+> - `UserAccount` = thông tin đăng nhập (email login, password hash, refresh token) — tạo SAU khi cấp quyền đăng nhập.
+> - Quan hệ **1-to-1** (`userId` là `@unique` trong `UserAccount`).
 
-> **Mô hình RBAC (Role-Based Access Control):**
-> - `User` ↔ `Role`: quan hệ **many-to-many** qua bảng trung gian `UserRole`
-> - `Role` ↔ `Permission`: quan hệ **many-to-many** qua bảng trung gian `RolePermission`
-> - Khi kiểm tra quyền: `User → UserRoles (active) → Roles → RolePermissions → Permissions`
+> **2. Mô hình RBAC (Role-Based Access Control):**
+> - `User` ↔ `Role`: quan hệ **many-to-many** qua bảng trung gian `UserRole`.
+> - `Role` ↔ `Permission`: quan hệ **many-to-many** qua bảng trung gian `RolePermission`.
+> - Khi kiểm tra quyền: `User → UserRoles (active) → Roles (active) → RolePermissions → Permissions (active)`.
+
+> **3. Chuẩn hóa Xóa mềm (Soft Delete):**
+> - Các thực thể cốt lõi (`Role`, `Department`, `Position`, `User`) đều có cột `isActive Boolean @default(true)`.
+> - Khi xóa, API chỉ cập nhật `isActive = false` thay vì xóa vĩnh viễn khỏi Database.
+> - Frontend tự động ẩn các bản ghi `isActive = false` thông qua bộ lọc backend.
+> - Khi tạo lại một mã đã xóa mềm, hệ thống tự động **tái kích hoạt (`isActive = true`)** mà không bị lỗi Unique Constraint.
 
 ---
 
@@ -161,9 +237,10 @@ sequenceDiagram
     participant FE_Axios as axios.ts
     participant FE_Store as auth.store.ts
     participant FE_MW as middleware.ts
-    participant BE_Route as auth.ts (Express)
+    participant BE_Route as auth.routes.ts (Express)
+    participant BE_Service as auth.service.ts
     participant BE_Prisma as Prisma ORM
-    participant DB as PostgreSQL
+    participant DB as PostgreSQL (Supabase)
 
     Note over User, DB: 🟡 Bước 1: User mở trang /login
 
@@ -202,32 +279,32 @@ sequenceDiagram
 
     Note over User, DB: 🟣 Bước 4: Backend xử lý Login
 
-    BE_Route->>BE_Route: Extract { loginEmail, email, password }
-    BE_Route->>BE_Prisma: findUnique({ loginEmail })
+    BE_Route->>BE_Service: authService.login(dto)
+    BE_Service->>BE_Prisma: prisma.userAccount.findUnique({ loginEmail })
     BE_Prisma->>DB: SELECT * FROM auth_user_accounts WHERE loginEmail = ?
     DB-->>BE_Prisma: UserAccount + User (include store, dept, position)
-    BE_Prisma-->>BE_Route: userAccount object
+    BE_Prisma-->>BE_Service: userAccount object
 
     alt UserAccount not found
-        BE_Route-->>FE_Axios: 401 "Email hoặc mật khẩu không chính xác"
+        BE_Service-->>FE_Axios: 401 "Email hoặc mật khẩu không chính xác"
     else Account is locked
-        BE_Route-->>FE_Axios: 403 "Tài khoản bị khóa"
+        BE_Service-->>FE_Axios: 403 "Tài khoản bị khóa do đăng nhập sai quá 5 lần"
     else Password incorrect
-        BE_Route->>DB: UPDATE failedLoginCount + check lock
+        BE_Service->>DB: UPDATE failedLoginCount + check lock
         alt Đã sai >= 5 lần
-            BE_Route-->>FE_Axios: 403 "Tài khoản vừa bị khóa"
+            BE_Service-->>FE_Axios: 403 "Mật khẩu sai quá 5 lần. Tài khoản vừa bị tự động khóa."
         else Còn cơ hội
-            BE_Route-->>FE_Axios: 401 "Còn N lần thử"
+            BE_Service-->>FE_Axios: 401 "Mật khẩu không đúng. Còn N lần thử"
         end
     else Password correct ✅
-        BE_Route->>BE_Route: Check user.isActive && status == 'ACTIVE'
-        BE_Route->>BE_Route: Reset failedLoginCount = 0
-        BE_Route->>BE_Route: Generate refreshToken (JWT, 7 ngày)
-        BE_Route->>DB: UPDATE refreshToken, lastLoginAt
-        BE_Route->>BE_Prisma: getUserPermissions(userId)
-        Note over BE_Prisma, DB: Query UserRoles → RolePermissions → Permission codes
-        BE_Route->>BE_Route: Generate accessToken (JWT, 15 phút)
-        BE_Route-->>FE_Axios: 200 { accessToken, refreshToken, user, permissions }
+        BE_Service->>BE_Service: Check user.isActive && status == 'ACTIVE'
+        BE_Service->>BE_Service: Reset failedLoginCount = 0
+        BE_Service->>BE_Service: Generate refreshToken (JWT, 7 ngày)
+        BE_Service->>DB: UPDATE refreshToken, lastLoginAt
+        BE_Service->>BE_Prisma: getUserPermissions(userId)
+        Note over BE_Prisma, DB: Query UserRoles (active) → Roles (active) → RolePermissions → Permissions
+        BE_Service->>BE_Service: Generate accessToken (JWT, 15 phút)
+        BE_Service-->>FE_Axios: 200 { isSuccess: true, data: { accessToken, refreshToken, user, permissions } }
     end
 
     Note over User, DB: 🟠 Bước 5: Frontend xử lý response thành công
@@ -236,19 +313,18 @@ sequenceDiagram
     FE_Service->>FE_Service: normalizeUserProfile(user)
     FE_Service-->>FE_Hook: { accessToken, refreshToken, user, permissions }
     FE_Hook->>FE_Store: setUser(user, permissions, accessToken, refreshToken)
-    FE_Store->>FE_Store: localStorage.setItem('access_token', accessToken)
-    FE_Store->>FE_Store: localStorage.setItem('refresh_token', refreshToken)
-    FE_Store->>FE_Store: document.cookie = 'access_token=...'
-    FE_Store->>FE_Store: Zustand persist → localStorage('auth-storage')
+    FE_Hook->>FE_Store: Lưu localStorage('access_token', 'refresh_token') & Cookie
     FE_Hook->>FE_Hook: toast.success("Chào mừng, ...")
     FE_Hook-->>FE_Form: return response
     FE_Form->>FE_Form: router.replace(redirect || '/dashboard')
     FE_Form-->>User: ✅ Redirect đến Dashboard
 ```
 
-### 2.2 Giải thích chi tiết từng file
+---
 
-#### Bước 1: Validation (Frontend)
+### 2.2 Phân tích chi tiết từng file & Dòng mã thực thi
+
+#### Bước 1: Schema Validation (Frontend)
 
 **File:** `frontend/src/features/auth/schemas/login.schema.ts`
 
@@ -300,19 +376,19 @@ login: async (credentials) => {
 }
 ```
 
-#### Bước 5: Axios Interceptors
+#### Bước 5: Axios Interceptors & Refresh Token Queue
 
 **File:** `frontend/src/lib/axios.ts`
 
 ```typescript
-// REQUEST: Tự động gắn Bearer token vào mọi request
+// REQUEST INTERCEPTOR: Tự động gắn Bearer token vào mọi request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
-// RESPONSE: Nếu 401 → tự động refresh token → retry request gốc
+// RESPONSE INTERCEPTOR: Nếu gặp 401 → tự động gọi refresh token → retry request gốc
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -325,27 +401,29 @@ api.interceptors.response.use(
 )
 ```
 
-#### Bước 6: Backend xử lý Login
+#### Bước 6: Backend Route & Service xử lý Login
 
-**File:** `backend/src/routes/auth.ts` (dòng 16-137)
+**Files:** `backend/src/modules/auth/auth.routes.ts` & `backend/src/modules/auth/auth.service.ts`
 
-Flow xử lý trong backend:
-
+Flow xử lý trong Backend Service:
 ```
 1. Extract body: { loginEmail, email, password }
-2. Query DB: prisma.userAccount.findUnique({ loginEmail }) + include User/Store/Dept/Position
-3. Check: Account tồn tại? → 401
-4. Check: isLocked? → 403
-5. Check: bcrypt.compare(password, passwordHash) → nếu sai: tăng failedCount, lock nếu >= 5
-6. Check: user.isActive && status === 'ACTIVE' → 403
+2. Query DB: prisma.userAccount.findUnique({ where: { loginEmail } }) + include User/Store/Dept/Position
+3. Check: Account tồn tại? → Nếu không: throw UnauthorizedError('Email hoặc mật khẩu không chính xác') [401]
+4. Check: isLocked? → Nếu có: throw ForbiddenError('Tài khoản bị khóa do đăng nhập sai quá 5 lần') [403]
+5. Check: bcrypt.compare(password, passwordHash) → Nếu sai:
+   - Tăng failedLoginCount lên 1
+   - Nếu failedCount >= 5: khóa tài khoản isLocked = true → throw ForbiddenError
+   - Nếu còn cơ hội: throw UnauthorizedError(`Còn ${5 - failedCount} lần thử`)
+6. Check: user.isActive && status === 'ACTIVE' → Nếu không: throw ForbiddenError
 7. Reset failedLoginCount = 0, update lastLoginAt
 8. Generate refreshToken (7d) → lưu vào DB
-9. getUserPermissions(userId) → query UserRoles → RolePermissions → Permission codes
-10. Generate accessToken (15m) → chứa { userId, email, employeeCode, fullName }
-11. Return: { accessToken, refreshToken, user, permissions }
+9. getUserPermissions(userId) → query UserRoles (active) → Roles (active) → Permissions
+10. Generate accessToken (15m) → chứa payload { userId, email, employeeCode, fullName }
+11. Return: { isSuccess: true, data: { accessToken, refreshToken, user, permissions } }
 ```
 
-#### Bước 7: Zustand Store lưu trữ state
+#### Bước 7: Zustand Store lưu trữ state & Token Storage
 
 **File:** `frontend/src/stores/auth.store.ts`
 
@@ -359,18 +437,18 @@ setUser: (user, permissions, accessToken, refreshToken) => {
 // Zustand persist: tự động lưu { user, permissions, isAuthenticated } vào localStorage('auth-storage')
 ```
 
-> **Tại sao lưu token ở cả 3 nơi?**
+> **Tại sao cần lưu token ở cả 3 nơi?**
 >
-> | Nơi lưu | Mục đích |
-> |---------|----------|
-> | `localStorage('access_token')` | Axios interceptor đọc để gắn Authorization header |
-> | `localStorage('refresh_token')` | Dùng khi access token hết hạn → gọi refresh |
-> | `cookie('access_token')` | Next.js Edge Middleware đọc (SSR/server không truy cập localStorage) |
-> | Zustand persist (`auth-storage`) | Rehydrate UI state khi reload page |
+> | Nơi lưu trữ | Mục đích sử dụng |
+> | :--- | :--- |
+> | `localStorage('access_token')` | Axios interceptor đọc từ Client để gắn `Authorization: Bearer <token>` vào request. |
+> | `localStorage('refresh_token')` | Dùng khi Access Token hết hạn (401) để tự động gọi `POST /api/auth/refresh`. |
+> | `cookie('access_token')` | Next.js Edge Middleware đọc ở tầng Server-Side (vì SSR không thể truy cập localStorage). |
+> | Zustand persist (`auth-storage`) | Rehydrate trạng thái người dùng (User profile, danh sách Permissions) khi F5/reload page. |
 
 ---
 
-## 🛡️ PHẦN 3: MIDDLEWARE & ROUTE PROTECTION
+## 🛡️ PHẦN 3: MIDDLEWARE & SECURITY GUARDS
 
 ### 3.1 Next.js Edge Middleware (Server-side)
 
@@ -415,15 +493,15 @@ flowchart TD
     A["Request đến protected route"] --> B{"Header có Authorization: Bearer xxx?"}
     B -->|Không| C["❌ 401 Access Token missing"]
     B -->|Có| D["jwt.verify(token, JWT_SECRET)"]
-    D -->|Fail| E["❌ 401 Invalid token"]
+    D -->|Fail| E["❌ 401 Invalid token / Expired"]
     D -->|OK| F["decoded = { userId, userAccountId, ... }"]
     F --> G["prisma.userAccount.findUnique(decoded.userAccountId)"]
-    G --> H{"Account tồn tại? User active?"}
+    G --> H{"Account tồn tại? User isActive?"}
     H -->|Không| I["❌ 401 User inactive or missing"]
     H -->|Có| J{"Account isLocked?"}
     J -->|Có| K["❌ 403 Account is locked"]
     J -->|Không| L["req.user = { id, userAccountId, loginEmail, ... }"]
-    L --> M["✅ next() → chuyển sang handler tiếp"]
+    L --> M["✅ next() → chuyển sang controller handler"]
 ```
 
 ### 3.4 Permission Middleware
@@ -437,12 +515,12 @@ flowchart TD
     B -->|Có| D["getUserPermissions(userId)"]
     D --> E{"permissions.has('ROLE.MANAGE')?"}
     E -->|Không| F["❌ 403 Forbidden: Không có quyền"]
-    E -->|Có| G["✅ next()"]
+    E -->|Có| G["✅ next() → Controller xử lý"]
 ```
 
 ---
 
-## 👑 PHẦN 4: ROLES & RBAC FLOW
+## 👑 PHẦN 4: ROLES & RBAC FLOW (Kèm Xóa Mềm)
 
 ### 4.1 Mô hình phân quyền
 
@@ -454,8 +532,8 @@ graph TB
     end
 
     subgraph "Role Layer"
-        R1["🎭 ADMIN<br/>isSystemRole: true<br/>bypassDataScope: true"]
-        R2["🎭 STUDENT<br/>isSystemRole: false"]
+        R1["🎭 ADMIN<br/>isSystemRole: true<br/>bypassDataScope: true<br/>isActive: true"]
+        R2["🎭 STUDENT<br/>isSystemRole: false<br/>isActive: true"]
     end
 
     subgraph "Permission Layer"
@@ -485,29 +563,29 @@ graph TB
     style R2 fill:#2563eb,color:#fff
 ```
 
-### 4.2 Permission Service (Caching Layer)
+### 4.2 Permission Service (In-Memory Caching Layer)
 
 **File:** `backend/src/services/permission.service.ts`
 
 ```mermaid
 flowchart TD
     A["getUserPermissions(userId)"] --> B{"In-Memory Cache hit?<br/>TTL 10 phút"}
-    B -->|Hit và chưa hết hạn| C["✅ Return cached Set<string>"]
+    B -->|Hit và chưa hết hạn| C["✅ Return cached Set<permissionCode>"]
     B -->|Miss hoặc hết hạn| D["Query DB"]
-    D --> E["prisma.userRole.findMany<br/>where: userId, isActive, revokedAt: null,<br/>expiresAt chưa qua, role.isActive"]
+    D --> E["prisma.userRole.findMany<br/>where: userId, isActive: true, revokedAt: null,<br/>expiresAt chưa qua, role: { isActive: true }"]
     E --> F["Lấy roleIds[]"]
     F --> G{"roleIds.length === 0?"}
     G -->|Có| H["Cache empty Set → return"]
-    G -->|Không| I["prisma.rolePermission.findMany<br/>where: roleId in roleIds, permission.isActive"]
+    G -->|Không| I["prisma.rolePermission.findMany<br/>where: roleId in roleIds, permission: { isActive: true }"]
     I --> J["Map → Set<permissionCode>"]
     J --> K["Cache với TTL 10 phút → return"]
 ```
 
 > **Khi nào cache bị invalidate?**
-> - `invalidatePermissionCacheForRole(roleId)` — gọi khi: update/delete role, assign permissions, sync users
-> - `invalidatePermissionCacheForUser(userId)` — gọi khi: logout, user bị remove khỏi role
+> - `invalidatePermissionCacheForRole(roleId)` — gọi khi: update role, xóa mềm role, assign permissions, sync users.
+> - `invalidatePermissionCacheForUser(userId)` — gọi khi: logout, user bị remove khỏi role, khóa tài khoản.
 
-### 4.3 Role Management API Flow
+### 4.3 Role Management & Soft Delete Flow
 
 ```mermaid
 sequenceDiagram
@@ -516,62 +594,81 @@ sequenceDiagram
     participant Hook as useRoles / use-roles.ts
     participant Service as rolesService
     participant API as Express Backend
-    participant MW as authenticateToken + requirePermission
-    participant DB as PostgreSQL
+    participant RoleSvc as role.service.ts
+    participant DB as PostgreSQL (Supabase)
 
     Note over Admin, DB: 📋 Xem danh sách Roles
-
     Admin->>FE: Vào trang /admin/roles
-    FE->>Hook: useRoles() → useQuery
+    FE->>Hook: useRoles()
     Hook->>Service: rolesService.list()
     Service->>API: GET /api/roles
-    API->>MW: authenticateToken → verify JWT
-    MW->>API: ✅ req.user set
-    API->>DB: prisma.role.findMany + include rolePermissions.permission
-    DB-->>API: roles[]
-    API->>API: Format response → { id, roleName, displayName, permissions[] }
-    API-->>FE: RoleResponse[]
+    API->>RoleSvc: getAllRoles()
+    RoleSvc->>DB: prisma.role.findMany({ where: { isActive: true } })
+    DB-->>RoleSvc: danh sách Role đang active
+    RoleSvc-->>API: format { id, roleName, displayName, permissions[] }
+    API-->>FE: 200 OK
 
     Note over Admin, DB: ➕ Tạo Role mới
-
     Admin->>FE: Click "Tạo vai trò mới"
     FE->>Hook: useCreateRole().mutate(data)
     Hook->>Service: rolesService.create({ roleName, displayName })
     Service->>API: POST /api/roles
-    API->>MW: authenticateToken → requirePermission('ROLE.MANAGE')
-    MW->>MW: getUserPermissions → check 'ROLE.MANAGE'
-    alt Không có quyền
-        MW-->>FE: 403 Forbidden
-    else Có quyền ✅
-        API->>DB: prisma.role.create
-        API-->>FE: 201 role.id
-        Hook->>Hook: invalidateQueries(['roles']) → refetch list
-        Hook-->>Admin: toast.success("Tạo vai trò thành công")
+    API->>RoleSvc: createRole(dto)
+    RoleSvc->>DB: Kiểm tra: roleName đã tồn tại?
+    alt Đã tồn tại & isActive = true
+        RoleSvc-->>API: 400 "Mã vai trò đã tồn tại"
+    else Đã tồn tại nhưng isActive = false (Đã xóa mềm trước đó)
+        RoleSvc->>DB: prisma.role.update({ where: { id }, data: { isActive: true, displayName } })
+        RoleSvc-->>API: 200 role.id (Tái kích hoạt)
+    else Chưa từng tồn tại
+        RoleSvc->>DB: prisma.role.create({ data: { roleName, displayName, isActive: true } })
+        RoleSvc-->>API: 201 role.id
     end
+    API-->>FE: Response
+    Hook->>Hook: invalidateQueries(['roles']) → refetch
+    Hook-->>Admin: toast.success("Tạo vai trò thành công")
 
     Note over Admin, DB: 🔑 Gán Permissions cho Role
-
     Admin->>FE: Chọn permissions → Save
     FE->>Hook: useAssignPermissions().mutate({ roleId, permissionIds })
     Hook->>Service: rolesService.assignPermissions(roleId, permissionIds)
     Service->>API: PUT /api/roles/:id/permissions
-    API->>MW: authenticateToken → requirePermission('ROLE.MANAGE')
-    API->>DB: DELETE all old RolePermissions for this role
-    API->>DB: CREATE new RolePermissions
-    API->>API: invalidatePermissionCacheForRole(roleId)
-    API-->>FE: 204 No Content
+    API->>RoleSvc: assignPermissions(roleId, permissionIds)
+    RoleSvc->>DB: DELETE all old RolePermissions for this role
+    RoleSvc->>DB: CREATE new RolePermissions
+    RoleSvc->>RoleSvc: invalidatePermissionCacheForRole(roleId)
+    RoleSvc-->>API: 200 OK
+    API-->>FE: 200 OK
 
     Note over Admin, DB: 👥 Gán Users cho Role
-
     Admin->>FE: Chọn users → Save
     FE->>Hook: useSyncRoleUsers().mutate({ roleId, toAdd, toRemove })
     Hook->>Service: rolesService.syncUsers(roleId, toAdd, toRemove)
     Service->>API: PUT /api/roles/:roleId/users
-    API->>MW: authenticateToken → requirePermission('ROLE.MANAGE')
-    API->>DB: DELETE UserRoles for toRemove users
-    API->>DB: UPSERT UserRoles for toAdd users
-    API->>API: invalidatePermissionCacheForUser(each user)
-    API-->>FE: 204 No Content
+    API->>RoleSvc: syncRoleUsers(roleId, dto)
+    RoleSvc->>DB: DELETE UserRoles for toRemove users
+    RoleSvc->>DB: UPSERT UserRoles for toAdd users
+    RoleSvc->>RoleSvc: invalidatePermissionCacheForUser(each user)
+    RoleSvc-->>API: 200 OK
+    API-->>FE: 200 OK
+
+    Note over Admin, DB: 🗑️ Xóa Mềm Role (Soft Delete)
+    Admin->>FE: Bấm Xóa Role -> Confirm
+    FE->>Hook: useDeleteRole().mutate(roleId)
+    Hook->>Service: rolesService.delete(roleId)
+    Service->>API: DELETE /api/roles/:id
+    API->>RoleSvc: deleteRole(id)
+    RoleSvc->>DB: Kiểm tra: isSystemRole == false?
+    alt Là System Role
+        RoleSvc-->>API: 400 "Không thể xóa vai trò hệ thống"
+    else Là Custom Role
+        RoleSvc->>DB: prisma.role.update({ where: { id }, data: { isActive: false } })
+        RoleSvc->>RoleSvc: invalidatePermissionCacheForRole(id)
+        RoleSvc-->>API: 200 "Xóa mềm vai trò thành công"
+        API-->>FE: 200 OK
+        Hook->>FE: Invalidate queries -> Role biến mất khỏi UI
+        Note over DB: Lịch sử Audit Log & UserRole vẫn được bảo toàn
+    end
 ```
 
 ### 4.4 Frontend kiểm tra quyền tại Client
@@ -605,7 +702,7 @@ sequenceDiagram
     participant FE as Frontend (bất kỳ request)
     participant Axios as axios.ts interceptor
     participant BE_Refresh as POST /api/auth/refresh
-    participant DB as PostgreSQL
+    participant DB as PostgreSQL (Supabase)
 
     FE->>Axios: API call bất kỳ
     Axios->>Axios: Gắn Bearer token
@@ -626,7 +723,7 @@ sequenceDiagram
         BE_Refresh->>BE_Refresh: Check: token match? Chưa hết hạn? Account not locked?
         alt Hợp lệ
             BE_Refresh->>BE_Refresh: Sign new accessToken (15m)
-            BE_Refresh-->>Axios: { accessToken: newToken }
+            BE_Refresh-->>Axios: { isSuccess: true, data: { accessToken: newToken } }
             Axios->>Axios: setTokens(newToken)
             Axios->>Axios: processPendingRequests(newToken)
             Axios->>Axios: Retry request gốc với newToken
@@ -639,110 +736,60 @@ sequenceDiagram
 
 ---
 
-## 📊 PHẦN 6: TỔNG HỢP THAY ĐỔI NGÀY 07/08/2026
+## 📘 PHẦN 6: HỆ THỐNG MODULAR SWAGGER & API DOCUMENTATION
 
-### 6.1 Thống kê thay đổi
+### 6.1 Cấu trúc Modular OpenAPI 3.0
 
-| Thành phần | Files Changed | Mô tả |
-|-----------|:------------:|-------|
-| **Backend Schema** | 1 | Mở rộng `schema.prisma`: thêm Auth RBAC (User, UserAccount, Role, Permission, UserRole, RolePermission) + Org Structure + LMS modules |
-| **Backend Routes** | 8+ | Thêm `auth.ts`, `role.routes.ts`, `permission.routes.ts`, `user.routes.ts` + mở rộng courses/lessons/progress/quizzes |
-| **Backend Middleware** | 2 | Tạo mới `auth.middleware.ts` (JWT verify) + `permission.middleware.ts` (RBAC check) |
-| **Backend Service** | 1 | Tạo mới `permission.service.ts` (in-memory cache + DB lookup) |
-| **Backend Seed** | 1 | Viết lại hoàn toàn seed data: tạo org, permissions, roles, users, courses |
-| **Frontend Middleware** | 1 | Tạo `middleware.ts`: route guard dựa trên cookie |
-| **Frontend Store** | 1 | Tạo `auth.store.ts` (Zustand + persist) |
-| **Frontend Auth Feature** | 7+ | `auth.service`, `use-auth`, `LoginForm`, `LoginPages`, `AuthGuard`, `auth.utils`, schemas, types |
-| **Frontend Admin Feature** | 5+ | `roles.service`, `permissions.service`, `use-roles`, `use-permissions`, admin types |
-| **Frontend Config** | 4 | `api-routes`, `route-path`, route configs (admin/user routes) |
-| **Frontend Lib** | 2 | `axios.ts` (interceptors + refresh), `api.ts` (wrapper) |
-| **Docs** | -8 files | Xóa docs cũ, chuyển sang cấu trúc mới `doc/00-overview` → `doc/workflow` |
+Hệ thống tài liệu Swagger được chia nhỏ thành từng file `*.swagger.ts` độc lập tương ứng với mỗi module trong `backend/src/modules/`:
 
-> **Tổng cộng: ~28 files thay đổi, +11,105 dòng thêm, -2,089 dòng xóa**
-
-### 6.2 Kiến trúc đã xây dựng
-
-```mermaid
-graph TB
-    subgraph "🌐 Frontend - Next.js 15"
-        MW["middleware.ts<br/>Edge Route Guard"]
-        AG["AuthGuard.tsx<br/>Client Route Guard"]
-        
-        subgraph "Auth Feature"
-            LP["LoginPages.tsx"]
-            LF["LoginForm.tsx"]
-            UH["useAuth hook"]
-            AS["authService"]
-            AU["auth.utils"]
-            LS["loginSchema (Zod)"]
-        end
-
-        subgraph "Admin Feature"  
-            RS["rolesService"]
-            PS["permissionsService"]
-            UR["useRoles hook"]
-            UP["usePermissions hook"]
-        end
-
-        subgraph "Infrastructure"
-            AX["axios.ts<br/>Interceptors + Refresh"]
-            ZS["auth.store.ts<br/>Zustand + Persist"]
-            RC["Routes Config<br/>Role-based access"]
-        end
-    end
-
-    subgraph "⚙️ Backend - Express.js"
-        EP["index.ts<br/>Entry Point"]
-        
-        subgraph "Middlewares"
-            AM["auth.middleware<br/>JWT Verify"]
-            PM["permission.middleware<br/>RBAC Check"]
-        end
-
-        subgraph "Routes"
-            AR["auth.ts<br/>Login/Refresh/Me/Logout"]
-            RR["role.routes.ts<br/>CRUD + Assign"]
-            PR["permission.routes.ts<br/>List"]
-            URR["user.routes.ts<br/>List/Create"]
-        end
-
-        subgraph "Services"
-            PSvc["permission.service<br/>Cache + DB Query"]
-        end
-    end
-
-    subgraph "🗃️ Database - PostgreSQL"
-        PRISMA["Prisma ORM"]
-        DB["auth_users<br/>auth_user_accounts<br/>auth_roles<br/>auth_permissions<br/>auth_user_roles<br/>auth_role_permissions"]
-    end
-
-    LP --> LF --> UH --> AS --> AX --> AR
-    UH --> ZS
-    MW --> |cookie| ZS
-    AG --> UH
-    AG --> RC
-    
-    RS --> AX --> RR
-    PS --> AX --> PR
-    
-    AR --> AM --> PRISMA --> DB
-    RR --> AM --> PM --> PSvc --> PRISMA
-    PR --> AM
-    URR --> AM
-
-    style MW fill:#f97316,color:#fff
-    style AM fill:#ef4444,color:#fff
-    style PM fill:#ef4444,color:#fff
-    style ZS fill:#8b5cf6,color:#fff
-    style PSvc fill:#059669,color:#fff
-    style DB fill:#3b82f6,color:#fff
 ```
+backend/src/
+├── config/
+│   └── swagger.ts                    <-- File gốc gom hợp nhất tất cả modules
+└── modules/
+    ├── auth/auth.swagger.ts          <-- Endpoints Login, Refresh, Me, Logout
+    ├── roles/role.swagger.ts         <-- Endpoints CRUD Roles, Assign Perms, Sync Users (Soft Delete)
+    ├── permissions/permission.swagger.ts
+    ├── departments/department.swagger.ts (Soft Delete)
+    ├── users/user.swagger.ts
+    ├── job-levels/job-level.swagger.ts (Soft Delete)
+    ├── custom-fields/custom-field.swagger.ts
+    ├── courses/course.swagger.ts
+    ├── lessons/lesson.swagger.ts
+    ├── quizzes/quiz.swagger.ts
+    └── progress/progress.swagger.ts
+```
+
+### 6.2 Truy cập & Quy trình Test API trực tiếp trên Swagger UI
+
+1. **Địa chỉ truy cập:**
+   - **`http://localhost:5000`** (Tự động redirect sang Swagger UI).
+   - **`http://localhost:5000/api-docs`** (Giao diện Swagger tương tác).
+   - **`http://localhost:5000/api-docs.json`** (OpenAPI JSON Spec).
+2. **Quy trình Authorize JWT Bearer Token:**
+   - Mở `POST /api/auth/login` -> Nhập `admin@bahung.com` / `password123` -> Bấm **Execute**.
+   - Copy mã `accessToken` từ kết quả JSON.
+   - Bấm nút **Authorize 🔓** ở góc trên bên phải màn hình -> Dán token vào -> Bấm **Authorize**.
+   - Toàn bộ các API yêu cầu quyền hạn sẽ tự động gửi kèm Token khi bạn bấm Test.
 
 ---
 
-## 🔑 PHẦN 7: SEED DATA (Dữ liệu mẫu)
+## 📊 PHẦN 7: TỔNG HỢP CÁC CẬP NHẬT KIẾN TRÚC MỚI (11/08/2026)
 
-**File:** `backend/src/seed.ts`
+| Hạng mục cải tiến | Trạng thái | Chi tiết kỹ thuật |
+| :--- | :---: | :--- |
+| **Tích hợp Swagger UI** |  Hoàn thành | Cài đặt `swagger-ui-express`, `swagger-jsdoc` và render tại `/api-docs`. |
+| **Modular Swagger Refactor** |  Hoàn thành | Tách 11 file `*.swagger.ts` vào từng module, rút gọn `swagger.ts` từ 600 xuống ~140 dòng. |
+| **Cơ chế Xóa mềm (Soft Delete)** |  Hoàn thành | Triển khai `isActive: false` cho `Roles`, `Departments`, `Job Levels`, `Users`. |
+| **Tái kích hoạt thông minh** |  Hoàn thành | Khi tạo lại mã trùng với bản ghi đã xóa mềm, tự động `isActive: true` thay vì lỗi Unique DB. |
+| **Prisma Local Client Generator** |  Hoàn thành | Đổi generator client output sang `./client` để triệt tiêu lỗi khóa file DLL trên Windows. |
+| **Chuẩn hóa PostgreSQL Migration** |  Hoàn thành | Khởi tạo migration PostgreSQL chính thức `20260811000000_init_postgresql_schema` đồng bộ với Supabase. |
+
+---
+
+## 🔑 PHẦN 8: SEED DATA, TEST ACCOUNTS & QUICK REFERENCE
+
+### 8.1 Dữ liệu mẫu ban đầu (`backend/src/seed.ts`)
 
 | Thứ tự | Data | Chi tiết |
 |:------:|------|---------|
@@ -752,31 +799,22 @@ graph TB
 | 4 | **Users** | `admin@bahung.com` (ADMIN role), `alex@logix.com` (STUDENT role) — password mặc định: `password123` |
 | 5 | **Sample Course** | 1 Category → 1 Course → 1 Module → 1 Lesson + enrollment cho alex |
 
----
+### 8.2 Tài khoản kiểm thử mặc định:
 
-## 🎯 Quick Reference cho Intern
+| Email | Password | Role | Permissions |
+| :--- | :--- | :--- | :--- |
+| `admin@bahung.com` | `password123` | **ADMIN** | Tất cả 7 quyền (`USER.READ`, `USER.CREATE`, `USER.LOCK`, `ROLE.MANAGE`, `COURSE.READ`, `COURSE.CREATE`, `ATTP.VIEW`) |
+| `alex@logix.com` | `password123` | **STUDENT** | Chỉ có `COURSE.READ` |
 
-### Muốn thêm Permission mới?
-
-1. Thêm vào `seed.ts` → chạy seed lại
-2. Hoặc tạo qua Admin UI nếu đã có API
-
-### Muốn protect một route mới?
+### 8.3 Bảo vệ Route & Kiểm tra Quyền nhanh:
 
 ```typescript
-// Backend: Trong route file
-router.get('/my-route', authenticateToken, requirePermission('MY.PERMISSION'), handler)
+// Backend (Express Route)
+router.post('/courses', authenticateToken, requirePermission('COURSE.CREATE'), courseController.createCourse)
 
-// Frontend: Trong route config
-{ path: '/my-page', roles: [Role.ADMIN], label: 'My Page' }
-```
-
-### Muốn kiểm tra quyền trong component?
-
-```tsx
+// Frontend (Component React)
 const { hasPermission } = useAuth()
-
-{hasPermission('COURSE.CREATE') && <Button>Tạo khóa học</Button>}
+{hasPermission('ROLE.MANAGE') && <Button onClick={handleOpenModal}>Tạo Vai Trò</Button>}
 ```
 
 ### Test accounts
