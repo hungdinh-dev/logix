@@ -3,6 +3,10 @@ packages:
   - 'backend'
 
 allowBuilds:
+  '@prisma/client': false
+  '@prisma/engines': false
+  '@scarf/scarf': false
+  prisma: false
   sharp: true
   unrs-resolver: true
 ignoredBuiltDependencies:
