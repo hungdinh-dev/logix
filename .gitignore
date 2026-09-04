@@ -47,3 +47,10 @@ Thumbs.db
 # Obsidian workspace config (local only)
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
+
+# Google Service Account Credentials / Secret Keys
+*-*.json
+*credentials*.json
+*service-account*.json
+lms-list-functions-*.json
+service_account.json
