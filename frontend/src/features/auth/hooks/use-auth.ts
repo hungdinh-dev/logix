@@ -4,47 +4,28 @@ import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth.store'
-import { authService, type LoginRequest } from '@/features/auth/services/auth.service'
-import { decodeUserFromToken } from '@/features/auth/auth.utils'
+import { authService, type LoginRequest, normalizeUserProfile } from '@/features/auth/services/auth.service'
 import { getErrorMessage } from '@/lib/api'
-import { Role } from '@/features/auth/types/auth.types'
 
 export const useAuth = () => {
-  const { user, isAuthenticated, isLoading, setUser, clearAuth, setLoading } = useAuthStore()
+  const { user, permissions, isAuthenticated, isLoading, setUser, clearAuth, setLoading, hasPermission } =
+    useAuthStore()
   const router = useRouter()
 
   const login = useCallback(
     async (credentials: LoginRequest) => {
       try {
         setLoading(true)
-        // 1. Gọi API login
         const response = await authService.login(credentials)
-        const { accessToken, refreshToken } = response
+        const { accessToken, refreshToken, user: userProfile, permissions: userPerms } = response
 
         if (!accessToken) {
-          throw new Error('Không nhận được Access Token từ server.')
+          throw new Error('Không nhận được Access Token từ máy chủ.')
         }
 
-        // 2. Giải mã JWT để lấy user info
-        const decodedUser = decodeUserFromToken(accessToken)
-        if (!decodedUser) {
-          throw new Error('Token không hợp lệ, không thể giải mã thông tin người dùng.')
-        }
-
-        // 3. Lưu vào Zustand store + localStorage + cookie
-        setUser(
-          {
-            id: decodedUser.id,
-            name: decodedUser.name,
-            email: decodedUser.email,
-            role: decodedUser.role as Role,
-            avatar: decodedUser.avatar,
-          },
-          accessToken,
-          refreshToken
-        )
-
-        toast.success(`Chào mừng, ${decodedUser.name}!`)
+        const normalizedUser = normalizeUserProfile(userProfile)
+        setUser(normalizedUser, userPerms || [], accessToken, refreshToken)
+        toast.success(`Chào mừng, ${normalizedUser.fullName}!`)
         return response
       } catch (error) {
         const message = getErrorMessage(error)
@@ -60,10 +41,9 @@ export const useAuth = () => {
   const logout = useCallback(async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('access_token')
-      await authService.logout(token || undefined)
+      await authService.logout()
     } catch (error) {
-      console.error('Logout API error:', error)
+      console.error('Logout error:', error)
     } finally {
       clearAuth()
       toast.info('Đã đăng xuất')
@@ -72,16 +52,20 @@ export const useAuth = () => {
     }
   }, [clearAuth, router, setLoading])
 
-  const hasRole = (role: Role): boolean => user?.role === role
+  const userRole = user?.role || (user?.roles && user.roles.length > 0 ? user.roles[0] : 'STUDENT')
 
-  const hasAnyRole = (roles: Role[]): boolean =>
-    roles.length === 0 || (!!user && roles.includes(user.role))
+  const hasRole = (role: string): boolean => userRole === role
+
+  const hasAnyRole = (roles: string[]): boolean =>
+    roles.length === 0 || roles.includes(userRole)
 
   return {
-    user,
-    role: user?.role ?? null,
+    user: user ? normalizeUserProfile(user) : null,
+    role: userRole,
+    permissions,
     isAuthenticated,
     isLoading,
+    hasPermission,
     hasRole,
     hasAnyRole,
     login,

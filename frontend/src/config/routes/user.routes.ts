@@ -3,12 +3,27 @@ import type { RouteConfig } from './index'
 
 export const userRoutes: RouteConfig[] = [
   {
-    path: '/dashboard',
-    roles: [Role.ADMIN, Role.USER],
+    path: '/lms/dashboard',
+    roles: [Role.ADMIN, Role.USER, Role.TRAINER, Role.STUDENT],
     label: 'Dashboard',
     icon: 'LayoutDashboard',
   },
-  { path: '/hr', roles: [Role.ADMIN, Role.USER], label: 'Quản lý nhân sự', icon: 'UserCog' },
-  { path: '/customers', roles: [Role.ADMIN, Role.USER], label: 'Khách hàng', icon: 'Users' },
-  { path: '/leads', roles: [Role.ADMIN, Role.USER], label: 'Leads', icon: 'UserPlus' },
+  {
+    path: '/lms/courses',
+    roles: [Role.ADMIN, Role.USER, Role.TRAINER, Role.STUDENT],
+    label: 'Khóa học',
+    icon: 'BookOpen',
+  },
+  {
+    path: '/lms/progress',
+    roles: [Role.ADMIN, Role.USER, Role.TRAINER, Role.STUDENT],
+    label: 'Tiến độ học tập',
+    icon: 'Activity',
+  },
+  {
+    path: '/lms/reports',
+    roles: [Role.ADMIN, Role.USER, Role.TRAINER, Role.STUDENT],
+    label: 'Báo cáo',
+    icon: 'FileText',
+  },
 ]

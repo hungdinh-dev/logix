@@ -10,6 +10,7 @@ import { loginSchema, type LoginFormValues } from '@/features/auth/schemas/login
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { routePath } from '@/config/route-path'
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -28,7 +29,7 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormValues) => {
     try {
       await login(data)
-      const redirect = searchParams.get('redirect') ?? '/dashboard'
+      const redirect = searchParams.get('redirect') ?? routePath.dashboard
       router.replace(redirect)
     } catch {
       // Error handles inside login hook via toast

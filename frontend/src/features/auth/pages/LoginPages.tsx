@@ -40,18 +40,18 @@ export function LoginPages() {
         <div className="relative space-y-6">
           <div className="space-y-2">
             <h1 className="text-4xl leading-tight font-bold text-white">
-              Quản lý quan hệ
+              Hệ thống Đào tạo &
               <br />
-              <span className="text-[#cc785c]">khách hàng</span> thông minh
+              <span className="text-[#cc785c]">Quản lý Học tập LogiX</span>
             </h1>
             <p className="text-lg text-[#a09d96]">
-              Nền tảng CRM dành riêng cho ngành tài chính — ngân hàng
+              Nền tảng LMS Doanh nghiệp — Đào tạo Onboarding & Tuân thủ ATTP
             </p>
           </div>
 
           <div className="grid grid-cols-3 gap-4 pt-4">
             {[
-              { value: '10K+', label: 'Khách hàng' },
+              { value: '100%', label: 'Tuân thủ ATTP' },
               { value: '99.9%', label: 'Uptime' },
               { value: '24/7', label: 'Hỗ trợ' },
             ].map((stat) => (
@@ -64,7 +64,7 @@ export function LoginPages() {
         </div>
 
         <p className="relative text-sm text-[#a09d96]">
-          © {new Date().getFullYear()} DigiFNB. All rights reserved.
+          © {new Date().getFullYear()} LogiX LMS. All rights reserved.
         </p>
       </div>
 
@@ -78,7 +78,7 @@ export function LoginPages() {
 
           <Card className="border-[#e6dfd8] shadow-none">
             <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-2xl font-bold">Đăng nhập</CardTitle>
+              <CardTitle className="text-2xl font-bold">Đăng nhập LogiX LMS</CardTitle>
               <CardDescription>Nhập thông tin tài khoản để tiếp tục</CardDescription>
             </CardHeader>
             <CardContent>

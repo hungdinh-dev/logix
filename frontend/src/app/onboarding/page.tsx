@@ -77,7 +77,7 @@ export default function OnboardingPage() {
             DigiFNB CRM
           </span>
         </div>
-        <Link href="/dashboard" style={{ color: '#6B6B6B', fontSize: 13 }}>
+        <Link href="/lms/dashboard" style={{ color: '#6B6B6B', fontSize: 13 }}>
           Skip setup
         </Link>
       </nav>

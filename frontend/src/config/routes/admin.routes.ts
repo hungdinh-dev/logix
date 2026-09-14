@@ -1,8 +1,11 @@
 import { Role } from '@/features/auth/types/auth.types'
 import type { RouteConfig } from './index'
 
+// 🏢 System Admin routes ONLY — Quản trị hệ thống chung
+// LMS routes → lms.routes.ts
+// HR routes → hr.routes.ts
 export const adminRoutes: RouteConfig[] = [
-  { path: '/reports', roles: [Role.ADMIN], label: 'Báo cáo', icon: 'BarChart2' },
-  { path: '/settings', roles: [Role.ADMIN], label: 'Cài đặt', icon: 'Settings' },
-  { path: '/users', roles: [Role.ADMIN], label: 'Quản lý người dùng', icon: 'UserCog' },
+  { path: '/admin/roles', roles: [Role.ADMIN], label: 'Vai trò (Roles)', icon: 'Shield' },
+  { path: '/admin/permissions', roles: [Role.ADMIN], label: 'Phân quyền (Permissions)', icon: 'UserCog' },
+  { path: '/admin/role-hierarchy', roles: [Role.ADMIN], label: 'Cây phân quyền', icon: 'GitBranch' },
 ]

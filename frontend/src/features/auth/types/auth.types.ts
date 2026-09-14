@@ -1,10 +1,9 @@
 import { z } from 'zod'
 
-export const roleSchema = z.enum(['ADMIN', 'USER'])
+export const roleSchema = z.enum(['ADMIN', 'USER', 'TRAINER', 'STUDENT'])
 
-// Expose as const object — preserves Role.ADMIN access without TypeScript enum
 export const Role = roleSchema.enum
-export type Role = z.infer<typeof roleSchema>
+export type Role = z.infer<typeof roleSchema> | string
 
 export interface User {
   id: string
