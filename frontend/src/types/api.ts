@@ -1,4 +1,13 @@
-// Wrapper for all API responses
+import type {
+  IApiResponse,
+  IPaginatedData,
+  IPaginationMeta,
+  IPaginationParams,
+} from '@logix/shared'
+
+export type { IApiResponse, IPaginatedData, IPaginationMeta, IPaginationParams }
+
+// Wrapper for all API responses (Legacy compatibility)
 export interface ApiResponse<T> {
   data: T
   message: string

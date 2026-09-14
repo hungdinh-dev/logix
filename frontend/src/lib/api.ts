@@ -1,35 +1,41 @@
 import { api } from './axios'
 import { AxiosError, type AxiosRequestConfig } from 'axios'
-import type { ApiResponse } from '@/types/api'
 
 // ──────────────────────────────────────────────────────────────
-// API Call Utilities
+// API Call Utilities (Tự động unwrap ApiResponse envelope)
 // ──────────────────────────────────────────────────────────────
+
+const unwrapData = <T>(res: unknown): T => {
+  if (res && typeof res === 'object' && 'isSuccess' in res && 'data' in res) {
+    return (res as { data: T }).data
+  }
+  return res as T
+}
 
 export const apiCall = {
-  get: async <T = unknown>(url: string, config?: AxiosRequestConfig) => {
-    const response = await api.get<unknown, ApiResponse<T>>(url, config)
-    return response.data
+  get: async <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> => {
+    const response = await api.get<unknown>(url, config)
+    return unwrapData<T>(response.data)
   },
 
-  post: async <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) => {
-    const response = await api.post<unknown, ApiResponse<T>>(url, data, config)
-    return response.data
+  post: async <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> => {
+    const response = await api.post<unknown>(url, data, config)
+    return unwrapData<T>(response.data)
   },
 
-  put: async <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) => {
-    const response = await api.put<unknown, ApiResponse<T>>(url, data, config)
-    return response.data
+  put: async <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> => {
+    const response = await api.put<unknown>(url, data, config)
+    return unwrapData<T>(response.data)
   },
 
-  patch: async <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) => {
-    const response = await api.patch<unknown, ApiResponse<T>>(url, data, config)
-    return response.data
+  patch: async <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> => {
+    const response = await api.patch<unknown>(url, data, config)
+    return unwrapData<T>(response.data)
   },
 
-  delete: async <T = unknown>(url: string, config?: AxiosRequestConfig) => {
-    const response = await api.delete<unknown, ApiResponse<T>>(url, config)
-    return response.data
+  delete: async <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> => {
+    const response = await api.delete<unknown>(url, config)
+    return unwrapData<T>(response.data)
   },
 }
 
