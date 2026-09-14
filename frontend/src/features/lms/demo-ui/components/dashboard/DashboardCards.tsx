@@ -1,3 +1,6 @@
+'use client'
+
+import Link from 'next/link'
 import { BookOpen, Calendar, ChevronRight, Clock, Play, Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import * as React from 'react'
@@ -78,19 +81,18 @@ export function DashboardCourseProgressCard({ course }: DashboardCourseProgressC
             <div className="h-full rounded-full transition-all duration-300" style={{ width: `${course.progress}%`, backgroundColor: course.accentColor }} />
           </div>
           <div className="mt-2.5 flex justify-end">
-            <button
-              type="button"
+            <Link
+              href={`/lms/lessons/${course.id}`}
               className="hover:bg-[var(--hover-bg)] flex min-h-[32px] cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
               style={{
                 borderColor: course.accentColor,
                 color: course.accentColor,
                 '--hover-bg': `${course.accentColor}14`,
               } as React.CSSProperties}
-              onClick={() => router.push(`/lms/lessons/${course.id}`)}
             >
               <Play className="h-2.5 w-2.5" style={{ fill: course.accentColor }} aria-hidden="true" />
               Resume
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -160,11 +162,13 @@ export function DashboardRecommendedCard({ course }: DashboardRecommendedCardPro
             {course.duration}
           </span>
           <Button
+            asChild
             size="sm"
-            className="h-7 rounded-md px-3 text-[11px] font-semibold"
-            onClick={() => router.push('/lms/courses')}
+            className="h-7 rounded-md px-3 text-[11px] font-semibold cursor-pointer"
           >
-            Enroll
+            <Link href="/lms/courses">
+              Enroll
+            </Link>
           </Button>
         </div>
       </div>

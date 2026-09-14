@@ -1,7 +1,6 @@
 import { Award, BookOpen, CheckCircle, Clock } from 'lucide-react'
-
-import { LMS_PALETTE } from '../components/shared/lms-palette'
-import type { CourseInProgress, Deadline, RecommendedCourse, StatItem } from '../types/lms-dashboard.types'
+import type { CourseInProgress, Deadline, RecommendedCourse, StatItem } from '../demo-ui/types/lms-dashboard.types'
+import { LMS_PALETTE } from '../demo-ui/components/shared/lms-palette'
 
 export const LMS_DASHBOARD_STATS: StatItem[] = [
   { label: 'Courses In Progress', value: 5, icon: BookOpen, iconColor: LMS_PALETTE.primary, bgColor: 'color-mix(in oklch, var(--primary) 10%, transparent)' },

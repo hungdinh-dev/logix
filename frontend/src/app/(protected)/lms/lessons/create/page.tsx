@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { ArrowLeft, Save, Eye, Edit2, Sparkles, BookOpen } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { LessonRichEditor } from '@/features/lms/components/editor/LessonRichEditor'
-import { CodePlayground } from '@/features/lms/components/lesson-player/CodePlayground'
+import { LessonRichEditor } from '@/features/lms/demo-ui/components/editor/LessonRichEditor'
+import { CodePlayground } from '@/features/lms/demo-ui/components/lesson-player/CodePlayground'
 
 // Decode utility to cleanly preview code blocks
 function decodeHtmlEntities(str: string) {

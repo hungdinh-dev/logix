@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import LearnerProgressPage from '@/features/lms/pages/LearnerProgressPage'
+import LearnerProgressPage from '@/features/lms/demo-ui/pages/LearnerProgressPage'
 
 export const metadata: Metadata = { title: 'My Progress | LogiX' }
 

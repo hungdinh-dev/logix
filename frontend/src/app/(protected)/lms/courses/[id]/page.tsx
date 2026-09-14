@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import CourseDetailPage from '@/features/lms/pages/CourseDetailPage'
+import CourseDetailPage from '@/features/lms/demo-ui/pages/CourseDetailPage'
 
 export const metadata: Metadata = { title: 'Course Details | LogiX' }
 
