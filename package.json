@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "npx concurrently --kill-others-on-fail -n \"Frontend,Backend\" -c \"orange.bold,blue.bold\" \"pnpm --prefix frontend dev\" \"pnpm --prefix backend dev\"",
+    "dev": "npx concurrently --kill-others-on-fail -n \"Shared,Frontend,Backend\" -c \"green.bold,orange.bold,blue.bold\" \"pnpm --prefix packages/shared dev\" \"pnpm --prefix frontend dev\" \"pnpm --prefix backend dev\"",
     "dev:fe": "pnpm --prefix frontend dev",
     "dev:be": "pnpm --prefix backend dev",
+    "dev:shared": "pnpm --prefix packages/shared dev",
+    "build:shared": "pnpm --prefix packages/shared build",
     "build:fe": "pnpm --prefix frontend build",
     "build:be": "pnpm --prefix backend build",
-    "build": "pnpm run build:be && pnpm run build:fe"
+    "build": "pnpm run build:shared && pnpm run build:be && pnpm run build:fe",
+    "type-check": "pnpm --prefix packages/shared type-check"
   }
 }

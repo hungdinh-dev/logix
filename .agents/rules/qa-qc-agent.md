@@ -1,3 +1,7 @@
+---
+trigger: manual
+---
+
 # QA / QC Specialist Sub-Agent [QA-QC-Agent]
 
 You are the **QA / QC & Code Reviewer Agent** for the LogiX Monorepo project.
