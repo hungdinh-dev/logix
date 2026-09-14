@@ -1,102 +1,585 @@
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
+// ==========================================
+// 1. AUTHENTICATION & RBAC (ERP-v2 1-to-1)
+// ==========================================
+
 model User {
-  id        String             @id @default(uuid())
-  email     String             @unique
-  password  String
-  name      String
-  role      String             @default("STUDENT") // STUDENT, INSTRUCTOR, ADMIN
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  
-  enrollments CourseEnrollment[]
-  progress    UserProgress[]
+  id               String   @id @default(uuid())
+  employeeCode     String?  @unique
+  fullName         String
+  email            String?  @unique
+  status           String   @default("ACTIVE") // 'ACTIVE', 'LOCKED', 'PENDING'
+  isActive         Boolean  @default(true)
+  userType         String   @default("EMPLOYEE") // 'EMPLOYEE', 'CUSTOMER', 'SYSTEM_ADMIN'
+  employmentStatus String   @default("PROBATION") // 'PROBATION', 'OFFICIAL', 'TEMPORARY', 'RESIGNED'
+
+  // Org Structure Links
+  storeId      String?
+  store        Store?      @relation(fields: [storeId], references: [id])
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  positionId   String?
+  position     Position?   @relation(fields: [positionId], references: [id])
+
+  // Relations
+  userAccount    UserAccount?
+  userRoles      UserRole[]
+  enrollments    CourseEnrollment[]
+  lessonProgress LessonProgress[]
+  quizAttempts   QuizAttempt[]
+  activityLogs   LmsActivityLog[]
+  certificates   UserCertificate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("auth_users")
+}
+
+model UserAccount {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginEmail            String    @unique
+  passwordHash          String
+  isLocked              Boolean   @default(false)
+  failedLoginCount      Int       @default(0)
+  refreshToken          String?
+  refreshTokenExpiresAt DateTime?
+  lastLoginAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("auth_user_accounts")
+}
+
+model Role {
+  id              String   @id @default(uuid())
+  roleName        String   @unique
+  displayName     String
+  isSystemRole    Boolean  @default(false)
+  bypassDataScope Boolean  @default(false)
+  isActive        Boolean  @default(true)
+
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("auth_roles")
+}
+
+model Permission {
+  id             String   @id @default(uuid())
+  permissionCode String   @unique // e.g. 'USER.READ', 'COURSE.CREATE', 'ATTP.VIEW'
+  permissionName String
+  module         String
+  action         String
+  resource       String
+  isActive       Boolean  @default(true)
+
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("auth_permissions")
+}
+
+model UserRole {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId     String
+  role       Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assignedAt DateTime  @default(now())
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  isActive   Boolean   @default(true)
+
+  @@map("auth_user_roles")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  assignedAt   DateTime   @default(now())
+
+  @@unique([roleId, permissionId])
+  @@map("auth_role_permissions")
+}
+
+// ==========================================
+// 2. ORG STRUCTURE MODULE
+// ==========================================
+
+model Store {
+  id        String   @id @default(uuid())
+  storeCode String   @unique
+  storeName String
+  region    String   @default("MIEN_NAM")
+  storeType String   @default("RETAIL_STORE") // 'RETAIL_STORE', 'CENTRAL_FACTORY'
+  isActive  Boolean  @default(true)
+  users     User[]
+  targetCourses Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("org_stores")
+}
+
+model Department {
+  id            String   @id @default(uuid())
+  deptCode      String   @unique
+  deptName      String
+  isFactoryDept Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  users         User[]
+  targetCourses Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("org_departments")
+}
+
+model Position {
+  id           String   @id @default(uuid())
+  positionCode String   @unique
+  positionName String
+  levelRank    Int      @default(1)
+  isActive     Boolean  @default(true)
+  users        User[]
+  targetCourses Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("org_positions")
+}
+
+// ==========================================
+// ENUMS FOR CURRICULUM & QUIZ
+// ==========================================
+
+enum LessonType {
+  VIDEO
+  ARTICLE
+  QUIZ
+  PDF
+  CHECKLIST
+}
+
+enum VideoProvider {
+  YOUTUBE
+  DIRECT_UPLOAD
+  EXTERNAL_URL
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+enum ProgressionMode {
+  FREE
+  LINEAR_LESSON
+  LINEAR_MODULE
+}
+
+// ==========================================
+// 3. COURSE & CURRICULUM MODULE
+// ==========================================
+
+model Category {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  courses     Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("crs_categories")
 }
 
 model Course {
-  id          String             @id @default(uuid())
-  title       String
-  description String
-  thumbnail   String?
-  price       Float              @default(0)
-  published   Boolean            @default(false)
-  category    String             @default("General")
-  duration    String             @default("0h")
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id           String   @id @default(uuid())
+  code         String   @unique
+  title        String
+  slug         String   @unique
+  description  String?
+  thumbnailUrl String?
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id])
 
-  sections    Section[]
-  enrollments CourseEnrollment[]
+  courseType      String          @default("STANDARD") // 'ATTP', 'ONBOARDING', 'STANDARD'
+  isMandatory     Boolean         @default(false)
+  durationDays    Int?            @default(30)
+  progressionMode ProgressionMode @default(LINEAR_LESSON)
+
+  // Target fields for auto-assign rules (LMS-005 -> LMS-008)
+  targetPositionId       String?
+  targetPosition         Position?   @relation(fields: [targetPositionId], references: [id])
+  targetDepartmentId     String?
+  targetDepartment       Department? @relation(fields: [targetDepartmentId], references: [id])
+  targetStoreId          String?
+  targetStore            Store?      @relation(fields: [targetStoreId], references: [id])
+  targetEmploymentStatus String?     // 'PROBATION', 'OFFICIAL', 'TEMPORARY', 'ALL'
+
+  isCommercial Boolean  @default(false)
+  isInternal   Boolean  @default(true)
+  status       String   @default("DRAFT") // 'DRAFT', 'PUBLISHED', 'ARCHIVED'
+  isActive     Boolean  @default(true)
+
+  hasCertificate        Boolean              @default(false)
+  certificateTemplateId String?
+  certificateTemplate   CertificateTemplate? @relation(fields: [certificateTemplateId], references: [id], onDelete: SetNull)
+
+  modules      CourseModule[]
+  enrollments  CourseEnrollment[]
+  activityLogs LmsActivityLog[]
+  certificates UserCertificate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([categoryId])
+  @@index([status, isActive])
+  @@map("crs_courses")
 }
 
-model Section {
+model CourseModule {
   id        String   @id @default(uuid())
-  title     String
-  order     Int
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  sortOrder Int      @default(1)
   lessons   Lesson[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([courseId, sortOrder])
+  @@map("crs_modules")
 }
 
 model Lesson {
-  id        String   @id @default(uuid())
-  title     String
-  content   String?
-  videoUrl  String?
-  duration  String   @default("0:00")
-  order     Int
-  sectionId String
-  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  id                String         @id @default(uuid())
+  moduleId          String
+  module            CourseModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?        // Mô tả chi tiết / Video notes / Quiz intro
+  lessonType        LessonType     @default(VIDEO)
   
-  quizzes   Quiz[]
-  progress  UserProgress[]
+  // 1. Video content (YouTube & Upload)
+  videoProvider     VideoProvider? @default(YOUTUBE)
+  videoUrl          String?
+  videoStoragePath  String?
+  videoDuration     Int            @default(0) // Giây
+  
+  // 2. Article & Document content
+  bodyHtml          String?
+  documentUrl       String?
+  estimatedReadTime Int            @default(5) // Phút
+  checklistItems    String?        // JSON string
+  
+  // 3. SOP & Compliance
+  sopCode           String?
+  sopType           String?        // 'STORE_SOP', 'FACTORY_SOP'
+  requiresSignature Boolean        @default(false)
+  
+  // 4. Settings
+  allowDownload     Boolean        @default(false)
+  allowSeeking      Boolean        @default(true)
+  isVisible         Boolean        @default(true)
+  sortOrder         Int            @default(1)
+
+  // 5. Relations
+  quiz              Quiz?
+  progressRecords   LessonProgress[]
+  activityLogs      LmsActivityLog[]
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([moduleId, sortOrder])
+  @@map("crs_lessons")
 }
+
+// ==========================================
+// 4. QUIZ & ASSESSMENT MODULE
+// ==========================================
 
 model Quiz {
-  id           String     @id @default(uuid())
-  title        String
-  passingScore Float      @default(80)
-  lessonId     String
-  lesson       Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  questions    Question[]
+  id                 String         @id @default(uuid())
+  lessonId           String         @unique
+  lesson             Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  title              String
+  description        String?
+  passScore          Int            @default(80) // % điểm đạt
+  maxAttempts        Int            @default(3)  // 0 = không giới hạn
+  timeLimitMinutes   Int?           @default(30) // null = không giới hạn
+  shuffleQuestions   Boolean        @default(true)
+  showAnswerFeedback Boolean        @default(true)
+
+  questions          QuizQuestion[]
+  attempts           QuizAttempt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("quiz_quizzes")
 }
 
-model Question {
-  id            String   @id @default(uuid())
-  quizId        String
-  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  text          String
-  options       String   // JSON-serialized string of options e.g., '["A", "B", "C"]'
-  correctAnswer Int
+model QuizQuestion {
+  id           String             @id @default(uuid())
+  quizId       String
+  quiz         Quiz               @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  
+  questionText String
+  questionType QuestionType       @default(SINGLE_CHOICE)
+  points       Float              @default(1.0)
+  explanation  String?
+  sortOrder    Int                @default(1)
+  
+  options      QuizQuestionOption[]
+  answers      QuizAttemptAnswer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([quizId, sortOrder])
+  @@map("quiz_questions")
 }
+
+model QuizQuestionOption {
+  id          String       @id @default(uuid())
+  questionId  String
+  question    QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  optionText  String
+  isCorrect   Boolean      @default(false)
+  sortOrder   Int          @default(1)
+
+  @@index([questionId, sortOrder])
+  @@map("quiz_question_options")
+}
+
+model QuizAttempt {
+  id            String              @id @default(uuid())
+  quizId        String
+  quiz          Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  attemptNumber Int                 @default(1)
+  score         Float               @default(0.0) // % điểm
+  isPassed      Boolean             @default(false)
+  startedAt     DateTime            @default(now())
+  submittedAt   DateTime?
+
+  answers       QuizAttemptAnswer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([quizId, userId])
+  @@index([userId, isPassed])
+  @@map("quiz_attempts")
+}
+
+model QuizAttemptAnswer {
+  id               String       @id @default(uuid())
+  attemptId        String
+  attempt          QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  selectedOptionId String?
+  textAnswer       String?
+  isCorrect        Boolean?
+  earnedPoints     Float        @default(0.0)
+
+  createdAt DateTime @default(now())
+
+  @@index([attemptId])
+  @@map("quiz_attempt_answers")
+}
+
+// ==========================================
+// 5. ENROLLMENT & PROGRESS MODULE
+// ==========================================
 
 model CourseEnrollment {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  courseId   String
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  enrolledAt DateTime @default(now())
-  progress   Float    @default(0.0)
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId         String
+  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  enrollmentSource String   @default("MANUAL") // 'AUTO_RULE', 'MANUAL', 'PURCHASE'
+  status           String   @default("ENROLLED") // 'ENROLLED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'
+  dueDate          DateTime?
+  completionPercentage Float @default(0.0)
+  isPassed         Boolean  @default(false)
+
+  enrolledAt       DateTime @default(now())
+  completedAt      DateTime?
+
+  lessonProgress   LessonProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@unique([userId, courseId])
+  @@index([userId, status])
+  @@map("enr_course_enrollments")
 }
 
-model UserProgress {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lessonId    String
-  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  completed   Boolean  @default(false)
-  completedAt DateTime @default(now())
+model LessonProgress {
+  id                  String           @id @default(uuid())
+  enrollmentId        String
+  enrollment          CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId            String
+  lesson              Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  isCompleted         Boolean          @default(false)
+  lastPositionSeconds Int              @default(0)
+  quizHighestScore    Float?           // Lưu điểm cao nhất nếu là Quiz Lesson
+  completedAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@unique([userId, lessonId])
+  @@index([enrollmentId])
+  @@map("enr_lesson_progress")
 }
+
+// ==========================================
+// 6. LMS AUDIT & ACTIVITY LOG MODULE
+// ==========================================
+
+enum LmsActivityType {
+  ENROLLED
+  LESSON_STARTED
+  LESSON_COMPLETED
+  QUIZ_ATTEMPTED
+  COURSE_COMPLETED
+  CERTIFICATE_ISSUED
+}
+
+model LmsActivityLog {
+  id           String          @id @default(uuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId     String?
+  course       Course?         @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  lessonId     String?
+  lesson       Lesson?         @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+
+  activityType LmsActivityType
+  actionTitle  String
+  targetName   String
+
+  status       String          @default("SUCCESS") // 'SUCCESS', 'FAILED', 'ACTIVE', 'IN_PROGRESS'
+  statusLabel  String?
+
+  metadata     Json?
+
+  createdAt    DateTime        @default(now())
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([activityType, createdAt])
+  @@index([createdAt])
+  @@map("lms_activity_logs")
+}
+
+// ==========================================
+// 7. CERTIFICATES & COMPLIANCE MODULE
+// ==========================================
+
+model CertificateTemplate {
+  id                  String            @id @default(uuid())
+  name                String
+  code                String            @unique
+  description         String?
+  validityMonths      Int?              // null = Vô thời hạn, 12 = 1 năm (ATTP)
+  issuingOrganization String            @default("Trung tâm Đào tạo & Khảo thí Ba Hưng")
+  signatoryName       String            @default("Ban Giám Đốc")
+  signatoryTitle      String            @default("Giám đốc Đào tạo & Quản lý Chất lượng")
+  signatureImageUrl   String?
+  badgeIconUrl        String?
+  isActive            Boolean           @default(true)
+  courses             Course[]
+  certificates        UserCertificate[]
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @default(now()) @updatedAt
+
+  @@map("cert_templates")
+}
+
+model UserCertificate {
+  id                  String               @id @default(uuid())
+  certificateCode     String               @unique // VD: CERT-2026-BH-00128
+  userId              String
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId            String?
+  course              Course?              @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  templateId          String?
+  template            CertificateTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  title               String
+  recipientName       String
+  issueDate           DateTime             @default(now())
+  expiryDate          DateTime?
+  status              String               @default("ACTIVE") // 'ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'REVOKED'
+  isExternal          Boolean              @default(false)
+  issuingOrganization String?
+  certificateFileUrl  String?
+  finalScore          Float?
+  revokedReason       String?
+  revokedAt           DateTime?
+  metadata            Json?
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @default(now()) @updatedAt
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([templateId])
+  @@index([status])
+  @@index([expiryDate])
+  @@map("cert_user_certificates")
+}
+
+
+

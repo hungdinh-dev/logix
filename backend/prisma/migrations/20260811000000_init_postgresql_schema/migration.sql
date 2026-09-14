@@ -1,4 +1,4 @@
-﻿-- CreateTable
+-- CreateTable
 CREATE TABLE "auth_users" (
     "id" TEXT NOT NULL,
     "employeeCode" TEXT,

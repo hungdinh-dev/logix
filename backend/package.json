@@ -10,6 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node src/seed.ts",
+    "seed:personnel": "ts-node src/seed-personnel.ts",
     "test:db": "ts-node-dev src/test-connection.ts"
   },
   "dependencies": {
@@ -21,7 +22,8 @@
     "jsonwebtoken": "^9.0.2",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@logix/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
