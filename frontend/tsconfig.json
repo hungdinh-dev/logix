@@ -23,6 +23,7 @@
       "@/app/*": ["./src/app/*"],
       "@/components/*": ["./src/components/*"],
       "@/features/*": ["./src/features/*"],
+      "@/features/hr/*": ["./src/features/hrm/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/lib/*": ["./src/lib/*"],
       "@/services/*": ["./src/services/*"],

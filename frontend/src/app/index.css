@@ -203,3 +203,40 @@
     scrollbar-color: var(--border) transparent;
   }
 }
+
+/* SortableJS drag & drop enhancements */
+.sortable-ghost {
+  opacity: 0.35 !important;
+  background-color: #ffedd5 !important;
+  border: 2px dashed #f97316 !important;
+  transform: scale(0.98);
+  border-radius: 0.75rem !important;
+}
+
+.dark .sortable-ghost {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+  border: 2px dashed #f97316 !important;
+}
+
+.sortable-chosen {
+  background-color: #fff7ed !important;
+  box-shadow: 0 12px 24px -6px rgba(249, 115, 22, 0.25) !important;
+  border-color: #fdba74 !important;
+  cursor: grabbing !important;
+}
+
+.dark .sortable-chosen {
+  background-color: rgba(249, 115, 22, 0.2) !important;
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.5) !important;
+  border-color: #f97316 !important;
+}
+
+.sortable-drag {
+  opacity: 1 !important;
+  cursor: grabbing !important;
+}
+
+.lesson-item, .section-card {
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
