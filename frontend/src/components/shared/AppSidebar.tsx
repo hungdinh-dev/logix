@@ -1,9 +1,11 @@
 'use client'
 
+import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   LayoutDashboard,
   BookOpen,
+  Award,
   ArrowLeftRight,
   Landmark,
   BarChart3,
@@ -27,6 +29,7 @@ import {
   GitBranch,
   UserCog,
   Boxes,
+  FolderTree,
   ArrowUpDown,
   Calculator,
   BookMarked,
@@ -38,6 +41,11 @@ import {
   Globe,
   LogOut,
   User as UserIcon,
+  Shield,
+  Sparkles,
+  GraduationCap,
+  ArrowLeft,
+  ArrowRight,
   type LucideIcon,
 } from 'lucide-react'
 import { useState, Suspense, useEffect } from 'react'
@@ -46,18 +54,6 @@ import { Button } from '@/components/ui/button'
 import { routePath } from '@/config/route-path'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuGroup,
-} from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/features/auth/hooks/use-auth'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -77,11 +73,16 @@ type NavGroup = {
   children: NavLeaf[]
 }
 
-type NavItem = NavLeaf | NavGroup
+type NavSectionHeader = {
+  kind: 'header'
+  label: string
+}
 
-// ─── Navigation tree ──────────────────────────────────────────────────────────
+type NavItem = NavLeaf | NavGroup | NavSectionHeader
 
-const NAV_TREE: NavItem[] = [
+// ─── Navigation trees ──────────────────────────────────────────────────────────
+
+const LMS_LEARNER_NAV_TREE: NavItem[] = [
   {
     kind: 'leaf',
     icon: LayoutDashboard,
@@ -104,8 +105,61 @@ const NAV_TREE: NavItem[] = [
     kind: 'leaf',
     icon: FileText,
     label: 'sidebar.reports',
-    href: '/lms/reports',
+    href: routePath.reports,
   },
+  {
+    kind: 'header',
+    label: 'Quy trình & Tiện ích',
+  },
+  {
+    kind: 'leaf',
+    icon: Sparkles,
+    label: 'Quy trình Onboarding',
+    href: routePath.onboarding,
+  },
+]
+
+const LMS_ADMIN_NAV_TREE: NavItem[] = [
+  {
+    kind: 'leaf',
+    icon: LayoutDashboard,
+    label: 'Tổng quan Đào tạo',
+    href: routePath.lmsAdminDashboard,
+  },
+  { kind: 'header', label: 'Quản lý Đào tạo' },
+  { kind: 'leaf', icon: BookOpen, label: 'Quản lý Khóa học', href: routePath.lmsAdminCourses },
+  { kind: 'leaf', icon: FolderTree, label: 'Danh mục Chương trình', href: routePath.lmsAdminCourseCategories },
+  { kind: 'leaf', icon: Award, label: 'Quản lý Chứng chỉ & ATTP', href: routePath.lmsAdminCertificates },
+  { kind: 'leaf', icon: Activity, label: 'Theo dõi Tiến độ', href: routePath.lmsAdminProgress },
+  { kind: 'leaf', icon: FileText, label: 'Soạn thảo Bài giảng', href: routePath.lessonCreate },
+
+  { kind: 'header', label: 'Giao diện Demo UI (Showcase)' },
+  { kind: 'leaf', icon: LayoutDashboard, label: 'Demo: Dashboard', href: routePath.lmsAdminDemoDashboard },
+  { kind: 'leaf', icon: BookOpen, label: 'Demo: Khóa học (API)', href: routePath.lmsAdminDemoCourses },
+  { kind: 'leaf', icon: FolderTree, label: 'Demo: Khám phá Catalog', href: routePath.lmsAdminDemoCatalog },
+  { kind: 'leaf', icon: BookMarked, label: 'Demo: Chi tiết Khóa học', href: routePath.lmsAdminDemoCourseDetail },
+  { kind: 'leaf', icon: GraduationCap, label: 'Demo: Trình phát Bài giảng', href: routePath.lmsAdminDemoLessonPlayer },
+  { kind: 'leaf', icon: FileText, label: 'Demo: Bài kiểm tra (Quiz)', href: routePath.lmsAdminDemoQuiz },
+  { kind: 'leaf', icon: Activity, label: 'Demo: Báo cáo Tiến độ', href: routePath.lmsAdminDemoProgress },
+]
+
+const SYSTEM_ADMIN_NAV_TREE: NavItem[] = [
+  {
+    kind: 'leaf',
+    icon: LayoutDashboard,
+    label: 'Tổng quan Hệ thống',
+    href: routePath.adminDashboard,
+  },
+  { kind: 'header', label: 'Phân quyền & Vai trò' },
+  { kind: 'leaf', icon: Shield, label: 'Vai trò (Roles)', href: routePath.adminRoles },
+  { kind: 'leaf', icon: UserCog, label: 'Phân quyền (Permissions)', href: routePath.adminPermissions },
+  { kind: 'leaf', icon: GitBranch, label: 'Cây phân quyền (Hierarchy)', href: routePath.adminRoleHierarchy },
+
+  { kind: 'header', label: 'Tổ chức & Nhân sự' },
+  { kind: 'leaf', icon: Building2, label: 'Sơ đồ Tổ chức (Departments)', href: routePath.adminDepartments },
+  { kind: 'leaf', icon: Users, label: 'Nhân sự (Employees)', href: routePath.adminEmployees },
+  { kind: 'leaf', icon: Target, label: 'Cấp bậc (Job Levels)', href: routePath.adminJobLevels },
+  { kind: 'leaf', icon: Boxes, label: 'Trường tùy chỉnh', href: routePath.adminCustomFields },
 ]
 
 // ─── NavLeafButton ────────────────────────────────────────────────────────────
@@ -116,22 +170,20 @@ function NavLeafButton({
   badge,
   active,
   indent,
-  onClick,
+  href,
 }: {
   icon: LucideIcon
   label: string
   badge?: number
   active: boolean
   indent: boolean
-  onClick: () => void
+  href: string
 }) {
   const { t } = useTranslation()
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      onClick={onClick}
+    <Link
+      href={href}
       className={cn(
         'flex h-[30px] w-full cursor-pointer items-center gap-2 rounded-md text-[12px] font-normal transition-colors duration-[120ms]',
         indent ? 'pr-2 pl-5' : 'px-2',
@@ -149,7 +201,7 @@ function NavLeafButton({
           {badge}
         </span>
       )}
-    </Button>
+    </Link>
   )
 }
 
@@ -158,11 +210,9 @@ function NavLeafButton({
 function NavGroupSection({
   group,
   pathname,
-  onNavigate,
 }: {
   group: NavGroup
   pathname: string
-  onNavigate: (href: string) => void
 }) {
   const { t } = useTranslation()
   const searchParams = useSearchParams()
@@ -222,11 +272,21 @@ function NavGroupSection({
               badge={child.badge}
               active={isChildActive(child.href)}
               indent
-              onClick={() => onNavigate(child.href)}
+              href={child.href}
             />
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── NavSectionTitle ─────────────────────────────────────────────────────────
+
+function NavSectionTitle({ label }: { label: string }) {
+  return (
+    <div className="px-2 pt-3 pb-1 text-[10px] font-bold tracking-wider text-sidebar-foreground/45 uppercase">
+      {label}
     </div>
   )
 }
@@ -239,34 +299,23 @@ export function AppSidebar() {
   const { t, i18n } = useTranslation()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const { user, logout } = useAuth()
+  const { user, role } = useAuth()
+  const normRole = String(role || user?.role || (user?.roles && user.roles[0]) || '').toUpperCase()
+  const isAdmin = normRole === 'ADMIN' || normRole === 'SUPER_ADMIN'
 
-  const displayName = user?.name || 'Huy Q.'
-  const displayEmail = user?.email || 'huyq@digifnb.com'
-  const initials = displayName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+  const isSystemAdminSection = pathname?.startsWith('/admin')
+  const isLmsAdminSection = pathname?.startsWith('/lms/admin')
+
+  const currentNavTree = isSystemAdminSection
+    ? SYSTEM_ADMIN_NAV_TREE
+    : isLmsAdminSection
+    ? LMS_ADMIN_NAV_TREE
+    : LMS_LEARNER_NAV_TREE
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
-
-  const handleLogout = async () => {
-    try {
-      await logout()
-    } catch (error) {
-      console.error('Logout failed:', error)
-    }
-  }
-
-  const handleLanguageChange = (lang: 'vi' | 'en') => {
-    i18n.changeLanguage(lang)
-    localStorage.setItem('i18nextLng', lang)
-  }
 
   const toggleLanguage = () => {
     const nextLang = i18n.language === 'vi' ? 'en' : 'vi'
@@ -280,11 +329,17 @@ export function AppSidebar() {
 
   const isEn = mounted ? i18n.language === 'en' : false
 
-  const themeList = [
-    { value: 'light', label: isEn ? 'Light' : 'Sáng', icon: Sun },
-    { value: 'dark', label: isEn ? 'Dark' : 'Tối', icon: Moon },
-    { value: 'system', label: isEn ? 'System' : 'Hệ thống', icon: Monitor },
-  ]
+  const headerTitle = isSystemAdminSection
+    ? 'LogiX Admin'
+    : isLmsAdminSection
+    ? 'LogiX LMS Admin'
+    : 'LogiX LMS'
+
+  const headerSubtitle = isSystemAdminSection
+    ? (isEn ? 'System & Org Console' : 'Quản trị Hệ thống')
+    : isLmsAdminSection
+    ? (isEn ? 'Training Management' : 'Quản trị Đào tạo')
+    : (isEn ? 'Learning Portal' : 'Cổng Học tập')
 
   return (
     <aside
@@ -293,27 +348,74 @@ export function AppSidebar() {
       aria-label="Main navigation"
     >
       {/* Workspace header */}
-      <Button
-        type="button"
-        variant="ghost"
-        className="hover:bg-sidebar-accent text-sidebar-foreground flex h-[52px] w-full shrink-0 cursor-pointer items-center gap-2 rounded-md px-3 transition-colors duration-[120ms]"
-      >
-        <span
-          className="bg-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-bold text-white"
-          aria-hidden="true"
-        >
-          L
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col items-start">
-          <span className="text-sidebar-foreground w-full truncate text-left text-[13px] font-semibold">
-            LogiX LMS
-          </span>
-          <span className="text-sidebar-foreground/45 w-full truncate text-left text-[10px]">
-            v1.0.0
-          </span>
+      <div className="border-sidebar-border/30 flex h-[52px] w-full shrink-0 items-center justify-between border-b px-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div
+            className="bg-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-sm text-sm font-bold text-white"
+            aria-hidden="true"
+          >
+            {isSystemAdminSection ? <Shield className="h-4.5 w-4.5" /> : <GraduationCap className="h-4.5 w-4.5" />}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col items-start">
+            <span className="text-sidebar-foreground w-full truncate text-left text-[13px] font-semibold">
+              {headerTitle}
+            </span>
+            <span className="text-sidebar-foreground/50 w-full truncate text-left text-[10px] font-medium">
+              {headerSubtitle}
+            </span>
+          </div>
         </div>
-        <ChevronDown className="text-sidebar-foreground/45 h-3.5 w-3.5 shrink-0" />
-      </Button>
+      </div>
+
+      {/* Switch Mode Shortcuts */}
+      {isAdmin && (
+        <div className="p-2 pb-1 flex flex-col gap-1">
+          {isSystemAdminSection && (
+            <Link
+              href={routePath.lmsAdminDashboard}
+              className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-between px-2 text-[11px] font-medium rounded-md transition-colors"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="truncate">{isEn ? 'LMS Admin Portal' : 'Quản trị Đào tạo (LMS)'}</span>
+              </span>
+              <ArrowRight className="h-3 w-3 shrink-0 text-sidebar-foreground/45" />
+            </Link>
+          )}
+
+          {isLmsAdminSection && (
+            <>
+              <Link
+                href={routePath.dashboard}
+                className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-start gap-1.5 px-2 text-[11px] font-medium rounded-md transition-colors"
+              >
+                <ArrowLeft className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="truncate">{isEn ? 'Learner Portal' : 'Về Cổng Học viên'}</span>
+              </Link>
+              <Link
+                href={routePath.adminDashboard}
+                className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-start gap-1.5 px-2 text-[11px] font-medium rounded-md transition-colors"
+              >
+                <Shield className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="truncate">{isEn ? 'System Admin' : 'Về Admin Tổng'}</span>
+              </Link>
+            </>
+          )}
+
+          {!isSystemAdminSection && !isLmsAdminSection && (
+            <Link
+              href={routePath.lmsAdminDashboard}
+              className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-between px-2 text-[11px] font-medium rounded-md transition-colors"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="truncate">{isEn ? 'LMS Admin Portal' : 'Trang Quản trị Đào tạo'}</span>
+              </span>
+              <ArrowRight className="h-3 w-3 shrink-0 text-sidebar-foreground/45" />
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Search bar */}
       <div className="mb-1 shrink-0 px-2">
@@ -329,7 +431,10 @@ export function AppSidebar() {
         style={{ scrollbarWidth: 'none' }}
       >
         <nav className="flex flex-col gap-0.5 pb-2" aria-label="Site navigation">
-          {NAV_TREE.map((item) => {
+          {currentNavTree.map((item, index) => {
+            if (item.kind === 'header') {
+              return <NavSectionTitle key={`header-${item.label}-${index}`} label={item.label} />
+            }
             if (item.kind === 'leaf') {
               return (
                 <NavLeafButton
@@ -339,7 +444,7 @@ export function AppSidebar() {
                   badge={item.badge}
                   active={pathname === item.href}
                   indent={false}
-                  onClick={() => router.push(item.href)}
+                  href={item.href}
                 />
               )
             }
@@ -348,7 +453,6 @@ export function AppSidebar() {
                 <NavGroupSection
                   group={item}
                   pathname={pathname}
-                  onNavigate={(href) => router.push(href)}
                 />
               </Suspense>
             )
@@ -387,7 +491,7 @@ export function AppSidebar() {
           className="text-sidebar-foreground/45 hover:bg-sidebar-accent hover:text-sidebar-foreground h-8 w-8 shrink-0 cursor-pointer"
           title={isEn ? 'Toggle theme' : 'Chuyển đổi giao diện'}
         >
-          {theme === 'dark' ? (
+          {mounted && theme === 'dark' ? (
             <Sun className="h-4 w-4 shrink-0" />
           ) : (
             <Moon className="h-4 w-4 shrink-0" />
@@ -405,133 +509,6 @@ export function AppSidebar() {
           <Bell className="h-4 w-4 shrink-0" aria-hidden="true" />
         </Button>
       </div>
-
-      {/* User row */}
-      {mounted && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <div
-              className="border-sidebar-border/30 hover:bg-sidebar-accent/50 text-sidebar-foreground/85 mx-1 mb-1 flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-md border-t px-3 transition-colors duration-[120ms]"
-              role="button"
-              tabIndex={0}
-              aria-label={t('sidebar.user_account')}
-            >
-              {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={displayName}
-                  className="h-[26px] w-[26px] shrink-0 rounded-full object-cover"
-                />
-              ) : (
-                <span
-                  className="bg-primary flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white"
-                  aria-hidden="true"
-                >
-                  {initials}
-                </span>
-              )}
-              <span className="text-sidebar-foreground/80 flex-1 truncate text-[12px]">
-                {displayName}
-              </span>
-              <ChevronDown className="text-sidebar-foreground/45 h-3 w-3 shrink-0" />
-            </div>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent className="w-56" align="start" side="top" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-foreground text-sm leading-none font-semibold">{displayName}</p>
-                <p className="text-muted-foreground pt-0.5 text-xs leading-none">{displayEmail}</p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-
-            <DropdownMenuGroup>
-              <DropdownMenuItem className="cursor-pointer">
-                <UserIcon className="mr-2 h-4 w-4" />
-                <span>{isEn ? 'My Profile' : 'Hồ sơ cá nhân'}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>{isEn ? 'Settings' : 'Cài đặt'}</span>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-
-            {/* Submenu for Theme Choice */}
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger className="cursor-pointer">
-                {theme === 'dark' ? (
-                  <Moon className="mr-2 h-4 w-4" />
-                ) : theme === 'light' ? (
-                  <Sun className="mr-2 h-4 w-4" />
-                ) : (
-                  <Monitor className="mr-2 h-4 w-4" />
-                )}
-                <span>{t('sidebar.appearance')}</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                {themeList.map((tItem) => {
-                  const Icon = tItem.icon
-                  return (
-                    <DropdownMenuItem
-                      key={tItem.value}
-                      onClick={() => setTheme(tItem.value)}
-                      className={cn(
-                        'cursor-pointer',
-                        theme === tItem.value && 'bg-accent font-semibold'
-                      )}
-                    >
-                      <Icon className="mr-2 h-4 w-4" />
-                      <span>{tItem.label}</span>
-                    </DropdownMenuItem>
-                  )
-                })}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-
-            {/* Submenu for Language Choice */}
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger className="cursor-pointer">
-                <Globe className="mr-2 h-4 w-4" />
-                <span>{t('sidebar.language')}</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem
-                  onClick={() => handleLanguageChange('vi')}
-                  className={cn(
-                    'cursor-pointer',
-                    i18n.language === 'vi' && 'bg-accent font-semibold'
-                  )}
-                >
-                  <span className="mr-2">🇻🇳</span>
-                  <span>Tiếng Việt</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleLanguageChange('en')}
-                  className={cn(
-                    'cursor-pointer',
-                    i18n.language === 'en' && 'bg-accent font-semibold'
-                  )}
-                >
-                  <span className="mr-2">🇬🇧</span>
-                  <span>English</span>
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-            <DropdownMenuSeparator />
-
-            {/* Logout Button */}
-            <DropdownMenuItem
-              onClick={handleLogout}
-              className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/20"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>{t('sidebar.logout')}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
     </aside>
   )
 }

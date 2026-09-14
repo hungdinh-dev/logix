@@ -24,15 +24,15 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'DigiFNB CRM',
-    template: '%s | DigiFNB CRM',
+    default: 'LogiX',
+    template: '%s | LogiX',
   },
-  description: 'Hệ thống quản lý quan hệ khách hàng DigiFNB',
-  icons: {
-    icon: '/logo/Logo-DigiOne.png',
-    shortcut: '/logo/Logo-DigiOne.png',
-    apple: '/logo/Logo-DigiOne.png',
-  },
+  description: 'Hệ thống quản lý quan hệ khách hàng LogiX',
+  // icons: {
+  //   icon: '/logo/Logo-DigiOne.png',
+  //   shortcut: '/logo/Logo-DigiOne.png',
+  //   apple: '/logo/Logo-DigiOne.png',
+  // },
 }
 
 export default function RootLayout({
@@ -48,10 +48,16 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col font-sans" suppressHydrationWarning>
         <NextTopLoader
-          color="var(--primary)"
-          showSpinner={false}
+          color="#e8784a"
+          initialPosition={0.08}
+          crawlSpeed={200}
           height={3}
-          shadow="0 0 10px var(--primary),0 0 5px var(--primary)"
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #e8784a, 0 0 5px #e8784a"
+          zIndex={99999}
         />
         <Providers>{children}</Providers>
       </body>
