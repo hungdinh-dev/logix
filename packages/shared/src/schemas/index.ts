@@ -1,0 +1,6 @@
+export * from './auth.schema'
+export * from './category.schema'
+export * from './course.schema'
+export * from './lesson.schema'
+export * from './quiz.schema'
+export * from './user.schema'

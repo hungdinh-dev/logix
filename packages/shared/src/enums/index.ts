@@ -1,0 +1,81 @@
+export enum HttpStatus {
+  OK = 200,
+  CREATED = 201,
+  NO_CONTENT = 204,
+  BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  FORBIDDEN = 403,
+  NOT_FOUND = 404,
+  CONFLICT = 409,
+  UNPROCESSABLE_ENTITY = 422,
+  INTERNAL_SERVER_ERROR = 500,
+}
+
+export enum RoleCode {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  ADMIN = 'ADMIN',
+  HR_MANAGER = 'HR_MANAGER',
+  TRAINER = 'TRAINER',
+  STORE_MANAGER = 'STORE_MANAGER',
+  EMPLOYEE = 'EMPLOYEE',
+}
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+  PENDING_VERIFICATION = 'PENDING_VERIFICATION',
+}
+
+export enum EmploymentStatus {
+  PROBATION = 'PROBATION',
+  OFFICIAL = 'OFFICIAL',
+  TEMPORARY = 'TEMPORARY',
+  INTERNSHIP = 'INTERNSHIP',
+  ALL = 'ALL',
+}
+
+export enum CourseStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  ARCHIVED = 'ARCHIVED',
+}
+
+export enum CourseType {
+  ONLINE = 'ONLINE',
+  OFFLINE = 'OFFLINE',
+  BLENDED = 'BLENDED',
+}
+
+export enum ProgressionMode {
+  FREE = 'FREE',
+  LINEAR_LESSON = 'LINEAR_LESSON',
+  LINEAR_MODULE = 'LINEAR_MODULE',
+}
+
+export enum LessonType {
+  VIDEO = 'VIDEO',
+  ARTICLE = 'ARTICLE',
+  DOCUMENT = 'DOCUMENT',
+  INTERACTIVE = 'INTERACTIVE',
+}
+
+export enum QuizType {
+  PRACTICE = 'PRACTICE',
+  FINAL_EXAM = 'FINAL_EXAM',
+  ASSESSMENT = 'ASSESSMENT',
+}
+
+export enum QuestionType {
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  SINGLE_CHOICE = 'SINGLE_CHOICE',
+  TRUE_FALSE = 'TRUE_FALSE',
+  ESSAY = 'ESSAY',
+}
+
+export enum ProgressStatus {
+  NOT_STARTED = 'NOT_STARTED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  EXPIRED = 'EXPIRED',
+}
