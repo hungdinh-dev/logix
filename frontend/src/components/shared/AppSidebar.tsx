@@ -46,15 +46,24 @@ import {
   GraduationCap,
   ArrowLeft,
   ArrowRight,
+  PanelLeftClose,
+  PanelLeft,
   type LucideIcon,
 } from 'lucide-react'
 import { useState, Suspense, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { routePath } from '@/config/route-path'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/features/auth/hooks/use-auth'
+import { useSidebarStore } from '@/stores/sidebar.store'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -171,6 +180,7 @@ function NavLeafButton({
   active,
   indent,
   href,
+  isCollapsed,
 }: {
   icon: LucideIcon
   label: string
@@ -178,31 +188,58 @@ function NavLeafButton({
   active: boolean
   indent: boolean
   href: string
+  isCollapsed: boolean
 }) {
   const { t } = useTranslation()
+  const translatedLabel = t(label)
 
-  return (
+  const content = (
     <Link
       href={href}
       className={cn(
-        'flex h-[30px] w-full cursor-pointer items-center gap-2 rounded-md text-[12px] font-normal transition-colors duration-[120ms]',
-        indent ? 'pr-2 pl-5' : 'px-2',
-        'border-l-2',
+        'flex h-[34px] w-full cursor-pointer items-center rounded-md text-[12px] font-normal transition-all duration-150',
+        isCollapsed
+          ? 'justify-center px-0'
+          : indent
+          ? 'pr-2 pl-5 gap-2.5 border-l-2'
+          : 'px-2.5 gap-2.5 border-l-2',
         active
           ? 'bg-primary/15 text-primary border-l-primary hover:bg-primary/20 hover:text-primary font-semibold'
-          : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent border-transparent'
+          : 'text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent border-transparent'
       )}
       aria-current={active ? 'page' : undefined}
     >
-      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-      <span className="flex-1 truncate text-left">{t(label)}</span>
-      {badge != null && (
-        <span className="bg-primary text-primary-foreground shrink-0 rounded-full px-1.5 py-px text-[10px] leading-none font-medium">
-          {badge}
-        </span>
+      <Icon className={cn('shrink-0 transition-transform', isCollapsed ? 'h-4 w-4' : 'h-3.5 w-3.5')} aria-hidden="true" />
+      {!isCollapsed && (
+        <>
+          <span className="flex-1 truncate text-left">{translatedLabel}</span>
+          {badge != null && (
+            <span className="bg-primary text-primary-foreground shrink-0 rounded-full px-1.5 py-px text-[10px] leading-none font-medium">
+              {badge}
+            </span>
+          )}
+        </>
       )}
     </Link>
   )
+
+  if (isCollapsed) {
+    return (
+      <Tooltip delayDuration={50}>
+        <TooltipTrigger asChild>{content}</TooltipTrigger>
+        <TooltipContent side="right" className="flex items-center gap-2 font-medium">
+          <span>{translatedLabel}</span>
+          {badge != null && (
+            <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none">
+              {badge}
+            </span>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return content
 }
 
 // ─── NavGroupSection ──────────────────────────────────────────────────────────
@@ -210,9 +247,11 @@ function NavLeafButton({
 function NavGroupSection({
   group,
   pathname,
+  isCollapsed,
 }: {
   group: NavGroup
   pathname: string
+  isCollapsed: boolean
 }) {
   const { t } = useTranslation()
   const searchParams = useSearchParams()
@@ -239,6 +278,26 @@ function NavGroupSection({
   const isAnyChildActive = group.children.some((c) => isChildActive(c.href))
   const [open, setOpen] = useState(isAnyChildActive)
   const GroupIcon = group.icon
+  const translatedGroupLabel = t(group.label)
+
+  if (isCollapsed) {
+    return (
+      <div className="flex flex-col gap-0.5">
+        {group.children.map((child) => (
+          <NavLeafButton
+            key={child.href}
+            icon={child.icon}
+            label={child.label}
+            badge={child.badge}
+            active={isChildActive(child.href)}
+            indent={false}
+            href={child.href}
+            isCollapsed={true}
+          />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -247,7 +306,7 @@ function NavGroupSection({
         variant="ghost"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          'flex h-[30px] w-full cursor-pointer items-center gap-2 rounded-md px-2 text-[12px] font-medium transition-colors duration-[120ms]',
+          'flex h-[32px] w-full cursor-pointer items-center gap-2 rounded-md px-2.5 text-[12px] font-medium transition-colors duration-[120ms]',
           isAnyChildActive
             ? 'text-sidebar-foreground bg-sidebar-accent/50 font-semibold'
             : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent'
@@ -255,7 +314,7 @@ function NavGroupSection({
         aria-expanded={open}
       >
         <GroupIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <span className="flex-1 truncate text-left">{t(group.label)}</span>
+        <span className="flex-1 truncate text-left">{translatedGroupLabel}</span>
         <ChevronDown
           className={cn('h-3 w-3 shrink-0 transition-transform duration-150', open && 'rotate-180')}
           aria-hidden="true"
@@ -273,6 +332,7 @@ function NavGroupSection({
               active={isChildActive(child.href)}
               indent
               href={child.href}
+              isCollapsed={false}
             />
           ))}
         </div>
@@ -283,9 +343,12 @@ function NavGroupSection({
 
 // ─── NavSectionTitle ─────────────────────────────────────────────────────────
 
-function NavSectionTitle({ label }: { label: string }) {
+function NavSectionTitle({ label, isCollapsed }: { label: string; isCollapsed: boolean }) {
+  if (isCollapsed) {
+    return <div className="my-2 mx-auto w-6 border-t border-sidebar-border/40" />
+  }
   return (
-    <div className="px-2 pt-3 pb-1 text-[10px] font-bold tracking-wider text-sidebar-foreground/45 uppercase">
+    <div className="px-2.5 pt-3.5 pb-1 text-[10px] font-bold tracking-wider text-sidebar-foreground/45 uppercase">
       {label}
     </div>
   )
@@ -300,6 +363,8 @@ export function AppSidebar() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const { user, role } = useAuth()
+  const { isCollapsed, toggleCollapse } = useSidebarStore()
+
   const normRole = String(role || user?.role || (user?.roles && user.roles[0]) || '').toUpperCase()
   const isAdmin = normRole === 'ADMIN' || normRole === 'SUPER_ADMIN'
 
@@ -342,173 +407,307 @@ export function AppSidebar() {
     : (isEn ? 'Learning Portal' : 'Cổng Học tập')
 
   return (
-    <aside
-      className="border-sidebar-border bg-sidebar text-sidebar-foreground fixed top-0 left-0 z-50 flex h-screen shrink-0 flex-col overflow-hidden border-r"
-      style={{ width: 240 }}
-      aria-label="Main navigation"
-    >
-      {/* Workspace header */}
-      <div className="border-sidebar-border/30 flex h-[52px] w-full shrink-0 items-center justify-between border-b px-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <div
-            className="bg-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-sm text-sm font-bold text-white"
-            aria-hidden="true"
-          >
-            {isSystemAdminSection ? <Shield className="h-4.5 w-4.5" /> : <GraduationCap className="h-4.5 w-4.5" />}
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col items-start">
-            <span className="text-sidebar-foreground w-full truncate text-left text-[13px] font-semibold">
-              {headerTitle}
-            </span>
-            <span className="text-sidebar-foreground/50 w-full truncate text-left text-[10px] font-medium">
-              {headerSubtitle}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Switch Mode Shortcuts */}
-      {isAdmin && (
-        <div className="p-2 pb-1 flex flex-col gap-1">
-          {isSystemAdminSection && (
-            <Link
-              href={routePath.lmsAdminDashboard}
-              className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-between px-2 text-[11px] font-medium rounded-md transition-colors"
-            >
-              <span className="flex items-center gap-1.5 truncate">
-                <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="truncate">{isEn ? 'LMS Admin Portal' : 'Quản trị Đào tạo (LMS)'}</span>
-              </span>
-              <ArrowRight className="h-3 w-3 shrink-0 text-sidebar-foreground/45" />
-            </Link>
-          )}
-
-          {isLmsAdminSection && (
-            <>
-              <Link
-                href={routePath.dashboard}
-                className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-start gap-1.5 px-2 text-[11px] font-medium rounded-md transition-colors"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="truncate">{isEn ? 'Learner Portal' : 'Về Cổng Học viên'}</span>
-              </Link>
-              <Link
-                href={routePath.adminDashboard}
-                className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-start gap-1.5 px-2 text-[11px] font-medium rounded-md transition-colors"
-              >
-                <Shield className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="truncate">{isEn ? 'System Admin' : 'Về Admin Tổng'}</span>
-              </Link>
-            </>
-          )}
-
-          {!isSystemAdminSection && !isLmsAdminSection && (
-            <Link
-              href={routePath.lmsAdminDashboard}
-              className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-between px-2 text-[11px] font-medium rounded-md transition-colors"
-            >
-              <span className="flex items-center gap-1.5 truncate">
-                <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="truncate">{isEn ? 'LMS Admin Portal' : 'Trang Quản trị Đào tạo'}</span>
-              </span>
-              <ArrowRight className="h-3 w-3 shrink-0 text-sidebar-foreground/45" />
-            </Link>
-          )}
-        </div>
-      )}
-
-      {/* Search bar */}
-      <div className="mb-1 shrink-0 px-2">
-        <div className="bg-sidebar-accent/40 border-sidebar-border/60 text-sidebar-foreground/60 flex h-[28px] cursor-text items-center gap-2 rounded-md border px-2.5 text-[12px]">
-          <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span>{t('sidebar.search_placeholder')}</span>
-        </div>
-      </div>
-
-      {/* Scrollable nav */}
-      <div
-        className="mt-1 min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-1"
-        style={{ scrollbarWidth: 'none' }}
+    <TooltipProvider delayDuration={50}>
+      <aside
+        className={cn(
+          'border-sidebar-border bg-sidebar text-sidebar-foreground fixed top-0 left-0 z-50 flex h-screen shrink-0 flex-col overflow-hidden border-r transition-[width] duration-200 ease-in-out select-none',
+          isCollapsed ? 'w-[64px]' : 'w-[240px]'
+        )}
+        aria-label="Main navigation"
       >
-        <nav className="flex flex-col gap-0.5 pb-2" aria-label="Site navigation">
-          {currentNavTree.map((item, index) => {
-            if (item.kind === 'header') {
-              return <NavSectionTitle key={`header-${item.label}-${index}`} label={item.label} />
-            }
-            if (item.kind === 'leaf') {
-              return (
-                <NavLeafButton
-                  key={item.href}
-                  icon={item.icon}
-                  label={item.label}
-                  badge={item.badge}
-                  active={pathname === item.href}
-                  indent={false}
-                  href={item.href}
-                />
+        {/* 1. Workspace Header with Collapse Toggle */}
+        <div className="border-sidebar-border/30 flex h-[52px] w-full shrink-0 items-center justify-between border-b px-2.5">
+          <div className="flex min-w-0 items-center gap-2.5 overflow-hidden">
+            <div
+              className="bg-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-sm text-sm font-bold text-white cursor-pointer"
+              onClick={toggleCollapse}
+              title={isCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
+              aria-hidden="true"
+            >
+              {isSystemAdminSection ? <Shield className="h-4.5 w-4.5" /> : <GraduationCap className="h-4.5 w-4.5" />}
+            </div>
+
+            {!isCollapsed && (
+              <div className="flex min-w-0 flex-1 flex-col items-start overflow-hidden">
+                <span className="text-sidebar-foreground w-full truncate text-left text-[13px] font-semibold leading-tight">
+                  {headerTitle}
+                </span>
+                <span className="text-sidebar-foreground/50 w-full truncate text-left text-[10px] font-medium leading-tight">
+                  {headerSubtitle}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Toggle Button */}
+          {/* <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={toggleCollapse}
+            className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent h-7 w-7 shrink-0 cursor-pointer"
+            title={isCollapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+          >
+            {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </Button> */}
+        </div>
+
+        {/* 2. Switch Mode Shortcuts */}
+        {isAdmin && (
+          <div className={cn('p-2 pb-1 flex flex-col gap-1', isCollapsed && 'px-1')}>
+            {isSystemAdminSection && (
+              isCollapsed ? (
+                <Tooltip delayDuration={50}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={routePath.lmsAdminDashboard}
+                      className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-8 w-full cursor-pointer flex items-center justify-center rounded-md transition-colors"
+                    >
+                      <GraduationCap className="h-4 w-4 text-primary" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <span>{isEn ? 'LMS Admin Portal' : 'Quản trị Đào tạo (LMS)'}</span>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Link
+                  href={routePath.lmsAdminDashboard}
+                  className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-between px-2 text-[11px] font-medium rounded-md transition-colors"
+                >
+                  <span className="flex items-center gap-1.5 truncate">
+                    <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span className="truncate">{isEn ? 'LMS Admin Portal' : 'Quản trị Đào tạo (LMS)'}</span>
+                  </span>
+                  <ArrowRight className="h-3 w-3 shrink-0 text-sidebar-foreground/45" />
+                </Link>
               )
-            }
-            return (
-              <Suspense key={item.label} fallback={null}>
-                <NavGroupSection
-                  group={item}
-                  pathname={pathname}
-                />
-              </Suspense>
-            )
-          })}
-        </nav>
-      </div>
+            )}
 
-      {/* Export button + Utilities */}
-      <div className="border-sidebar-border/20 flex shrink-0 items-center gap-1 border-t px-2 pt-2 pb-2">
-        <Button
-          type="button"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 flex-1 cursor-pointer gap-1 truncate px-2 text-[12px] font-medium shadow-sm"
-          aria-label={t('sidebar.export_report')}
-        >
-          {t('sidebar.export_report')}
-        </Button>
+            {isLmsAdminSection && (
+              isCollapsed ? (
+                <>
+                  <Tooltip delayDuration={50}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={routePath.dashboard}
+                        className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-8 w-full cursor-pointer flex items-center justify-center rounded-md transition-colors"
+                      >
+                        <ArrowLeft className="h-4 w-4 text-primary" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <span>{isEn ? 'Learner Portal' : 'Về Cổng Học viên'}</span>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip delayDuration={50}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={routePath.adminDashboard}
+                        className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-8 w-full cursor-pointer flex items-center justify-center rounded-md transition-colors"
+                      >
+                        <Shield className="h-4 w-4 text-primary" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <span>{isEn ? 'System Admin' : 'Về Admin Tổng'}</span>
+                    </TooltipContent>
+                  </Tooltip>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href={routePath.dashboard}
+                    className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-start gap-1.5 px-2 text-[11px] font-medium rounded-md transition-colors"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span className="truncate">{isEn ? 'Learner Portal' : 'Về Cổng Học viên'}</span>
+                  </Link>
+                  <Link
+                    href={routePath.adminDashboard}
+                    className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-start gap-1.5 px-2 text-[11px] font-medium rounded-md transition-colors"
+                  >
+                    <Shield className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span className="truncate">{isEn ? 'System Admin' : 'Về Admin Tổng'}</span>
+                  </Link>
+                </>
+              )
+            )}
 
-        {/* Quick Language Toggle */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={toggleLanguage}
-          className="text-sidebar-foreground/45 hover:bg-sidebar-accent hover:text-sidebar-foreground h-8 w-8 shrink-0 cursor-pointer"
-          title={isEn ? 'Switch to Vietnamese' : 'Chuyển sang Tiếng Anh'}
-        >
-          <Globe className="h-4 w-4 shrink-0" />
-        </Button>
+            {!isSystemAdminSection && !isLmsAdminSection && (
+              isCollapsed ? (
+                <Tooltip delayDuration={50}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={routePath.lmsAdminDashboard}
+                      className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-8 w-full cursor-pointer flex items-center justify-center rounded-md transition-colors"
+                    >
+                      <GraduationCap className="h-4 w-4 text-primary" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <span>{isEn ? 'LMS Admin Portal' : 'Trang Quản trị Đào tạo'}</span>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Link
+                  href={routePath.lmsAdminDashboard}
+                  className="border border-sidebar-border/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sidebar-foreground/75 h-7 w-full cursor-pointer flex items-center justify-between px-2 text-[11px] font-medium rounded-md transition-colors"
+                >
+                  <span className="flex items-center gap-1.5 truncate">
+                    <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span className="truncate">{isEn ? 'LMS Admin Portal' : 'Trang Quản trị Đào tạo'}</span>
+                  </span>
+                  <ArrowRight className="h-3 w-3 shrink-0 text-sidebar-foreground/45" />
+                </Link>
+              )
+            )}
+          </div>
+        )}
 
-        {/* Quick Theme Toggle */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          className="text-sidebar-foreground/45 hover:bg-sidebar-accent hover:text-sidebar-foreground h-8 w-8 shrink-0 cursor-pointer"
-          title={isEn ? 'Toggle theme' : 'Chuyển đổi giao diện'}
-        >
-          {mounted && theme === 'dark' ? (
-            <Sun className="h-4 w-4 shrink-0" />
+        {/* 3. Search Bar */}
+        <div className={cn('mb-1 shrink-0', isCollapsed ? 'px-2' : 'px-2')}>
+          {isCollapsed ? (
+            <Tooltip delayDuration={50}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="bg-sidebar-accent/40 border-sidebar-border/60 text-sidebar-foreground/60 flex h-[34px] w-full cursor-pointer items-center justify-center rounded-md border text-[12px] hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                >
+                  <Search className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <span>{t('sidebar.search_placeholder')}</span>
+              </TooltipContent>
+            </Tooltip>
           ) : (
-            <Moon className="h-4 w-4 shrink-0" />
+            <div className="bg-sidebar-accent/40 border-sidebar-border/60 text-sidebar-foreground/60 flex h-[28px] cursor-text items-center gap-2 rounded-md border px-2.5 text-[12px]">
+              <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{t('sidebar.search_placeholder')}</span>
+            </div>
           )}
-        </Button>
+        </div>
 
-        {/* Notifications */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="text-sidebar-foreground/45 hover:bg-sidebar-accent hover:text-sidebar-foreground h-8 w-8 shrink-0 cursor-pointer"
-          aria-label={t('sidebar.notifications')}
+        {/* 4. Scrollable Nav Tree */}
+        <div
+          className="mt-1 min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-1.5"
+          style={{ scrollbarWidth: 'none' }}
         >
-          <Bell className="h-4 w-4 shrink-0" aria-hidden="true" />
-        </Button>
-      </div>
-    </aside>
+          <nav className="flex flex-col gap-0.5 pb-2" aria-label="Site navigation">
+            {currentNavTree.map((item, index) => {
+              if (item.kind === 'header') {
+                return (
+                  <NavSectionTitle
+                    key={`header-${item.label}-${index}`}
+                    label={item.label}
+                    isCollapsed={isCollapsed}
+                  />
+                )
+              }
+              if (item.kind === 'leaf') {
+                return (
+                  <NavLeafButton
+                    key={item.href}
+                    icon={item.icon}
+                    label={item.label}
+                    badge={item.badge}
+                    active={pathname === item.href}
+                    indent={false}
+                    href={item.href}
+                    isCollapsed={isCollapsed}
+                  />
+                )
+              }
+              return (
+                <Suspense key={item.label} fallback={null}>
+                  <NavGroupSection
+                    group={item}
+                    pathname={pathname}
+                    isCollapsed={isCollapsed}
+                  />
+                </Suspense>
+              )
+            })}
+          </nav>
+        </div>
+
+        {/* 5. Footer Utilities */}
+        <div
+          className={cn(
+            'border-sidebar-border/20 flex shrink-0 items-center border-t p-2',
+            isCollapsed ? 'flex-col gap-1.5 items-center' : 'gap-1'
+          )}
+        >
+          {!isCollapsed && (
+            <Button
+              type="button"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 flex-1 cursor-pointer gap-1 truncate px-2 text-[12px] font-medium shadow-sm"
+              aria-label={t('sidebar.export_report')}
+            >
+              {t('sidebar.export_report')}
+            </Button>
+          )}
+
+          {/* Quick Language Toggle with Tooltip */}
+          <Tooltip delayDuration={50}>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={toggleLanguage}
+                className="text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground h-8 w-8 shrink-0 cursor-pointer"
+              >
+                <Globe className="h-4 w-4 shrink-0" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <span>{isEn ? 'Switch to Vietnamese (Tiếng Việt)' : 'Chuyển sang English'}</span>
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Quick Theme Toggle with Tooltip */}
+          <Tooltip delayDuration={50}>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground h-8 w-8 shrink-0 cursor-pointer"
+              >
+                {mounted && theme === 'dark' ? (
+                  <Sun className="h-4 w-4 shrink-0" />
+                ) : (
+                  <Moon className="h-4 w-4 shrink-0" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <span>{mounted && theme === 'dark' ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối'}</span>
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Notifications with Tooltip */}
+          <Tooltip delayDuration={50}>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground h-8 w-8 shrink-0 cursor-pointer"
+                aria-label={t('sidebar.notifications')}
+              >
+                <Bell className="h-4 w-4 shrink-0" aria-hidden="true" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <span>{t('sidebar.notifications')}</span>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </aside>
+    </TooltipProvider>
   )
 }

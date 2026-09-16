@@ -16,8 +16,11 @@ import {
   LogIn,
   UserPlus,
   Type,
+  PanelLeft,
+  PanelLeftClose,
 } from 'lucide-react'
 
+import { useSidebarStore } from '@/stores/sidebar.store'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -119,11 +122,23 @@ export function Header() {
     { value: 'system', label: isEn ? 'System' : 'Hệ thống', icon: Monitor },
   ]
 
+  const { isCollapsed, toggleCollapse } = useSidebarStore()
+
   return (
     <header className="bg-background/80 sticky top-0 z-40 h-14 w-full shrink-0 border-b backdrop-blur-md transition-colors duration-200">
-      <div className="flex h-14 w-full items-center justify-between px-6">
-        {/* --- LEFT AREA: BRANDING OR TITLE --- */}
-        <div className="flex items-center gap-6">
+      <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6">
+        {/* --- LEFT AREA: TOGGLE BUTTON & BRANDING --- */}
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleCollapse}
+            className="text-muted-foreground hover:text-foreground h-9 w-9 cursor-pointer"
+            title={isCollapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+          >
+            {isCollapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          </Button>
+
           <Link href="/" className="flex items-center gap-2 outline-none">
             <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-lg shadow-md transition-transform hover:scale-105">
               <UserIcon className="h-4.5 w-4.5" />
