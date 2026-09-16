@@ -71,20 +71,20 @@ export class CourseController {
   }
 
   public createCourse = async (req: AuthenticatedRequest, res: Response) => {
-    const course = await courseService.createCourse(req.body)
+    const course = await courseService.createCourse(req.body, req.user?.id)
     return res
       .status(HttpStatus.CREATED)
       .json(ApiResponse.success(course, 'Tạo khóa học mới thành công', HttpStatus.CREATED))
   }
 
   public updateCourse = async (req: AuthenticatedRequest, res: Response) => {
-    const course = await courseService.updateCourse(req.params.id, req.body)
+    const course = await courseService.updateCourse(req.params.id, req.body, req.user?.id)
     return res.json(ApiResponse.success(course, 'Cập nhật khóa học thành công'))
   }
 
   // LMS-003: Sao chép khóa học
   public cloneCourse = async (req: AuthenticatedRequest, res: Response) => {
-    const clonedCourse = await courseService.cloneCourse(req.params.id)
+    const clonedCourse = await courseService.cloneCourse(req.params.id, req.user?.id)
     return res
       .status(HttpStatus.CREATED)
       .json(ApiResponse.success(clonedCourse, 'Sao chép khóa học thành công', HttpStatus.CREATED))
@@ -92,12 +92,12 @@ export class CourseController {
 
   // LMS-004: Ngưng / Kích hoạt khóa học
   public updateCourseStatus = async (req: AuthenticatedRequest, res: Response) => {
-    const course = await courseService.updateCourseStatus(req.params.id, req.body)
+    const course = await courseService.updateCourseStatus(req.params.id, req.body, req.user?.id)
     return res.json(ApiResponse.success(course, 'Cập nhật trạng thái khóa học thành công'))
   }
 
   public deleteCourse = async (req: AuthenticatedRequest, res: Response) => {
-    await courseService.deleteCourse(req.params.id)
+    await courseService.deleteCourse(req.params.id, req.user?.id)
     return res.json(ApiResponse.success(null, 'Xóa khóa học thành công'))
   }
 
@@ -169,7 +169,7 @@ export class CourseController {
   }
 
   public syncCurriculum = async (req: AuthenticatedRequest, res: Response) => {
-    const course = await courseService.syncCourseCurriculum(req.params.id, req.body)
+    const course = await courseService.syncCourseCurriculum(req.params.id, req.body, req.user?.id)
     return res.json(ApiResponse.success(course, 'Đồng bộ giáo trình khóa học thành công'))
   }
 }

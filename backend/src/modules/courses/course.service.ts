@@ -2,6 +2,7 @@ import prisma from '../../config/prisma'
 import { NotFoundError, BadRequestError } from '../../common/errors/app.error'
 import { LmsActivityType } from '@prisma/client'
 import { lmsActivityLogService } from '../activity-logs/activity-log.service'
+import { auditLogService } from '../audit-logs/audit-log.service'
 import {
   CreateCategoryDto,
   UpdateCategoryDto,
@@ -24,7 +25,11 @@ export class CourseService {
       where: { isActive: true },
       include: {
         _count: {
-          select: { courses: true },
+          select: {
+            courses: {
+              where: { isActive: true },
+            },
+          },
         },
       },
       orderBy: { sortOrder: 'asc' },
@@ -101,9 +106,27 @@ export class CourseService {
   }
 
   public async deleteCategory(id: string) {
-    const category = await prisma.category.findUnique({ where: { id } })
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            courses: {
+              where: { isActive: true },
+            },
+          },
+        },
+      },
+    })
     if (!category || !category.isActive) {
       throw new NotFoundError('Danh mục khóa học')
+    }
+
+    const linkedCoursesCount = category._count?.courses || 0
+    if (linkedCoursesCount > 0) {
+      throw new BadRequestError(
+        `Không thể xóa danh mục '${category.name}' vì đang có ${linkedCoursesCount} khóa học liên kết đang hoạt động. Vui lòng chuyển các khóa học sang danh mục khác trước khi xóa!`
+      )
     }
 
     // Soft delete
@@ -175,6 +198,12 @@ export class CourseService {
         targetDepartment: true,
         targetStore: true,
         certificateTemplate: true,
+        createdByUser: {
+          select: { id: true, fullName: true, email: true, employeeCode: true },
+        },
+        updatedByUser: {
+          select: { id: true, fullName: true, email: true, employeeCode: true },
+        },
         modules: {
           orderBy: { sortOrder: 'asc' },
           include: {
@@ -201,6 +230,12 @@ export class CourseService {
         targetDepartment: true,
         targetStore: true,
         certificateTemplate: true,
+        createdByUser: {
+          select: { id: true, fullName: true, email: true, employeeCode: true },
+        },
+        updatedByUser: {
+          select: { id: true, fullName: true, email: true, employeeCode: true },
+        },
         modules: {
           orderBy: { sortOrder: 'asc' },
           include: {
@@ -237,7 +272,7 @@ export class CourseService {
   }
 
   // LMS-002, LMS-009, LMS-010, LMS-011, LMS-012
-  public async createCourse(dto: CreateCourseDto) {
+  public async createCourse(dto: CreateCourseDto, userId?: string) {
     const existing = await prisma.course.findFirst({
       where: {
         OR: [{ code: dto.code }, { slug: dto.slug }],
@@ -246,7 +281,7 @@ export class CourseService {
 
     if (existing) {
       if (!existing.isActive) {
-        return prisma.course.update({
+        const restored = await prisma.course.update({
           where: { id: existing.id },
           data: {
             title: dto.title,
@@ -264,13 +299,31 @@ export class CourseService {
             targetEmploymentStatus: dto.targetEmploymentStatus,
             status: 'DRAFT',
             isActive: true,
+            updatedBy: userId || null,
+          },
+          include: {
+            category: true,
+            createdByUser: { select: { id: true, fullName: true, email: true } },
+            updatedByUser: { select: { id: true, fullName: true, email: true } },
           },
         })
+
+        await auditLogService.logChange({
+          tableName: 'crs_courses',
+          entityId: restored.id,
+          action: 'CREATE',
+          userId: userId || null,
+          fieldName: 'Khóa học',
+          newValue: restored.title,
+          metadata: { isRestored: true, code: restored.code },
+        })
+
+        return restored
       }
       throw new BadRequestError(`Mã khóa học '${dto.code}' hoặc slug '${dto.slug}' đã tồn tại`)
     }
 
-    return prisma.course.create({
+    const created = await prisma.course.create({
       data: {
         code: dto.code,
         title: dto.title,
@@ -290,6 +343,8 @@ export class CourseService {
         certificateTemplateId: dto.certificateTemplateId || null,
         status: 'DRAFT',
         isActive: true,
+        createdBy: userId || null,
+        updatedBy: userId || null,
       },
       include: {
         category: true,
@@ -297,17 +352,34 @@ export class CourseService {
         targetDepartment: true,
         targetStore: true,
         certificateTemplate: true,
+        createdByUser: { select: { id: true, fullName: true, email: true } },
+        updatedByUser: { select: { id: true, fullName: true, email: true } },
       },
     })
+
+    // Ghi nhận Audit Log (Non-blocking)
+    await auditLogService.logChange({
+      tableName: 'crs_courses',
+      entityId: created.id,
+      action: 'CREATE',
+      userId: userId || null,
+      fieldName: 'Khóa học mới',
+      newValue: created.title,
+      metadata: { code: created.code, title: created.title, categoryId: created.categoryId },
+    })
+
+    return created
   }
 
-  public async updateCourse(id: string, dto: UpdateCourseDto) {
+  public async updateCourse(id: string, dto: UpdateCourseDto, userId?: string) {
     const course = await prisma.course.findUnique({ where: { id } })
     if (!course || !course.isActive) {
       throw new NotFoundError('Khóa học')
     }
 
-    return prisma.course.update({
+    const { diff, changedFields } = auditLogService.calculateDiff(course, dto)
+
+    const updated = await prisma.course.update({
       where: { id },
       data: {
         title: dto.title,
@@ -328,6 +400,7 @@ export class CourseService {
             ? dto.certificateTemplateId
             : undefined,
         status: dto.status,
+        updatedBy: userId || null,
       },
       include: {
         category: true,
@@ -335,12 +408,28 @@ export class CourseService {
         targetDepartment: true,
         targetStore: true,
         certificateTemplate: true,
+        createdByUser: { select: { id: true, fullName: true, email: true } },
+        updatedByUser: { select: { id: true, fullName: true, email: true } },
       },
     })
+
+    if (changedFields.length > 0) {
+      await auditLogService.logChange({
+        tableName: 'crs_courses',
+        entityId: id,
+        action: 'UPDATE',
+        userId: userId || null,
+        fieldName: changedFields.join(', '),
+        diff,
+        metadata: { changedFieldsCount: changedFields.length },
+      })
+    }
+
+    return updated
   }
 
   // LMS-003: Sao chép khóa học (Clone course)
-  public async cloneCourse(id: string) {
+  public async cloneCourse(id: string, userId?: string) {
     const sourceCourse = await prisma.course.findUnique({
       where: { id },
       include: {
@@ -361,7 +450,7 @@ export class CourseService {
     const newSlug = `${sourceCourse.slug}-copy-${timestamp}`
     const newTitle = `(Bản sao) ${sourceCourse.title}`
 
-    return prisma.$transaction(async (tx) => {
+    const cloned = await prisma.$transaction(async (tx) => {
       const clonedCourse = await tx.course.create({
         data: {
           code: newCode,
@@ -380,6 +469,8 @@ export class CourseService {
           targetEmploymentStatus: sourceCourse.targetEmploymentStatus,
           status: 'DRAFT', // Luôn tạo ở trạng thái nháp
           isActive: true,
+          createdBy: userId || null,
+          updatedBy: userId || null,
         },
       })
 
@@ -423,39 +514,96 @@ export class CourseService {
         where: { id: clonedCourse.id },
         include: {
           category: true,
+          createdByUser: { select: { id: true, fullName: true, email: true } },
+          updatedByUser: { select: { id: true, fullName: true, email: true } },
           modules: {
             include: { lessons: true },
           },
         },
       })
     })
+
+    if (cloned) {
+      await auditLogService.logChange({
+        tableName: 'crs_courses',
+        entityId: cloned.id,
+        action: 'CLONE',
+        userId: userId || null,
+        fieldName: 'Sao chép khóa học',
+        newValue: cloned.title,
+        metadata: {
+          sourceCourseId: sourceCourse.id,
+          sourceCode: sourceCourse.code,
+          sourceTitle: sourceCourse.title,
+        },
+      })
+    }
+
+    return cloned
   }
 
   // LMS-004: Ngưng / Kích hoạt khóa học
-  public async updateCourseStatus(id: string, dto: UpdateCourseStatusDto) {
+  public async updateCourseStatus(id: string, dto: UpdateCourseStatusDto, userId?: string) {
     const course = await prisma.course.findUnique({ where: { id } })
     if (!course || !course.isActive) {
       throw new NotFoundError('Khóa học')
     }
 
-    return prisma.course.update({
+    const oldStatus = course.status
+    const updated = await prisma.course.update({
       where: { id },
-      data: { status: dto.status },
-      include: { category: true },
+      data: {
+        status: dto.status,
+        updatedBy: userId || null,
+      },
+      include: {
+        category: true,
+        createdByUser: { select: { id: true, fullName: true, email: true } },
+        updatedByUser: { select: { id: true, fullName: true, email: true } },
+      },
     })
+
+    await auditLogService.logChange({
+      tableName: 'crs_courses',
+      entityId: id,
+      action: 'STATUS_CHANGE',
+      userId: userId || null,
+      fieldName: 'status',
+      oldValue: oldStatus,
+      newValue: dto.status,
+      diff: { status: { old: oldStatus, new: dto.status } },
+      metadata: { reason: (dto as any).reason || null },
+    })
+
+    return updated
   }
 
-  public async deleteCourse(id: string) {
+  public async deleteCourse(id: string, userId?: string) {
     const course = await prisma.course.findUnique({ where: { id } })
     if (!course || !course.isActive) {
       throw new NotFoundError('Khóa học')
     }
 
     // Soft delete
-    return prisma.course.update({
+    const deleted = await prisma.course.update({
       where: { id },
-      data: { isActive: false, status: 'ARCHIVED' },
+      data: {
+        isActive: false,
+        updatedBy: userId || null,
+      },
     })
+
+    await auditLogService.logChange({
+      tableName: 'crs_courses',
+      entityId: id,
+      action: 'DELETE',
+      userId: userId || null,
+      fieldName: 'Xóa khóa học (Soft delete)',
+      oldValue: course.title,
+      metadata: { code: course.code, title: course.title },
+    })
+
+    return deleted
   }
 
   // ==========================================
@@ -770,7 +918,7 @@ export class CourseService {
   // ==========================================
   // SYNC FULL CURRICULUM (Modules -> Lessons -> Quiz -> Questions -> Options)
   // ==========================================
-  public async syncCourseCurriculum(courseId: string, dto: SyncCurriculumDto) {
+  public async syncCourseCurriculum(courseId: string, dto: SyncCurriculumDto, userId?: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
@@ -798,14 +946,15 @@ export class CourseService {
       throw new NotFoundError('Khóa học')
     }
 
-    return prisma.$transaction(async (tx) => {
-      // 1. Update Course title if given
-      if (dto.title && dto.title !== course.title) {
-        await tx.course.update({
-          where: { id: courseId },
-          data: { title: dto.title },
-        })
-      }
+    const synced = await prisma.$transaction(async (tx) => {
+      // 1. Update Course title if given & update updatedBy
+      await tx.course.update({
+        where: { id: courseId },
+        data: {
+          title: dto.title && dto.title !== course.title ? dto.title : undefined,
+          updatedBy: userId || null,
+        },
+      })
 
       // 2. Track existing modules and lessons for safe deletion
       const existingModules = course.modules
@@ -821,63 +970,68 @@ export class CourseService {
         await tx.courseModule.delete({ where: { id: m.id } })
       }
 
-      // 3. Process each module in payload
-      for (let mIdx = 0; mIdx < (dto.modules || []).length; mIdx++) {
-        const modData = dto.modules[mIdx]
-        const isExistingModule = !!modData.id && !modData.id.startsWith('mod-') && existingModules.some((m) => m.id === modData.id)
-
+      // 3. Upsert Modules & Lessons
+      let modSortOrder = 1
+      for (const modData of dto.modules || []) {
         let targetModuleId = modData.id
-        if (isExistingModule && targetModuleId) {
-          await tx.courseModule.update({
-            where: { id: targetModuleId },
-            data: {
-              title: modData.title,
-              sortOrder: modData.sortOrder ?? mIdx + 1,
-            },
-          })
-        } else {
-          const createdModule = await tx.courseModule.create({
+        const isNewMod = !modData.id || modData.id.startsWith('mod-')
+
+        if (isNewMod) {
+          const createdMod = await tx.courseModule.create({
             data: {
               courseId,
               title: modData.title,
-              sortOrder: modData.sortOrder ?? mIdx + 1,
+              sortOrder: modSortOrder++,
             },
           })
-          targetModuleId = createdModule.id
+          targetModuleId = createdMod.id
+        } else {
+          await tx.courseModule.update({
+            where: { id: modData.id },
+            data: {
+              title: modData.title,
+              sortOrder: modSortOrder++,
+            },
+          })
         }
 
-        // Handle lessons in this module
-        const existingLessonsInModule = isExistingModule
-          ? existingModules.find((m) => m.id === targetModuleId)?.lessons || []
-          : []
+        // Handle Lessons in this module
+        const existingLessons =
+          existingModules.find((m) => m.id === targetModuleId)?.lessons || []
         const submittedLessonIds = (modData.lessons || [])
           .map((l) => l.id)
           .filter((id): id is string => !!id && !id.startsWith('les-'))
 
-        // Delete lessons removed from this module
-        const lessonsToDelete = existingLessonsInModule.filter(
+        // Delete removed lessons
+        const lessonsToDelete = existingLessons.filter(
           (l) => !submittedLessonIds.includes(l.id)
         )
-        for (const les of lessonsToDelete) {
-          await tx.lesson.delete({ where: { id: les.id } })
+        for (const l of lessonsToDelete) {
+          await tx.lesson.delete({ where: { id: l.id } })
         }
 
-        for (let lIdx = 0; lIdx < (modData.lessons || []).length; lIdx++) {
-          const lesData = modData.lessons[lIdx]
-          const isExistingLesson = !!lesData.id && !lesData.id.startsWith('les-') && existingLessonsInModule.some((l) => l.id === lesData.id)
-
-          const durationSeconds = lesData.durationMinutes ? lesData.durationMinutes * 60 : (lesData.lessonType === 'VIDEO' ? 600 : 300)
-
+        let lesSortOrder = 1
+        for (const lesData of modData.lessons || []) {
           let targetLessonId = lesData.id
-          if (isExistingLesson && targetLessonId) {
+          const isNewLesson = !lesData.id || lesData.id.startsWith('les-')
+
+          // Calculate duration in seconds
+          let durationSeconds = 0
+          if (lesData.durationMinutes) {
+            durationSeconds = lesData.durationMinutes * 60
+          } else if ((lesData as any).videoDuration) {
+            durationSeconds = (lesData as any).videoDuration
+          }
+
+          if (!isNewLesson) {
             await tx.lesson.update({
-              where: { id: targetLessonId },
+              where: { id: lesData.id },
               data: {
                 title: lesData.title,
                 lessonType: (lesData.lessonType as any) || 'VIDEO',
-                sortOrder: lesData.sortOrder ?? lIdx + 1,
+                sortOrder: lesSortOrder++,
                 videoUrl: lesData.videoUrl,
-                videoProvider: (lesData.videoProvider as any) || (lesData.videoUrl ? 'YOUTUBE' : undefined),
+                videoProvider: (lesData.videoProvider as any) || 'YOUTUBE',
                 videoDuration: durationSeconds,
                 bodyHtml: lesData.bodyHtml,
                 description: lesData.bodyHtml,
@@ -894,9 +1048,9 @@ export class CourseService {
                 moduleId: targetModuleId!,
                 title: lesData.title,
                 lessonType: (lesData.lessonType as any) || 'VIDEO',
-                sortOrder: lesData.sortOrder ?? lIdx + 1,
+                sortOrder: lesSortOrder++,
                 videoUrl: lesData.videoUrl,
-                videoProvider: (lesData.videoProvider as any) || (lesData.videoUrl ? 'YOUTUBE' : undefined),
+                videoProvider: (lesData.videoProvider as any) || 'YOUTUBE',
                 videoDuration: durationSeconds,
                 bodyHtml: lesData.bodyHtml,
                 description: lesData.bodyHtml,
@@ -981,6 +1135,8 @@ export class CourseService {
           targetPosition: true,
           targetDepartment: true,
           targetStore: true,
+          createdByUser: { select: { id: true, fullName: true, email: true } },
+          updatedByUser: { select: { id: true, fullName: true, email: true } },
           modules: {
             orderBy: { sortOrder: 'asc' },
             include: {
@@ -1006,8 +1162,93 @@ export class CourseService {
         },
       })
     })
+
+    // ==========================================
+    // Tính toán Semantic Delta chi tiết cho Lịch sử giáo trình
+    // ==========================================
+    const existingModules = course.modules || []
+    const existingLessonsAll = existingModules.flatMap((m) => m.lessons || [])
+
+    const submittedModules = dto.modules || []
+    const submittedLessonsAll = submittedModules.flatMap((m) => m.lessons || [])
+
+    const submittedModuleIds = submittedModules
+      .map((m) => m.id)
+      .filter((id): id is string => !!id && !id.startsWith('mod-'))
+    const submittedLessonIds = submittedLessonsAll
+      .map((l) => l.id)
+      .filter((id): id is string => !!id && !id.startsWith('les-'))
+
+    const addedModules = submittedModules
+      .filter((m) => !m.id || m.id.startsWith('mod-'))
+      .map((m) => m.title)
+
+    const deletedModules = existingModules
+      .filter((m) => !submittedModuleIds.includes(m.id))
+      .map((m) => m.title)
+
+    const renamedModules = submittedModules
+      .filter((m) => {
+        const found = existingModules.find((em) => em.id === m.id)
+        return found && found.title !== m.title
+      })
+      .map((m) => ({
+        from: existingModules.find((em) => em.id === m.id)!.title,
+        to: m.title,
+      }))
+
+    const addedLessons = submittedLessonsAll
+      .filter((l) => !l.id || l.id.startsWith('les-'))
+      .map((l) => l.title)
+
+    const deletedLessons = existingLessonsAll
+      .filter((l) => !submittedLessonIds.includes(l.id))
+      .map((l) => l.title)
+
+    const renamedLessons = submittedLessonsAll
+      .filter((l) => {
+        const found = existingLessonsAll.find((el) => el.id === l.id)
+        return found && found.title !== l.title
+      })
+      .map((l) => ({
+        from: existingLessonsAll.find((el) => el.id === l.id)!.title,
+        to: l.title,
+      }))
+
+    // Xây dựng mô tả tóm tắt ngắn gọn
+    const summaryParts: string[] = []
+    if (addedLessons.length > 0) summaryParts.push(`+ Thêm ${addedLessons.length} bài học`)
+    if (deletedLessons.length > 0) summaryParts.push(`- Xóa ${deletedLessons.length} bài học`)
+    if (addedModules.length > 0) summaryParts.push(`+ Thêm ${addedModules.length} chương`)
+    if (deletedModules.length > 0) summaryParts.push(`- Xóa ${deletedModules.length} chương`)
+    if (renamedLessons.length > 0) summaryParts.push(`~ Đổi tên ${renamedLessons.length} bài học`)
+
+    const summaryText =
+      summaryParts.length > 0
+        ? summaryParts.join(' • ')
+        : `Đồng bộ giáo trình (${submittedModules.length} chương, ${submittedLessonsAll.length} bài học)`
+
+    await auditLogService.logChange({
+      tableName: 'crs_courses',
+      entityId: courseId,
+      action: 'SYNC',
+      userId: userId || null,
+      fieldName: 'Cập nhật toàn bộ giáo trình',
+      newValue: summaryText,
+      metadata: {
+        moduleCount: submittedModules.length,
+        lessonCount: submittedLessonsAll.length,
+        addedLessons,
+        deletedLessons,
+        renamedLessons,
+        addedModules,
+        deletedModules,
+        renamedModules,
+      },
+    })
+
+    return synced
   }
 }
 
 export const courseService = new CourseService()
-

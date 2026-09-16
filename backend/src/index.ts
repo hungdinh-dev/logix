@@ -14,6 +14,7 @@ import lessonsRouter from './modules/lessons/lesson.routes'
 import quizzesRouter from './modules/quizzes/quiz.routes'
 import progressRouter from './modules/progress/progress.routes'
 import { certificateRouter } from './modules/certificates/certificate.routes'
+import auditLogsRouter from './modules/audit-logs/audit-log.routes'
 
 import { globalErrorHandler } from './common/middlewares/error-handler.middleware'
 import { ApiResponse } from './common/responses/api-response'
@@ -48,6 +49,7 @@ app.use('/api/lessons', lessonsRouter)
 app.use('/api/quizzes', quizzesRouter)
 app.use('/api/progress', progressRouter)
 app.use('/api/certificates', certificateRouter)
+app.use('/api/audit-logs', auditLogsRouter)
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

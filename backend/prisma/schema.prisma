@@ -38,6 +38,11 @@ model User {
   quizAttempts   QuizAttempt[]
   activityLogs   LmsActivityLog[]
   certificates   UserCertificate[]
+  
+  // Auditing Relations
+  createdCourses Course[]          @relation("CourseCreatedBy")
+  updatedCourses Course[]          @relation("CourseUpdatedBy")
+  auditLogs      AuditLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -261,11 +266,19 @@ model Course {
   activityLogs LmsActivityLog[]
   certificates UserCertificate[]
 
+  // Auditing Fields (C# .NET AuditableEntityBase Compatible)
+  createdBy   String?   @map("created_by")
+  createdByUser User?   @relation("CourseCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedBy   String?   @map("updated_by")
+  updatedByUser User?   @relation("CourseUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
   @@index([categoryId])
   @@index([status, isActive])
+  @@index([createdBy])
+  @@index([updatedBy])
   @@map("crs_courses")
 }
 
@@ -579,6 +592,32 @@ model UserCertificate {
   @@index([status])
   @@index([expiryDate])
   @@map("cert_user_certificates")
+}
+
+// ==========================================
+// 8. SYSTEM AUDIT LOG MODULE (C# .NET Compatible)
+// ==========================================
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tableName String   @map("table_name") // e.g. 'crs_courses', 'crs_lessons', 'auth_users'
+  entityId  String   @map("entity_id")  // Target record UUID
+  action    String   // 'CREATE', 'UPDATE', 'DELETE', 'STATUS_CHANGE', 'CLONE', 'SYNC'
+  fieldName String?  @map("field_name") // Specific field modified or summary
+  oldValue  String?  @map("old_value")  // Text / JSON string before update
+  newValue  String?  @map("new_value")  // Text / JSON string after update
+  diff      Json?    // Structured JSON diff map { field: { old, new } }
+  metadata  Json?    // Context data (IP, browser user-agent, action summary, reason)
+
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tableName, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("sys_audit_logs")
 }
 
 
