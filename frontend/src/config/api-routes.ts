@@ -51,6 +51,10 @@ export const apiRoutes = {
     summary: '/api/reports/summary', // GET
   },
 
+  auditLogs: {
+    base: '/api/audit-logs', // GET
+  },
+
   certificates: {
     base: '/api/certificates',
     stats: '/api/certificates/stats',

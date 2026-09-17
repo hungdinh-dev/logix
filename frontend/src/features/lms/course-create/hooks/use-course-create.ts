@@ -153,7 +153,7 @@ export function useCourseCreate() {
       setIsSubmitting(false)
       toast.success('Khởi tạo khóa học thành công! Đang chuyển đến Trình soạn giáo trình...')
       // Navigate to Curriculum Editor to start adding modules, lessons & quizzes!
-      router.push(`/admin/courses/${created.id}`)
+      router.push(`/lms/admin/courses/${created.id}`)
     },
     onError: (err: any) => {
       setIsSubmitting(false)
