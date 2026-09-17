@@ -11,6 +11,7 @@ import {
   LessonEditorPanel,
   BulkTranscriptModal,
 } from '../components'
+import { EntityAuditSidePeek } from '@/components/shared/EntityAuditSidePeek'
 import type { TranscriptEntry } from '../types/course-editor.types'
 
 export default function CourseEditorPage() {
@@ -18,6 +19,7 @@ export default function CourseEditorPage() {
   const courseId = params?.id as string
 
   const [isBulkTranscriptOpen, setIsBulkTranscriptOpen] = useState(false)
+  const [isAuditOpen, setIsAuditOpen] = useState(false)
   const sectionsContainerRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -78,6 +80,7 @@ export default function CourseEditorPage() {
         saveSuccess={saveSuccess}
         isSaving={isSaving}
         onSave={handleSaveCourseAll}
+        onOpenAuditHistory={() => setIsAuditOpen(true)}
       />
 
       {/* Main Workspace Split Pane */}
@@ -112,6 +115,16 @@ export default function CourseEditorPage() {
         isOpen={isBulkTranscriptOpen}
         onOpenChange={setIsBulkTranscriptOpen}
         onImport={handleBulkImport}
+      />
+
+      {/* Course & Curriculum Audit Trail Side Peek */}
+      <EntityAuditSidePeek
+        isOpen={isAuditOpen}
+        onClose={() => setIsAuditOpen(false)}
+        tableName="crs_courses"
+        entityId={courseId}
+        entityTitle={courseTitle}
+        entitySubtitle={`Mã khóa học: ${backendCourse?.code || ''}`}
       />
     </div>
   )

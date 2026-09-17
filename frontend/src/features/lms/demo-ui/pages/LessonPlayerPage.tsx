@@ -15,6 +15,8 @@ import {
   FileText,
   CheckCircle2,
   Loader2,
+  ArrowRight,
+  Lock,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -30,6 +32,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CodePlayground } from '../components/lesson-player/CodePlayground';
 import { MarkdownLessonViewer } from '@/features/lms/components/viewer';
+import { DetailSkeleton, LessonPlayerSkeleton } from '@/components/shared/skeletons';
 import {
   getCourseAndLessonByLessonId,
   JS_INFO_COURSES,
@@ -98,6 +101,7 @@ export default function LessonPlayerPage() {
   const [backendCourseProgress, setBackendCourseProgress] = useState<any>(null);
   const [isSignedSop, setIsSignedSop] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [detectedDuration, setDetectedDuration] = useState<number | null>(null);
 
   // Auto-collapse panels on smaller screens
   useEffect(() => {
@@ -118,6 +122,13 @@ export default function LessonPlayerPage() {
 
       try {
         setIsLoadingLesson(true);
+        setBackendLesson(null);
+        setBackendCourseProgress(null);
+        setCurrentTime(0);
+        setMaxWatchedSeconds(0);
+        setDetectedDuration(null);
+        setIsSignedSop(false);
+
         // 1. Lấy chi tiết bài học từ Backend
         const resLesson = await api.get(apiRoutes.lessons.byId(lessonId));
         const lData = resLesson.data?.data;
@@ -154,13 +165,9 @@ export default function LessonPlayerPage() {
     };
   }, [lessonId]);
 
-  // Fallback to mock dataset if backend lesson is not available
+  // Fallback to mock dataset if backend lesson is not available (only for matched mock IDs)
   const mockResult = useMemo(() => {
-    return getCourseAndLessonByLessonId(lessonId) || {
-      course: JS_INFO_COURSES[0],
-      section: JS_INFO_COURSES[0].sections[0],
-      lesson: JS_INFO_COURSES[0].sections[0].lessons[0],
-    };
+    return getCourseAndLessonByLessonId(lessonId) || null;
   }, [lessonId]);
 
   // Computed properties
@@ -168,31 +175,39 @@ export default function LessonPlayerPage() {
 
   const courseTitle = isUsingBackend
     ? backendCourseProgress?.title || backendLesson?.module?.course?.title || 'Khóa học Đào tạo'
-    : mockResult.course.title;
+    : mockResult?.course?.title || 'Khóa học Đào tạo';
 
   const courseId = isUsingBackend
     ? backendCourseProgress?.courseId || backendLesson?.module?.courseId || ''
-    : mockResult.course.id;
+    : mockResult?.course?.id || '';
 
   const sectionTitle = isUsingBackend
     ? backendLesson?.module?.title || 'Chương học'
-    : mockResult.section.title;
+    : mockResult?.section?.title || 'Chương học';
 
-  const lessonTitle = isUsingBackend ? backendLesson.title : mockResult.lesson.title;
+  const lessonTitle = isUsingBackend
+    ? backendLesson.title
+    : mockResult?.lesson?.title || 'Bài học';
 
-  const lessonTypeRaw = isUsingBackend ? backendLesson.lessonType : mockResult.lesson.type?.toUpperCase();
+  const lessonTypeRaw = isUsingBackend
+    ? backendLesson.lessonType
+    : mockResult?.lesson?.type?.toUpperCase();
   const isVideo = lessonTypeRaw === 'VIDEO';
   const isQuiz = lessonTypeRaw === 'QUIZ';
   const isDocument = !isVideo && !isQuiz;
 
   const videoUrl = isUsingBackend ? backendLesson.videoUrl : undefined;
-  const bodyContent = isUsingBackend ? backendLesson.bodyHtml || backendLesson.description || '' : mockResult.lesson.content;
+  const bodyContent = isUsingBackend
+    ? backendLesson.bodyHtml || backendLesson.description || ''
+    : mockResult?.lesson?.content || '';
   const sopCode = isUsingBackend ? backendLesson.sopCode : undefined;
   const requiresSignature = isUsingBackend ? Boolean(backendLesson.requiresSignature) : false;
 
-  const durationSeconds = isUsingBackend
-    ? backendLesson.videoDuration || (backendLesson.estimatedReadTime ? backendLesson.estimatedReadTime * 60 : 300)
-    : 600;
+  const durationSeconds = detectedDuration || (
+    isUsingBackend
+      ? backendLesson.videoDuration || (backendLesson.estimatedReadTime ? backendLesson.estimatedReadTime * 60 : 300)
+      : 600
+  );
 
   const durationLabel = `${Math.ceil(durationSeconds / 60)} phút`;
 
@@ -240,19 +255,22 @@ export default function LessonPlayerPage() {
       }));
     }
 
-    // Mock fallback chapters
-    return mockResult.course.sections.map((s) => ({
-      id: s.id,
-      number: s.number,
-      title: s.title,
-      lessons: s.lessons.map((l) => ({
-        id: l.id,
-        title: l.title,
-        duration: l.duration,
-        type: l.type,
-        status: l.id === mockResult.lesson.id ? ('current' as const) : ('available' as const),
-      })),
-    }));
+    if (mockResult) {
+      return mockResult.course.sections.map((s) => ({
+        id: s.id,
+        number: s.number,
+        title: s.title,
+        lessons: s.lessons.map((l) => ({
+          id: l.id,
+          title: l.title,
+          duration: l.duration,
+          type: l.type,
+          status: l.id === mockResult.lesson.id ? ('current' as const) : ('available' as const),
+        })),
+      }));
+    }
+
+    return [];
   }, [isUsingBackend, backendCourseProgress, lessonId, mockResult]);
 
   // Flattened lessons list for sequential navigation
@@ -283,6 +301,23 @@ export default function LessonPlayerPage() {
   const currentLessonIndex = allLessons.findIndex((l) => l.id === lessonId);
   const totalLessons = allLessons.length > 0 ? allLessons.length : 1;
 
+  const currentChapter = useMemo(() => {
+    return chapters.find((c) => c.lessons.some((l) => l.id === lessonId));
+  }, [chapters, lessonId]);
+
+  const nextLesson = currentLessonIndex >= 0 && currentLessonIndex < allLessons.length - 1
+    ? allLessons[currentLessonIndex + 1]
+    : null;
+
+  const nextLessonChapter = useMemo(() => {
+    if (!nextLesson) return null;
+    return chapters.find((c) => c.lessons.some((l) => l.id === nextLesson.id));
+  }, [chapters, nextLesson]);
+
+  const isNextChapter = Boolean(
+    currentChapter && nextLessonChapter && currentChapter.id !== nextLessonChapter.id
+  );
+
   const handlePrev = () => {
     if (currentLessonIndex > 0) {
       const prevLesson = allLessons[currentLessonIndex - 1];
@@ -300,6 +335,11 @@ export default function LessonPlayerPage() {
         return;
       }
 
+      if (requiresSignature && !isSignedSop) {
+        toast.warning('⚠️ Vui lòng bấm "Ký Cam Kết Tuân Thủ SOP" trước khi qua bài tiếp theo!');
+        return;
+      }
+
       setIsCompleting(true);
 
       // 1. Gửi cập nhật tiến độ lên backend nếu đang học bài thực
@@ -309,18 +349,18 @@ export default function LessonPlayerPage() {
           isCompleted: true,
           lastPositionSeconds: Math.max(maxWatchedSeconds, currentTime),
         });
-        toast.success('Đã lưu hoàn thành bài học!');
       }
 
-      // 2. Chuyển sang bài tiếp theo
-      if (currentLessonIndex >= 0 && currentLessonIndex < allLessons.length - 1) {
-        const nextLesson = allLessons[currentLessonIndex + 1];
-        if (nextLesson.status === 'locked') {
-          toast.info('Đang mở khóa bài học tiếp theo...');
+      // 2. Chuyển sang bài tiếp theo hoặc chương tiếp theo
+      if (nextLesson) {
+        if (isNextChapter && nextLessonChapter) {
+          toast.success(`🎉 Hoàn thành ${currentChapter?.title || 'chương'}! Bắt đầu: ${nextLessonChapter.title}`);
+        } else {
+          toast.success('Đã lưu hoàn thành bài học!');
         }
         router.push(`/lms/lessons/${nextLesson.id}`);
       } else {
-        toast.success('Chúc mừng! Bạn đã hoàn thành toàn bộ chương trình học!');
+        toast.success(`🎉 Xuất sắc! Bạn đã hoàn thành toàn bộ khóa học ${courseTitle}!`);
         if (courseId) {
           router.push(`/lms/courses/${courseId}`);
         }
@@ -347,12 +387,77 @@ export default function LessonPlayerPage() {
     }
   };
 
-  if (isLoadingLesson && !backendLesson && !mockResult.lesson) {
+  const isUnenrolledCourse = Boolean(
+    backendCourseProgress && backendCourseProgress.enrollment === null
+  );
+
+  if (!isLoadingLesson && isUnenrolledCourse) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-card">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm font-medium text-muted-foreground">Đang tải nội dung bài học...</p>
+      <div className="flex h-full w-full items-center justify-center bg-card p-6">
+        <div className="flex max-w-md flex-col items-center text-center gap-4 p-8 rounded-2xl border border-border bg-background shadow-lg">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
+            <ShieldAlert className="h-8 w-8" />
+          </div>
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-bold text-foreground">Bạn chưa ghi danh khóa học</h2>
+            <p className="text-sm text-muted-foreground">
+              Khóa học <strong>{courseTitle}</strong> yêu cầu bạn ghi danh trước khi truy cập nội dung bài học.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 w-full pt-2">
+            <Button
+              variant="outline"
+              className="flex-1 text-xs"
+              onClick={() => router.push(courseId ? `/lms/courses/${courseId}` : '/lms/courses')}
+            >
+              Về trang khóa học
+            </Button>
+            <Button
+              className="flex-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={async () => {
+                try {
+                  if (courseId) {
+                    await api.post(apiRoutes.courses.enroll(courseId));
+                    toast.success('Ghi danh thành công! Đang tải lại bài học...');
+                    window.location.reload();
+                  }
+                } catch (e: any) {
+                  toast.error(e?.response?.data?.message || 'Ghi danh thất bại');
+                }
+              }}
+            >
+              Ghi danh ngay
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoadingLesson) {
+    return <LessonPlayerSkeleton />;
+  }
+
+  if (!backendLesson && !mockResult) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-card p-6">
+        <div className="flex max-w-md flex-col items-center text-center gap-4 p-8 rounded-2xl border border-border bg-background shadow-lg">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+            <ShieldAlert className="h-8 w-8" />
+          </div>
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-bold text-foreground">Không tìm thấy bài học</h2>
+            <p className="text-sm text-muted-foreground">
+              Bài học không tồn tại hoặc đã bị gỡ bỏ khỏi chương trình đào tạo.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full text-xs"
+            onClick={() => router.push('/lms/courses')}
+          >
+            Quay lại danh mục khóa học
+          </Button>
         </div>
       </div>
     );
@@ -407,6 +512,7 @@ export default function LessonPlayerPage() {
                     setCurrentTime(sec);
                     setMaxWatchedSeconds((prev) => Math.max(prev, sec));
                   }}
+                  onDurationDetected={(dur) => setDetectedDuration(dur)}
                   videoUrl={videoUrl}
                   allowSeeking={(backendLesson as any)?.allowSeeking !== false}
                 />
@@ -513,6 +619,60 @@ export default function LessonPlayerPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Article / Reading Completion Action Box */}
+                <div className="mt-8 rounded-xl border border-primary/25 bg-primary/5 p-5 dark:border-primary/30 dark:bg-primary/10 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        <h3 className="text-sm sm:text-base font-bold text-foreground">
+                          Hoàn thành bài đọc này
+                        </h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {nextLesson
+                          ? isNextChapter
+                            ? `Tiếp theo: Bắt đầu ${nextLessonChapter?.title || 'chương mới'} — Bài ${nextLesson.title}`
+                            : `Tiếp theo: ${nextLesson.title} (${nextLesson.duration})`
+                          : 'Bạn đang ở bài học cuối cùng của khóa học!'}
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={handleNext}
+                      disabled={isCompleting || (requiresSignature && !isSignedSop)}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-5 gap-2 shrink-0 shadow-sm"
+                    >
+                      {isCompleting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Đang lưu tiến độ...
+                        </>
+                      ) : !nextLesson ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4" />
+                          Hoàn thành khóa học
+                        </>
+                      ) : isNextChapter ? (
+                        <>
+                          Qua chương tiếp theo
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      ) : (
+                        <>
+                          Đánh dấu đã học & Tiếp tục
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  {requiresSignature && !isSignedSop && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                      ⚠️ Vui lòng bấm &quot;Ký Cam Kết Tuân Thủ SOP&quot; ở trên trước khi bấm hoàn thành bài học.
+                    </p>
+                  )}
+                </div>
               </div>
             ) : (
               /* Quiz Lesson View */
@@ -613,6 +773,8 @@ export default function LessonPlayerPage() {
       <LessonBottomBar
         lessonIndex={Math.max(1, currentLessonIndex + 1)}
         totalLessons={totalLessons}
+        isNextChapter={isNextChapter}
+        isCompleting={isCompleting}
         onPrev={handlePrev}
         onNext={handleNext}
       />

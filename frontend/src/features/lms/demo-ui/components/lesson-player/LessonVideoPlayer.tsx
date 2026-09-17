@@ -1,15 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   Play,
   Pause,
   Volume2,
-  Maximize,
-  Subtitles,
   Lock,
-  Sparkles,
-  RotateCcw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -22,16 +18,15 @@ export interface LessonVideoPlayerProps {
   readonly currentTimeSeconds: number
   readonly maxWatchedSeconds?: number
   readonly onSeek: (seconds: number) => void
+  readonly onDurationDetected?: (durationSeconds: number) => void
   readonly videoUrl?: string | null
   readonly allowSeeking?: boolean
 }
 
-function getYouTubeEmbedUrl(url: string, startTime: number = 0) {
+function extractYouTubeId(url: string): string | null {
   if (!url) return null
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/)
-  if (!match) return null
-  const base = `https://www.youtube.com/embed/${match[1]}?autoplay=0&rel=0&enablejsapi=1`
-  return startTime > 0 ? `${base}&start=${startTime}` : base
+  return match ? match[1] : null
 }
 
 export function LessonVideoPlayer({
@@ -40,6 +35,7 @@ export function LessonVideoPlayer({
   currentTimeSeconds,
   maxWatchedSeconds = 0,
   onSeek,
+  onDurationDetected,
   videoUrl,
   allowSeeking = true,
 }: LessonVideoPlayerProps) {
@@ -47,9 +43,18 @@ export function LessonVideoPlayer({
   const [speed, setSpeed] = useState<(typeof SPEED_OPTIONS)[number]>(1)
   const [volume, setVolume] = useState(80)
   const [showSpeed, setShowSpeed] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
 
-  const youtubeEmbed = videoUrl ? getYouTubeEmbedUrl(videoUrl, currentTimeSeconds) : null
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const lastReportedTimeRef = useRef<number>(currentTimeSeconds)
+
+  const onSeekRef = useRef(onSeek)
+  onSeekRef.current = onSeek
+
+  const onDurationDetectedRef = useRef(onDurationDetected)
+  onDurationDetectedRef.current = onDurationDetected
+
+  const youtubeId = videoUrl ? extractYouTubeId(videoUrl) : null
 
   // Format mm:ss or hh:mm:ss
   const formatTime = (s: number) => {
@@ -63,11 +68,10 @@ export function LessonVideoPlayer({
   }
 
   // Handle Seek with Anti-seek security check
-  const handleSeekRequest = (targetSeconds: number) => {
-    const bounded = Math.max(0, Math.min(targetSeconds, totalDurationSeconds))
+  const handleSeekRequest = useCallback((targetSeconds: number) => {
+    const bounded = Math.max(0, Math.min(targetSeconds, totalDurationSeconds || 3600))
 
     if (!allowSeeking) {
-      // If anti-seek is active, learner can only seek up to maxWatchedSeconds + 2s
       const allowedMax = Math.max(maxWatchedSeconds, currentTimeSeconds)
       if (bounded > allowedMax + 2) {
         toast.warning(
@@ -78,38 +82,186 @@ export function LessonVideoPlayer({
       }
     }
 
+    lastReportedTimeRef.current = bounded
     onSeek(bounded)
+
+    // Seek HTML5 Video
     if (videoRef.current) {
       videoRef.current.currentTime = bounded
     }
-  }
+
+    // Seek YouTube without iframe reload
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({
+          event: 'command',
+          func: 'seekTo',
+          args: [bounded, true],
+        }),
+        '*'
+      )
+    }
+  }, [allowSeeking, maxWatchedSeconds, currentTimeSeconds, totalDurationSeconds, onSeek])
+
+  // Sync external seek changes (like TranscriptTab click) to HTML5 video or YouTube iframe
+  // ONLY if the change is significant (jump > 1.5s) to avoid playback feedback loops
+  useEffect(() => {
+    if (Math.abs(currentTimeSeconds - lastReportedTimeRef.current) > 1.5) {
+      lastReportedTimeRef.current = currentTimeSeconds
+
+      if (videoRef.current && Math.abs(videoRef.current.currentTime - currentTimeSeconds) > 1.5) {
+        videoRef.current.currentTime = currentTimeSeconds
+      }
+
+      if (youtubeId && iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: 'seekTo',
+            args: [currentTimeSeconds, true],
+          }),
+          '*'
+        )
+      }
+    }
+  }, [currentTimeSeconds, youtubeId])
+
+  // Listen to YouTube postMessage events to track playback time, real duration & play state
+  useEffect(() => {
+    if (!youtubeId) return
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        let data = event.data
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data)
+          } catch {
+            return
+          }
+        }
+
+        if (data && data.event === 'infoDelivery' && data.info) {
+          // Capture real duration from YouTube
+          if (typeof data.info.duration === 'number' && data.info.duration > 0) {
+            onDurationDetectedRef.current?.(Math.floor(data.info.duration))
+          }
+
+          // Capture current time
+          if (typeof data.info.currentTime === 'number') {
+            const currentSec = Math.floor(data.info.currentTime)
+            if (currentSec !== lastReportedTimeRef.current) {
+              lastReportedTimeRef.current = currentSec
+              onSeekRef.current(currentSec)
+            }
+          }
+
+          // Capture player state (1: playing, 2: paused, 0: ended)
+          if (data.info.playerState === 1) {
+            setPlaying(true)
+          } else if (data.info.playerState === 2) {
+            setPlaying(false)
+          } else if (data.info.playerState === 0) {
+            setPlaying(false)
+            if (typeof data.info.duration === 'number' && data.info.duration > 0) {
+              const finalSec = Math.floor(data.info.duration)
+              lastReportedTimeRef.current = finalSec
+              onSeekRef.current(finalSec)
+            }
+          }
+        }
+      } catch {
+        // Ignore non-JSON postMessage from other extensions/scripts
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    // Initial handshake after mounting
+    const initTimer = setTimeout(() => {
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'listening' }),
+          '*'
+        )
+      }
+    }, 500)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+      clearTimeout(initTimer)
+    }
+  }, [youtubeId])
+
+  // Mockup Player: Simulate video playback timer when playing is true
+  useEffect(() => {
+    if (youtubeId || (videoUrl && (videoUrl.endsWith('.mp4') || videoUrl.endsWith('.webm')))) {
+      return
+    }
+
+    let interval: NodeJS.Timeout | null = null
+    if (playing) {
+      interval = setInterval(() => {
+        const nextTime = currentTimeSeconds + 1
+        if (totalDurationSeconds > 0 && nextTime >= totalDurationSeconds) {
+          lastReportedTimeRef.current = totalDurationSeconds
+          onSeek(totalDurationSeconds)
+          setPlaying(false)
+        } else {
+          lastReportedTimeRef.current = nextTime
+          onSeek(nextTime)
+        }
+      }, 1000)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [playing, currentTimeSeconds, totalDurationSeconds, onSeek, youtubeId, videoUrl])
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const pct = (e.clientX - rect.left) / rect.width
-    const target = Math.round(pct * totalDurationSeconds)
+    const target = Math.round(pct * (totalDurationSeconds || 600))
     handleSeekRequest(target)
   }
 
   // Calculate percentage
-  const progressPct = totalDurationSeconds > 0 ? (currentTimeSeconds / totalDurationSeconds) * 100 : 0
-  const maxWatchedPct = totalDurationSeconds > 0 ? (Math.max(maxWatchedSeconds, currentTimeSeconds) / totalDurationSeconds) * 100 : 0
+  const duration = totalDurationSeconds > 0 ? totalDurationSeconds : 600
+  const progressPct = Math.min(100, (currentTimeSeconds / duration) * 100)
+  const maxWatchedPct = Math.min(100, (Math.max(maxWatchedSeconds, currentTimeSeconds) / duration) * 100)
 
-  if (youtubeEmbed) {
+  // YouTube embed URL (memoized to keep iframe stable)
+  const embedSrc = useMemo(() => {
+    if (!youtubeId) return ''
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    return `https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&rel=0&modestbranding=1&origin=${encodeURIComponent(origin)}`
+  }, [youtubeId])
+
+  // 1. YouTube Video Mode
+  if (youtubeId) {
     return (
       <div className="space-y-2">
         <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-border shadow-md group">
           <iframe
-            key={currentTimeSeconds > 0 ? `${videoUrl}-${currentTimeSeconds}` : videoUrl}
-            src={youtubeEmbed}
+            ref={iframeRef}
+            src={embedSrc}
             title="Lesson Video"
             className="h-full w-full border-0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+            onLoad={() => {
+              if (iframeRef.current?.contentWindow) {
+                iframeRef.current.contentWindow.postMessage(
+                  JSON.stringify({ event: 'listening' }),
+                  '*'
+                )
+              }
+            }}
           />
 
           {!allowSeeking && (
-            <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md text-amber-300 text-[11px] font-semibold px-2.5 py-1 rounded-md border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
+            <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md text-amber-300 text-[11px] font-semibold px-2.5 py-1 rounded-md border border-amber-500/30 flex items-center gap-1.5 shadow-sm pointer-events-none">
               <Lock className="w-3 h-3 text-amber-400" />
               <span>Chống tua cóc (Bắt buộc xem 90%)</span>
             </div>
@@ -119,6 +271,7 @@ export function LessonVideoPlayer({
     )
   }
 
+  // 2. Direct HTML5 Video File Mode
   if (videoUrl && (videoUrl.endsWith('.mp4') || videoUrl.endsWith('.webm') || videoUrl.includes('storage.'))) {
     return (
       <div className="space-y-2">
@@ -127,15 +280,34 @@ export function LessonVideoPlayer({
             ref={videoRef}
             src={videoUrl}
             controls={allowSeeking}
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onLoadedMetadata={(e) => {
+              const dur = Math.floor(e.currentTarget.duration)
+              if (dur > 0) {
+                onDurationDetectedRef.current?.(dur)
+              }
+            }}
             onTimeUpdate={(e) => {
               const current = Math.floor(e.currentTarget.currentTime)
-              onSeek(current)
+              if (current !== lastReportedTimeRef.current) {
+                lastReportedTimeRef.current = current
+                onSeekRef.current(current)
+              }
+            }}
+            onEnded={() => {
+              setPlaying(false)
+              if (videoRef.current?.duration) {
+                const finalSec = Math.floor(videoRef.current.duration)
+                lastReportedTimeRef.current = finalSec
+                onSeekRef.current(finalSec)
+              }
             }}
             className="h-full w-full object-contain"
           />
 
           {!allowSeeking && (
-            <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md text-amber-300 text-[11px] font-semibold px-2.5 py-1 rounded-md border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
+            <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md text-amber-300 text-[11px] font-semibold px-2.5 py-1 rounded-md border border-amber-500/30 flex items-center gap-1.5 shadow-sm pointer-events-none">
               <Lock className="w-3 h-3 text-amber-400" />
               <span>Khóa tua cóc</span>
             </div>
@@ -145,6 +317,7 @@ export function LessonVideoPlayer({
     )
   }
 
+  // 3. Custom / Placeholder Mock Player Mode
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-[#181715] shadow-md border border-border">
       {/* Anti-seeking compliance banner */}
@@ -161,6 +334,7 @@ export function LessonVideoPlayer({
           type="button"
           onClick={() => setPlaying((v) => !v)}
           className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-colors hover:bg-white/20"
+          aria-label={playing ? 'Tạm dừng video' : 'Phát video'}
         >
           {playing ? (
             <Pause className="h-9 w-9 text-white" />
@@ -274,4 +448,5 @@ export function LessonVideoPlayer({
     </div>
   )
 }
+
 export default LessonVideoPlayer

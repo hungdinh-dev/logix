@@ -76,8 +76,9 @@ export function useCurriculumState(courseId: string) {
     }
   }, [backendCourse])
 
-  // Helper to sync updated lesson into modules array
+  // Helper to sync updated lesson into modules array & active selected lesson state
   const updateLessonInModules = (updatedLesson: LessonItem) => {
+    setSelectedLesson(updatedLesson)
     setModules((prev) =>
       prev.map((mod) => ({
         ...mod,

@@ -144,9 +144,9 @@ export function UniversalRichEditor({
     },
   })
 
-  // Synchronize when external value changes
+  // Synchronize when external value changes (only if editor is not actively focused/typing)
   useEffect(() => {
-    if (editor && value !== currentMarkdown) {
+    if (editor && value !== currentMarkdown && !editor.isFocused) {
       const targetHtml = markdownToHtml(value)
       if (editor.getHTML() !== targetHtml) {
         editor.commands.setContent(targetHtml)

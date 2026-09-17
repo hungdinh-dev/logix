@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ChevronRight, Eye, Save, Check, Loader2 } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Eye, Save, Check, Loader2, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { routePath } from '@/config/route-path'
@@ -16,6 +16,7 @@ interface CourseEditorHeaderProps {
   saveSuccess: boolean
   isSaving: boolean
   onSave: () => void
+  onOpenAuditHistory?: () => void
 }
 
 export function CourseEditorHeader({
@@ -26,6 +27,7 @@ export function CourseEditorHeader({
   saveSuccess,
   isSaving,
   onSave,
+  onOpenAuditHistory,
 }: CourseEditorHeaderProps) {
   const router = useRouter()
 
@@ -74,6 +76,19 @@ export function CourseEditorHeader({
       </div>
 
       <div className="flex items-center gap-2">
+        {onOpenAuditHistory && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenAuditHistory}
+            className="cursor-pointer gap-1.5 text-xs font-medium"
+            title="Xem lịch sử chỉnh sửa khóa học & giáo trình"
+          >
+            <History className="h-3.5 w-3.5 text-muted-foreground" />
+            Lịch sử chỉnh sửa
+          </Button>
+        )}
+
         <Button
           asChild
           variant="outline"
