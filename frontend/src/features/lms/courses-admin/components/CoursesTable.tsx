@@ -41,9 +41,10 @@ interface CoursesTableProps {
   onRequestProgressionChange: (course: BackendCourse, nextMode: ProgressionMode) => void
   onRequestClone: (course: BackendCourse) => void
   onRequestDelete: (course: BackendCourse) => void
+  onRequestViewAudit?: (course: BackendCourse) => void
 }
 
-export function    CoursesTable({
+export function CoursesTable({
   courses,
   isLoading,
   isAllPageSelected,
@@ -61,6 +62,7 @@ export function    CoursesTable({
   onRequestProgressionChange,
   onRequestClone,
   onRequestDelete,
+  onRequestViewAudit,
 }: CoursesTableProps) {
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
@@ -240,6 +242,7 @@ export function    CoursesTable({
                 onRequestProgressionChange={onRequestProgressionChange}
                 onRequestClone={onRequestClone}
                 onRequestDelete={onRequestDelete}
+                onRequestViewAudit={onRequestViewAudit}
               />
             ))
           )}

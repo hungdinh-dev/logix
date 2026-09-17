@@ -16,6 +16,7 @@ import {
   Unlock,
   Link2,
   Package,
+  History,
 } from 'lucide-react'
 import type { BackendCourse } from '@/features/lms/types/course.types'
 import type {
@@ -108,6 +109,7 @@ interface CourseTableRowProps {
   onRequestProgressionChange: (course: BackendCourse, nextMode: ProgressionMode) => void
   onRequestClone: (course: BackendCourse) => void
   onRequestDelete: (course: BackendCourse) => void
+  onRequestViewAudit?: (course: BackendCourse) => void
 }
 
 export function CourseTableRow({
@@ -120,6 +122,7 @@ export function CourseTableRow({
   onRequestProgressionChange,
   onRequestClone,
   onRequestDelete,
+  onRequestViewAudit,
 }: CourseTableRowProps) {
   return (
     <TableRow data-state={isSelected ? 'selected' : undefined} className="hover:bg-muted/30 transition-colors">
@@ -229,7 +232,21 @@ export function CourseTableRow({
       {/* Ngày Cập Nhật */}
       {columnVisibility.updatedAt && (
         <TableCell className="py-3.5 text-center text-xs text-muted-foreground">
-          {course.updatedAt ? new Date(course.updatedAt).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+          <button
+            type="button"
+            onClick={() => onRequestViewAudit?.(course)}
+            className="inline-flex flex-col items-center hover:text-primary transition-colors cursor-pointer group"
+            title="Bấm để xem lịch sử chỉnh sửa chi tiết"
+          >
+            <span className="font-medium text-foreground group-hover:text-primary">
+              {course.updatedAt ? new Date(course.updatedAt).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+            </span>
+            {course.updatedByUser && (
+              <span className="text-[10px] text-muted-foreground group-hover:text-primary/80 truncate max-w-[120px]">
+                bởi {course.updatedByUser.fullName}
+              </span>
+            )}
+          </button>
         </TableCell>
       )}
 
@@ -237,6 +254,15 @@ export function CourseTableRow({
       {columnVisibility.actions && (
         <TableCell className="py-3.5 pr-4 text-right">
           <div className="flex items-center justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer"
+              onClick={() => onRequestViewAudit?.(course)}
+              title="Xem lịch sử chỉnh sửa (Side Peek)"
+            >
+              <History className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"

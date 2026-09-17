@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { DataTablePagination } from '@/components/common/DataTablePagination'
+import { EntityAuditSidePeek } from '@/components/shared/EntityAuditSidePeek'
+import type { BackendCourse } from '@/features/lms/types/course.types'
 import {
   CoursesStatsCards,
   CoursesStatusTabs,
@@ -92,6 +94,8 @@ export default function CoursesAdminPage() {
     setIsAssignOpen,
     activeAssignCourse,
   } = useCoursesAdmin()
+
+  const [auditTargetCourse, setAuditTargetCourse] = React.useState<BackendCourse | null>(null)
 
   return (
     <div className="p-6 mx-auto space-y-6">
@@ -243,6 +247,7 @@ export default function CoursesAdminPage() {
         onRequestProgressionChange={(course, nextMode) => setProgressionChangeTarget({ course, nextMode })}
         onRequestClone={(course) => setCloneTarget(course)}
         onRequestDelete={(course) => setDeleteTarget(course)}
+        onRequestViewAudit={(course) => setAuditTargetCourse(course)}
       />
 
       {/* 7. Data Table Pagination */}
@@ -443,6 +448,16 @@ export default function CoursesAdminPage() {
         onOpenChange={setIsAssignOpen}
         course={activeAssignCourse}
         onSuccess={refetchCourses}
+      />
+
+      {/* 14. Notion-style Audit Trail Side Peek */}
+      <EntityAuditSidePeek
+        isOpen={!!auditTargetCourse}
+        onClose={() => setAuditTargetCourse(null)}
+        tableName="crs_courses"
+        entityId={auditTargetCourse?.id}
+        entityTitle={auditTargetCourse?.title}
+        entitySubtitle={`Mã khóa học: ${auditTargetCourse?.code || ''}`}
       />
     </div>
   )
