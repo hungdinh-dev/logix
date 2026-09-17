@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, SlidersHorizontal, LayoutGrid, List, BookOpen, AlertCircle, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CategoryPillTabs } from '../components/course-catalog/CategoryPillTabs';
 import { CourseCard } from '../components/course-catalog/CourseCard';
 import { useCourses } from '@/features/lms/hooks/use-courses';
+import { useDashboardProgress } from '@/features/lms/hooks/use-course-progress';
 import { courseApiService } from '@/features/lms/services/course.service';
 import type { SortOption, ViewMode } from '../types/course.types';
 
@@ -66,6 +68,18 @@ export default function CourseCatalog() {
   const { courses, categories, isLoading, error, refetchCourses } = useCourses({
     status: 'PUBLISHED',
   });
+
+  const { data: dashboardData, refetch: refetchDashboard } = useDashboardProgress();
+
+  const enrolledMap = useMemo(() => {
+    const map = new Map<string, { progress: number; totalLessons: number }>();
+    if (dashboardData?.courses) {
+      for (const item of dashboardData.courses) {
+        map.set(item.id, { progress: item.progress, totalLessons: item.totalLessons });
+      }
+    }
+    return map;
+  }, [dashboardData]);
 
   const filtered = courses.filter((course) => {
     const matchesCategory =
@@ -110,10 +124,10 @@ export default function CourseCatalog() {
     try {
       setEnrollingId(courseId);
       await courseApiService.enrollCourse(courseId);
-      alert('Ghi danh khóa học thành công!');
-      refetchCourses();
+      toast.success('Ghi danh khóa học thành công! Bạn có thể bắt đầu học ngay bây giờ.');
+      await Promise.all([refetchCourses(), refetchDashboard()]);
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Ghi danh thất bại');
+      toast.error(err?.response?.data?.message || 'Ghi danh thất bại. Vui lòng thử lại sau.');
     } finally {
       setEnrollingId(null);
     }
@@ -247,14 +261,20 @@ export default function CourseCatalog() {
               : 'grid-cols-1',
           )}
         >
-          {paginated.map((course) => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              onEnroll={handleEnroll}
-              isEnrolling={enrollingId === course.id}
-            />
-          ))}
+          {paginated.map((course) => {
+            const isEnrolled = enrolledMap.has(course.id);
+            const progressPercent = enrolledMap.get(course.id)?.progress;
+            return (
+              <CourseCard
+                key={course.id}
+                course={course}
+                isEnrolled={isEnrolled}
+                progressPercent={progressPercent}
+                onEnroll={handleEnroll}
+                isEnrolling={enrollingId === course.id}
+              />
+            );
+          })}
         </div>
       )}
 

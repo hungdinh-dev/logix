@@ -1,4 +1,4 @@
-import { Award, Clock, Star, Users, CheckCircle2, AlertCircle, BookOpen } from 'lucide-react';
+import { Award, Clock, Star, Users, CheckCircle2, AlertCircle, BookOpen, PlayCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -8,11 +8,13 @@ import type { BackendCourse } from '../../types/course.types';
 
 interface CourseCardProps {
   readonly course: BackendCourse;
+  readonly isEnrolled?: boolean;
+  readonly progressPercent?: number;
   readonly onEnroll?: (courseId: string) => void;
   readonly isEnrolling?: boolean;
 }
 
-export function CourseCard({ course, onEnroll, isEnrolling }: CourseCardProps) {
+export function CourseCard({ course, isEnrolled, progressPercent, onEnroll, isEnrolling }: CourseCardProps) {
   const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
   const enrollmentCount = course._count?.enrollments || 0;
 
@@ -40,9 +42,14 @@ export function CourseCard({ course, onEnroll, isEnrolling }: CourseCardProps) {
           </span>
         )}
 
-        {/* Mandatory / Optional Badge (LMS-009 & LMS-010) */}
-        <div className="absolute right-3 top-3">
-          {course.isMandatory ? (
+        {/* Enrolled Badge or Mandatory / Optional Badge */}
+        <div className="absolute right-3 top-3 flex items-center gap-1.5">
+          {isEnrolled ? (
+            <Badge className="bg-emerald-600 text-white flex items-center gap-1 shadow-sm text-[11px] font-bold">
+              <CheckCircle2 className="h-3 w-3" />
+              Đã ghi danh
+            </Badge>
+          ) : course.isMandatory ? (
             <Badge variant="destructive" className="flex items-center gap-1 shadow-sm text-[11px] font-bold">
               <AlertCircle className="h-3 w-3" />
               Bắt buộc
@@ -99,6 +106,22 @@ export function CourseCard({ course, onEnroll, isEnrolling }: CourseCardProps) {
             </div>
           </div>
 
+          {/* Enrolled Progress Bar if available */}
+          {isEnrolled && progressPercent !== undefined && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>Tiến độ học</span>
+                <span className="font-semibold text-primary">{progressPercent}%</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           <Separator className="bg-border" />
 
           {/* Actions */}
@@ -111,16 +134,28 @@ export function CourseCard({ course, onEnroll, isEnrolling }: CourseCardProps) {
             >
               <Link href={`/lms/courses/${course.id}`}>Chi tiết</Link>
             </Button>
-            {onEnroll && (
+            {isEnrolled ? (
+              <Button
+                asChild
+                size="sm"
+                className="flex-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5"
+              >
+                <Link href={`/lms/courses/${course.id}`}>
+                  <PlayCircle className="h-3.5 w-3.5" />
+                  Học tiếp
+                </Link>
+              </Button>
+            ) : onEnroll ? (
               <Button
                 size="sm"
                 disabled={isEnrolling}
                 onClick={() => onEnroll(course.id)}
-                className="flex-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                className="flex-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5"
               >
+                {isEnrolling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Ghi danh ngay
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

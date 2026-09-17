@@ -8,6 +8,7 @@ import { CourseDetailTabs } from '../components/course-detail/CourseDetailTabs'
 import { CourseEnrollmentCard } from '../components/course-detail/CourseEnrollmentCard'
 import type { CourseDetail } from '../types/course.types'
 import { useCourseDetail } from '@/features/lms/hooks/use-course-detail'
+import { useCourseProgress, useEnrollCourse } from '@/features/lms/hooks/use-course-progress'
 import { JS_INFO_COURSES } from '@/features/lms/mocks/javascript-info.mock'
 import { DetailSkeleton } from '@/components/shared/skeletons'
 
@@ -121,27 +122,40 @@ export function getFallbackCourseDetail(courseId: string): CourseDetail {
 }
 
 export default function CourseDetailPage({ courseId = '1' }: { courseId?: string }) {
-  const { course: realCourse, isLoading } = useCourseDetail(courseId)
+  const { course: realCourse, isLoading: isCourseLoading, refetch: refetchDetail } = useCourseDetail(courseId)
+  const { data: progressData, isLoading: isProgressLoading, refetch: refetchProgress } = useCourseProgress(courseId)
+  const enrollMutation = useEnrollCourse()
+
+  const isEnrolled = Boolean(progressData?.enrollment)
+  const completionPercentage = progressData?.enrollment?.completionPercentage || 0
 
   const course: CourseDetail = useMemo(() => {
     if (!realCourse) {
       return getFallbackCourseDetail(courseId)
     }
 
-    const mappedSections = (realCourse.modules || []).map((m: any, mIdx: number) => {
+    const rawModules = progressData?.modules && progressData.modules.length > 0
+      ? progressData.modules
+      : realCourse.modules || []
+
+    const mappedSections = rawModules.map((m: any, mIdx: number) => {
       const lessons = (m.lessons || []).map((l: any, lIdx: number) => {
         const durMinutes = Math.round(
-          (l.videoDuration || (l.estimatedReadTime ? l.estimatedReadTime * 60 : 600)) / 60
+          (l.duration || l.videoDuration || (l.estimatedReadTime ? l.estimatedReadTime * 60 : 600)) / 60
         )
         const type = (l.lessonType?.toLowerCase() || 'video') as 'video' | 'article' | 'quiz'
+
+        const isLessonCompleted = Boolean(l.isCompleted)
+        const isLessonLocked = l.isLocked !== undefined ? l.isLocked : !isEnrolled
 
         return {
           id: l.id || `les-${mIdx}-${lIdx}`,
           title: l.title,
-          duration: `${durMinutes} phút`,
+          duration: `${durMinutes || 5} phút`,
           type,
-          locked: false,
-          completed: false,
+          locked: isLessonLocked,
+          completed: isLessonCompleted,
+          status: l.status || (isEnrolled ? 'available' : 'locked'),
         }
       })
 
@@ -152,7 +166,7 @@ export default function CourseDetailPage({ courseId = '1' }: { courseId?: string
 
       return {
         id: m.id || `mod-${mIdx}`,
-        number: mIdx + 1,
+        number: m.sortOrder || mIdx + 1,
         title: m.title,
         totalDuration: `${totalMins} phút`,
         lessons,
@@ -176,7 +190,7 @@ export default function CourseDetailPage({ courseId = '1' }: { courseId?: string
       enrolledCount: realCourse._count?.enrollments || 120,
       rating: 4.9,
       reviewCount: 28,
-      enrolled: true,
+      enrolled: isEnrolled,
       description:
         realCourse.description || 'Chương trình đào tạo toàn diện trang bị kiến thức và kỹ năng thực tế.',
       level: realCourse.courseType === 'ATTP' ? 'Advanced' : 'Beginner',
@@ -215,9 +229,23 @@ export default function CourseDetailPage({ courseId = '1' }: { courseId?: string
         { stars: 1, count: 0, percentage: 0 },
       ],
     }
-  }, [realCourse, courseId])
+  }, [realCourse, progressData, isEnrolled, courseId])
 
-  if (isLoading && !realCourse) {
+  // Find the next active/current lesson
+  const nextLessonId = useMemo(() => {
+    const allLessons = course.sections.flatMap((s) => s.lessons)
+    const currentOrIncomplete = allLessons.find((l: any) => l.status === 'current')
+      || allLessons.find((l: any) => !l.completed && !l.locked)
+      || allLessons[0]
+    return currentOrIncomplete?.id || null
+  }, [course])
+
+  const handleEnroll = async () => {
+    await enrollMutation.mutateAsync(courseId)
+    await Promise.all([refetchDetail(), refetchProgress()])
+  }
+
+  if (isCourseLoading && !realCourse) {
     return <DetailSkeleton />
   }
 
@@ -229,14 +257,25 @@ export default function CourseDetailPage({ courseId = '1' }: { courseId?: string
           <div className="min-w-0 lg:flex-[3]">
             <CourseHero course={course} />
             <WhatYouLearnCard outcomes={course.learningOutcomes} />
-            <CourseContentAccordion courseId={course.id} sections={course.sections} />
+            <CourseContentAccordion
+              courseId={course.id}
+              sections={course.sections}
+              isEnrolled={isEnrolled}
+            />
             <CourseDetailTabs course={course} />
           </div>
 
           {/* Right column — 40% sticky */}
           <aside className="shrink-0 lg:flex-[2]">
             <div className="lg:sticky lg:top-24">
-              <CourseEnrollmentCard course={course} />
+              <CourseEnrollmentCard
+                course={course}
+                isEnrolled={isEnrolled}
+                completionPercentage={completionPercentage}
+                nextLessonId={nextLessonId}
+                onEnroll={handleEnroll}
+                isEnrolling={enrollMutation.isPending}
+              />
             </div>
           </aside>
         </div>

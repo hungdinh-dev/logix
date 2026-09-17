@@ -28,6 +28,7 @@ export function useCourseDetail(courseId: string) {
       // Invalidate and update detail cache
       queryClient.setQueryData(COURSE_DETAIL_QUERY_KEY(courseId), updatedCourse)
       queryClient.invalidateQueries({ queryKey: ['courses'] })
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] })
     },
   })
 

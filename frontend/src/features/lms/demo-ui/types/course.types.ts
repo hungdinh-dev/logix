@@ -80,6 +80,20 @@ export interface BackendCourse {
   _count?: {
     enrollments: number;
   };
+  createdBy?: string | null;
+  createdByUser?: {
+    id: string;
+    fullName: string;
+    email?: string | null;
+    employeeCode?: string | null;
+  } | null;
+  updatedBy?: string | null;
+  updatedByUser?: {
+    id: string;
+    fullName: string;
+    email?: string | null;
+    employeeCode?: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
