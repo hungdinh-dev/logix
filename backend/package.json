@@ -11,6 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node src/seed.ts",
     "seed:personnel": "ts-node src/seed-personnel.ts",
+    "seed:be-course": "ts-node-dev --transpile-only src/seed-backend-course.ts",
     "test:db": "ts-node-dev src/test-connection.ts"
   },
   "dependencies": {
