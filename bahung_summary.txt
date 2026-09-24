@@ -1,0 +1,112 @@
+=== BAHUNG LMS ALL ROWS ===
+Row 2 | Code: LMS-001 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Quản lý danh mục khóa học | Phase: 1 | BE: Done | FE: Done | All: Done | Test: 
+Row 3 | Code: LMS-002 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Tạo mới khóa học | Phase: 1 | BE: Done | FE: Done | All: Done | Test: 
+Row 4 | Code: LMS-003 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Sao chép khóa học | Phase: 1 | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 5 | Code: LMS-004 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Xóa / Ẩn khóa học | Phase: 1 | BE: Done | FE: Done | All: Done | Test: 
+Row 6 | Code: LMS-005 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Gán khóa học theo chức danh | Phase: 1 | BE: Done | FE: Done | All: Done | Test: 
+Row 7 | Code: LMS-006 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Gán khóa học theo loại nhân sự | Phase: 1 | BE: Done | FE: Done | All: Done | Test: 
+Row 8 | Code: LMS-007 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Gán khóa học theo cửa hàng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 9 | Code: LMS-008 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Gán khóa học theo bộ phận sản xuất | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 10 | Code: LMS-009 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Đặt khóa học bắt buộc | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 11 | Code: LMS-010 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Đặt khóa học tùy chọn | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 12 | Code: LMS-011 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Cấu hình thời hạn hoàn thành khóa học | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 13 | Code: LMS-012 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Cấu hình điểm đạt khóa học | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 14 | Code: LMS-013 | Domain: Quản lý video đào tạo | Sub: Video | Name: Tải lên video | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 15 | Code: LMS-014 | Domain: Quản lý video đào tạo | Sub: Video | Name: Tạo bài giảng dạng tài liệu PDF | Phase: HỦY | BE: Done | FE: Done | All: Done | Test: 
+Row 16 | Code: LMS-015 | Domain: Quản lý video đào tạo | Sub: Video | Name: Tạo bài giảng dạng trang văn bản | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 17 | Code: LMS-016 | Domain: Quản lý video đào tạo | Sub: Video | Name: Tạo bài giảng dạng hình ảnh / checklist | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 18 | Code: LMS-017 | Domain: Quản lý video đào tạo | Sub: Video | Name: Sắp xếp thứ tự bài giảng trong khóa | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 19 | Code: LMS-018 | Domain: Quản lý video đào tạo | Sub: Video | Name: Ẩn / hiện bài giảng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 20 | Code: LMS-019 | Domain: Quản lý video đào tạo | Sub: Video | Name: Gắn tài liệu SOP vận hành cửa hàng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 21 | Code: LMS-020 | Domain: Quản lý video đào tạo | Sub: Video | Name: Gắn tài liệu SOP sản xuất | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 22 | Code: LMS-021 | Domain: Quản lý video đào tạo | Sub: Video | Name: Phiên bản hóa học liệu | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 23 | Code: LMS-022 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: Tạo khóa đào tạo ATTP bắt buộc | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 24 | Code: LMS-023 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: Ghi nhận hoàn thành khóa ATTP nội bộ | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 25 | Code: LMS-024 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: Ghi nhận chứng chỉ ATTP bên ngoài | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 26 | Code: LMS-025 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: Lưu ngày cấp chứng chỉ ATTP | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 27 | Code: LMS-026 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: Lưu ngày hết hạn chứng chỉ ATTP | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 28 | Code: LMS-027 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: Cảnh báo chứng chỉ ATTP sắp hết hạn | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 29 | Code: LMS-028 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: Cảnh báo chứng chỉ ATTP đã hết hạn | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 30 | Code: LMS-029 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: Chặn xếp ca nếu thiếu ATTP còn hiệu lực | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 31 | Code: LMS-030 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: In / xuất giấy xác nhận ATTP | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 32 | Code: LMS-031 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: Quản lý loại chứng chỉ khác ngoài ATTP | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 33 | Code: LMS-032 | Domain: ATTP & chứng chỉ | Sub: ATTP | Name: Gắn chứng chỉ vào hồ sơ học viên | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 34 | Code: LMS-033 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Tạo lộ trình onboarding cho nhân viên cửa hàng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 35 | Code: LMS-034 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Tạo lộ trình onboarding cho nhân viên sản xuất | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 36 | Code: LMS-035 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Tạo lộ trình onboarding cho quản lý cửa hàng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 37 | Code: LMS-036 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Tạo lộ trình onboarding cho nhân viên tăng cường | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 38 | Code: LMS-037 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Tạo lộ trình onboarding cho học việc | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 39 | Code: LMS-038 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Tự gán lộ trình khi nhân sự vào status Học việc | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 40 | Code: LMS-039 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Tự gán lộ trình khi nhận việc chính thức | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 41 | Code: LMS-040 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Theo dõi % hoàn thành lộ trình onboarding | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 42 | Code: LMS-041 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Cảnh báo học viên chậm tiến độ onboarding | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 43 | Code: LMS-042 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Xác nhận hoàn tất onboarding học tập | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 44 | Code: LMS-043 | Domain: Onboarding học tập | Sub: Lộ trình | Name: Checklist học tập song song checklist HR | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 45 | Code: LMS-044 | Domain: Quản lý học viên | Sub: Học viên | Name: Thêm mới học viên | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 46 | Code: LMS-045 | Domain: Quản lý học viên | Sub: Học viên | Name: Ghi danh hàng loạt theo cửa hàng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 47 | Code: LMS-046 | Domain: Quản lý học viên | Sub: Học viên | Name: Ghi danh hàng loạt theo bộ phận | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 48 | Code: LMS-047 | Domain: Quản lý học viên | Sub: Học viên | Name: Hủy ghi danh học viên | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 49 | Code: LMS-048 | Domain: Quản lý học viên | Sub: Học viên | Name: Xem danh sách khóa của tôi | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 50 | Code: LMS-049 | Domain: Quản lý học viên | Sub: Học viên | Name: Mở bài giảng để học | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 51 | Code: LMS-050 | Domain: Quản lý học viên | Sub: Học viên | Name: Đánh dấu hoàn thành bài giảng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 52 | Code: LMS-051 | Domain: Quản lý học viên | Sub: Học viên | Name: Lưu tiến độ học dở | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 53 | Code: LMS-052 | Domain: Quản lý học viên | Sub: Học viên | Name: Học trên web | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 54 | Code: LMS-053 | Domain: Quản lý học viên | Sub: Học viên | Name: Học trên APP di động | Phase: HỦY | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 55 | Code: LMS-054 | Domain: Quản lý học viên | Sub: Học viên | Name: Tải tài liệu học (nếu được phép) | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 56 | Code: LMS-055 | Domain: Quản lý học viên | Sub: Học viên | Name: Ghi nhận thời gian học (learning time) | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 57 | Code: LMS-056 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Tạo ngân hàng câu hỏi | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 58 | Code: LMS-057 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Tạo câu hỏi trắc nghiệm một đáp án | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 59 | Code: LMS-058 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Tạo câu hỏi trắc nghiệm nhiều đáp án | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 60 | Code: LMS-059 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Tạo câu hỏi đúng/sai | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 61 | Code: LMS-060 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Tạo câu hỏi tự luận ngắn | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 62 | Code: LMS-061 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Tạo bài kiểm tra (quiz) gắn khóa học | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 63 | Code: LMS-062 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Cấu hình số lần được làm lại bài kiểm tra | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 64 | Code: LMS-063 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Cấu hình thời gian làm bài | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 65 | Code: LMS-064 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Xáo trộn câu hỏi | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 66 | Code: LMS-065 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Học viên làm bài kiểm tra | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 67 | Code: LMS-066 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Chấm điểm tự động bài trắc nghiệm | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 68 | Code: LMS-067 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Chấm điểm thủ công câu tự luận | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 69 | Code: LMS-068 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Xem kết quả bài kiểm tra | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 70 | Code: LMS-069 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Xem lịch sử làm bài | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 71 | Code: LMS-070 | Domain: Kiểm tra & đánh giá | Sub: Quiz | Name: Đạt / không đạt khóa theo điểm kiểm tra | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 72 | Code: LMS-071 | Domain: Kiểm tra & đánh giá | Sub: Gamification & thi đua | Name: Tạo bảng xếp hạng điểm học tập | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 73 | Code: LMS-072 | Domain: Kiểm tra & đánh giá | Sub: Gamification & thi đua | Name: Tạo thử thách học tập theo tuần/tháng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 74 | Code: LMS-073 | Domain: Kiểm tra & đánh giá | Sub: Gamification & thi đua | Name: Cộng điểm thưởng khi hoàn thành khóa đúng hạn | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 75 | Code: LMS-074 | Domain: Kiểm tra & đánh giá | Sub: Gamification & thi đua | Name: Hiển thị huy hiệu hoàn thành khóa | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 76 | Code: LMS-075 | Domain: Kiểm tra & đánh giá | Sub: Gamification & thi đua | Name: Báo cáo người dẫn đầu theo cửa hàng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 77 | Code: LMS-076 | Domain: Đánh giá thực hành & mentor | Sub: Thực hành | Name: Tạo phiếu đánh giá thực hành tại cửa hàng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 78 | Code: LMS-077 | Domain: Đánh giá thực hành & mentor | Sub: Thực hành | Name: Tạo phiếu đánh giá thực hành tại sản xuất | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 79 | Code: LMS-078 | Domain: Đánh giá thực hành & mentor | Sub: Thực hành | Name: Mentor chấm đánh giá học việc trên LMS | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 80 | Code: LMS-079 | Domain: Đánh giá thực hành & mentor | Sub: Thực hành | Name: QLCH xác nhận đánh giá thực hành | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 81 | Code: LMS-080 | Domain: Đánh giá thực hành & mentor | Sub: Thực hành | Name: Gửi kết quả đánh giá thực hành sang HRM | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 82 | Code: LMS-081 | Domain: Đánh giá thực hành & mentor | Sub: Thực hành | Name: Lưu lịch sử đánh giá thực hành | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 83 | Code: LMS-082 | Domain: Đánh giá thực hành & mentor | Sub: Thực hành | Name: Gán mentor trong LMS (đồng bộ từ HRM) | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 84 | Code: LMS-083 | Domain: Lớp học & lịch đào tạo | Sub: Lớp | Name: Tạo lớp đào tạo tập trung | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 85 | Code: LMS-084 | Domain: Lớp học & lịch đào tạo | Sub: Lớp | Name: Mở điểm danh lớp đào tạo | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 86 | Code: LMS-085 | Domain: Lớp học & lịch đào tạo | Sub: Lớp | Name: Ghi nhận tham dự lớp đào tạo | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 87 | Code: LMS-086 | Domain: Lớp học & lịch đào tạo | Sub: Lớp | Name: Gắn lớp với khóa học | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 88 | Code: LMS-087 | Domain: Lớp học & lịch đào tạo | Sub: Lớp | Name: Thông báo lịch học cho học viên | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 89 | Code: LMS-088 | Domain: Lớp học & lịch đào tạo | Sub: Lớp | Name: Đăng ký tham gia lớp học | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 90 | Code: LMS-089 | Domain: Lớp học & lịch đào tạo | Sub: Lớp | Name: Giới hạn sĩ số lớp | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 91 | Code: LMS-090 | Domain: Khảo sát & xác nhận | Sub: Survey | Name: Tạo form xác nhận đã đọc quy trình | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 92 | Code: LMS-091 | Domain: Khảo sát & xác nhận | Sub: Survey | Name: Học viên ký xác nhận đã hiểu quy định | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 93 | Code: LMS-092 | Domain: Khảo sát & xác nhận | Sub: Survey | Name: Tạo khảo sát mức độ hiểu bài | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 94 | Code: LMS-093 | Domain: Khảo sát & xác nhận | Sub: Survey | Name: Tạo khảo sát chất lượng khóa học | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 95 | Code: LMS-094 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Báo cáo tỷ lệ hoàn thành khóa theo cửa hàng | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 96 | Code: LMS-095 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Báo cáo tỷ lệ hoàn thành khóa theo bộ phận sản xuất | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 97 | Code: LMS-096 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Báo cáo học viên chưa hoàn thành onboarding | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 98 | Code: LMS-097 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Báo cáo chứng chỉ ATTP còn hạn / hết hạn | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 99 | Code: LMS-098 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Báo cáo kết quả quiz theo khóa | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 100 | Code: LMS-099 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Báo cáo thời gian đào tạo theo kỳ | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 101 | Code: LMS-100 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Báo cáo mentor – số học việc đang kèm | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Not Started | FE: Not Started | All: Not Started | Test: 
+Row 102 | Code: LMS-101 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Xuất báo cáo đào tạo ra Excel | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 103 | Code: LMS-102 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Phân quyền Admin LMS | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 104 | Code: LMS-103 | Domain: Quản trị & tích hợp LMS | Sub: Admin | Name: Phân quyền Trainer | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 105 | Code: LMS-104 | Domain: Quản trị & tích hợp LMS | Sub: Admin | Name: Phân quyền xem báo cáo đào tạo | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 106 | Code: LMS-105 | Domain: Quản trị & tích hợp LMS | Sub: Admin | Name: Đồng bộ danh sách nhân sự từ HRM sang LMS | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 107 | Code: LMS-106 | Domain: Quản trị & tích hợp LMS | Sub: Admin | Name: Đồng bộ trạng thái nhân sự từ HRM | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Done | FE: Done | All: Done | Test: 
+Row 108 | Code: LMS-107 | Domain: Quản trị & tích hợp LMS | Sub: Admin | Name: Gửi sự kiện hoàn thành khóa sang HRM | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 109 | Code: LMS-108 | Domain: Quản trị & tích hợp LMS | Sub: Admin | Name: Gửi sự kiện đạt đánh giá thực hành sang HRM | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 110 | Code: LMS-109 | Domain: Quản trị & tích hợp LMS | Sub: Admin | Name: Single Sign-On với APP nhân viên | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 111 | Code: LMS-110 | Domain: Quản trị & tích hợp LMS | Sub: Admin | Name: Nhật ký thao tác LMS (audit log) | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 
+Row 112 | Code: LMS-111 | Domain: Quản trị & tích hợp LMS | Sub: Admin | Name: Sao lưu nội dung đào tạo | Phase: HỦY / CHƯA TRIỂN KHAI | BE: In Progress | FE: In Progress | All: In Progress | Test: 

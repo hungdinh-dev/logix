@@ -1,0 +1,69 @@
+=== HORECA LMS ALL ROWS ===
+Row 2 | Code: LMS-001 | Domain: Đào tạo & Đánh giá nội bộ | Sub: Quản lý Kho khóa học | Name: Quản lý danh mục khóa học | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 3 | Code: LMS-002 | Domain: Đào tạo & Đánh giá nội bộ | Sub: Quản lý Kho khóa học | Name: Đăng tải và quản lý video bài giảng | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 4 | Code: LMS-003 | Domain: Đào tạo & Đánh giá nội bộ | Sub: Đánh giá năng lực | Name: Tạo bài kiểm tra trắc nghiệm | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 5 | Code: LMS-004 | Domain: Đào tạo & Đánh giá nội bộ | Sub: Đánh giá năng lực | Name: Theo dõi tiến độ và đồng bộ HRM | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 6 | Code: LMS-005 | Domain: Quản lý Khóa học B2C/B2B | Sub: Phân phối khóa học khách hàng | Name: Cấp tài khoản & kích hoạt thủ công | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 7 | Code: LMS-006 | Domain: Quản lý Khóa học B2C/B2B | Sub: Tương tác & Hỗ trợ học viên | Name: Gửi bình luận dưới bài học | Phase: 1 | BE: Not Started | FE: Not Started | All: Not Started
+Row 8 | Code: LMS-007 | Domain: Quản lý Khóa học B2C/B2B | Sub: Tương tác & Hỗ trợ học viên | Name: Tích hợp thông báo qua Zalo OA | Phase: 1 | BE: Not Started | FE: Not Started | All: Not Started
+Row 9 | Code: LMS-001 | Domain: Hệ thống học trực tuyến | Sub: Truy cập | Name:   | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 10 | Code: LMS-002 | Domain: Hệ thống học trực tuyến | Sub: Truy cập | Name: Trang chủ | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 11 | Code: LMS-003 | Domain: Hệ thống học trực tuyến | Sub: Truy cập | Name: Tìm kiếm khóa học | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 12 | Code: LMS-004 | Domain: Hệ thống học trực tuyến | Sub: Truy cập | Name: Dashboard học viên | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 13 | Code: LMS-005 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Tạo mới khóa học | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 14 | Code: LMS-006 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Chỉnh sửa thông tin khóa học | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 15 | Code: LMS-007 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Xóa / Ẩn khóa học | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 16 | Code: LMS-008 | Domain: Quản lý khóa học | Sub: Khóa học | Name: Quản lý danh mục khóa học | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 17 | Code: LMS-009 | Domain: Quản lý video đào tạo | Sub: Video | Name: Tải lên video | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 18 | Code: LMS-010 | Domain: Quản lý video đào tạo | Sub: Video | Name: Nhúng video từ Youtube | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 19 | Code: LMS-011 | Domain: Quản lý video đào tạo | Sub: Video | Name: Quản lý chất lượng video | Phase: 3 | BE: Not Started | FE: Not Started | All: Not Started
+Row 20 | Code: LMS-012 | Domain: Quản lý video đào tạo | Sub: Video | Name: Bảo mật video | Phase: 2 | BE: In Progress | FE: In Progress | All: In Progress
+Row 21 | Code: LMS-013 | Domain: Webinar | Sub: Webinar | Name: Tạo phòng học trực tuyến | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 22 | Code: LMS-014 | Domain: Webinar | Sub: Webinar | Name: Quản lý người tham gia | Phase: HỦY / CHƯA TRIỂN KHAI | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 23 | Code: LMS-015 | Domain: Học theo phân quyền | Sub: Phân quyền | Name: Phân quyền theo chức danh | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 24 | Code: LMS-016 | Domain: Học theo phân quyền | Sub: Phân quyền | Name: Phân quyền theo phòng ban | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 25 | Code: LMS-017 | Domain: Học theo phân quyền | Sub: Phân quyền | Name: Lộ trình học tập theo vị trí | Phase: 2 | BE: Done | FE: Done | All: Done
+Row 26 | Code: LMS-018 | Domain: Học theo phân quyền | Sub: Phân quyền | Name: Giới hạn truy cập nội dung | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 27 | Code: LMS-019 | Domain: Đào tạo nội bộ | Sub: Nội bộ | Name: Tích hợp dữ liệu nhân sự | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 28 | Code: LMS-020 | Domain: Đào tạo nội bộ | Sub: Nội bộ | Name: Khóa học onboarding | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 29 | Code: LMS-021 | Domain: Đào tạo nội bộ | Sub: Nội bộ | Name: Đánh giá năng lực nhân viên | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 30 | Code: LMS-022 | Domain: Đào tạo nội bộ | Sub: Nội bộ | Name: Báo cáo kết quả đào tạo nội bộ | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 31 | Code: LMS-023 | Domain: Đào tạo khách hàng | Sub: Khách hàng | Name: Tạo tài khoản khách hàng | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 32 | Code: LMS-024 | Domain: Đào tạo khách hàng | Sub: Khách hàng | Name: Khóa học hướng dẫn sử dụng sản phẩm | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 33 | Code: LMS-025 | Domain: Đào tạo khách hàng | Sub: Khách hàng | Name: Cấp chứng chỉ cho khách hàng | Phase: 3 | BE: Not Started | FE: Not Started | All: Not Started
+Row 34 | Code: LMS-026 | Domain: Đào tạo khách hàng | Sub: Khách hàng | Name: Thu thập phản hồi từ khách hàng | Phase: 2 | BE: Not Started | FE: Not Started | All: Not Started
+Row 35 | Code: LMS-027 | Domain: Theo dõi tiến độ học tập | Sub: Tiến độ | Name: Thanh tiến độ khóa học | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 36 | Code: LMS-028 | Domain: Theo dõi tiến độ học tập | Sub: Tiến độ | Name: Lưu vị trí học tập | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 37 | Code: LMS-029 | Domain: Theo dõi tiến độ học tập | Sub: Tiến độ | Name: Cảnh báo học viên chậm tiến độ | Phase: 2 | BE: In Progress | FE: In Progress | All: In Progress
+Row 38 | Code: LMS-030 | Domain: Theo dõi tiến độ học tập | Sub: Tiến độ | Name: Báo cáo tiến độ cá nhân | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 39 | Code: LMS-031 | Domain: Theo dõi video đã xem | Sub: Tiến độ | Name: Đánh dấu video đã xem | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 40 | Code: LMS-032 | Domain: Theo dõi video đã xem | Sub: Tiến độ | Name: Chống tua video | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 41 | Code: LMS-033 | Domain: Theo dõi video đã xem | Sub: Tiến độ | Name: Báo cáo thời lượng xem video | Phase: 2 | BE: In Progress | FE: In Progress | All: In Progress
+Row 42 | Code: LMS-034 | Domain: Theo dõi video đã xem | Sub: Tiến độ | Name: Tiếp tục xem từ điểm dừng | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 43 | Code: LMS-035 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Thống kê tỷ lệ hoàn thành khóa học | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 44 | Code: LMS-036 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Thống kê điểm số trung bình | Phase: 2 | BE: In Progress | FE: In Progress | All: In Progress
+Row 45 | Code: LMS-037 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Phân tích câu hỏi kiểm tra khó | Phase: 3 | BE: Not Started | FE: Not Started | All: Not Started
+Row 46 | Code: LMS-038 | Domain: Phân tích hiệu quả nội dung đào tạo | Sub: Báo cáo | Name: Báo cáo đánh giá khóa học | Phase: 2 | BE: Not Started | FE: Not Started | All: Not Started
+Row 47 | Code: LMS-039 | Domain: Quản lý học viên | Sub: Học viên | Name: Thêm mới học viên | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 48 | Code: LMS-040 | Domain: Quản lý học viên | Sub: Học viên | Name: Import danh sách học viên | Phase: 1 | BE: In Progress | FE: In Progress | All: In Progress
+Row 49 | Code: LMS-041 | Domain: Quản lý học viên | Sub: Học viên | Name: Khóa/Mở khóa tài khoản | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 50 | Code: LMS-042 | Domain: Quản lý học viên | Sub: Học viên | Name: Xem hồ sơ và lịch sử học tập | Phase: 1 | BE: Done | FE: Done | All: Done
+Row 51 | Code: LMS-043 | Domain: Bán khóa học | Sub: Thương mại | Name: Cài đặt giá khóa học | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 52 | Code: LMS-044 | Domain: Bán khóa học | Sub: Thương mại | Name: Tích hợp cổng thanh toán | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 53 | Code: LMS-045 | Domain: Bán khóa học | Sub: Thương mại | Name: Quản lý mã giảm giá | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 54 | Code: LMS-046 | Domain: Bán khóa học | Sub: Thương mại | Name: Báo cáo doanh thu | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 55 | Code: LMS-047 | Domain: Kết nối & Xử lý Dữ liệu Hệ thống Cũ | Sub: Migration | Name: Kết nối an toàn với hệ thống cũ | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 56 | Code: LMS-048 | Domain: Kết nối & Xử lý Dữ liệu Hệ thống Cũ | Sub: Migration | Name: Phân tích và làm sạch dữ liệu cũ | Phase: 1 | BE: In Progress | FE: In Progress | All: In Progress
+Row 57 | Code: LMS-049 | Domain: Kết nối & Xử lý Dữ liệu Hệ thống Cũ | Sub: Migration | Name: Nghiên cứu & Thiết lập hệ thống trục kết nối ngầm | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 58 | Code: LMS-050 | Domain: Tự động Đồng bộ Khóa học & Bài tập | Sub: Migration | Name: Tự động kéo toàn bộ danh mục | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 59 | Code: LMS-051 | Domain: Tự động Đồng bộ Khóa học & Bài tập | Sub: Migration | Name: Giao diện trực quan kiểm tra nội dung | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 60 | Code: LMS-052 | Domain: Tự động Đồng bộ Khóa học & Bài tập | Sub: Migration | Name: Xây dựng luồng xử lý nội dung | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 61 | Code: LMS-053 | Domain: Tự động Đồng bộ Học viên & Tài khoản | Sub: Migration | Name: Chuyển toàn bộ danh sách học viên cũ | Phase: 1 | BE: In Progress | FE: In Progress | All: In Progress
+Row 62 | Code: LMS-054 | Domain: Tự động Đồng bộ Học viên & Tài khoản | Sub: Migration | Name: Tự động kích hoạt đúng khóa học | Phase: 1 | BE: In Progress | FE: In Progress | All: In Progress
+Row 63 | Code: LMS-055 | Domain: Tự động Đồng bộ Học viên & Tài khoản | Sub: Migration | Name: Cài đặt luồng đăng nhập mới bảo mật | Phase: 1 | BE: In Progress | FE: In Progress | All: In Progress
+Row 64 | Code: LMS-056 | Domain: Bảo toàn Tiến độ Học tập của Học viên | Sub: Migration | Name: Học viên cũ không phải học lại | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 65 | Code: LMS-057 | Domain: Bảo toàn Tiến độ Học tập của Học viên | Sub: Migration | Name: Tự nhận diện bài học đã hoàn thành | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 66 | Code: LMS-058 | Domain: Bảo toàn Tiến độ Học tập của Học viên | Sub: Migration | Name: Xây dựng luồng xử lý tiến độ học | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 67 | Code: LMS-059 | Domain: Trang Quản lý & Báo lỗi cho Admin | Sub: Migration | Name: Giao diện trực quan hiển thị tiến trình | Phase: HỦY | BE: Cancelled | FE: Cancelled | All: Cancelled
+Row 68 | Code: LMS-060 | Domain: Trang Quản lý & Báo lỗi cho Admin | Sub: Migration | Name: Tự động gom riêng các tài khoản bị lỗi | Phase: 1 | BE: In Progress | FE: In Progress | All: In Progress
+Row 69 | Code: LMS-061 | Domain: Trang Quản lý & Báo lỗi cho Admin | Sub: Migration | Name: Xử lý nhanh tài khoản lỗi | Phase: 1 | BE: In Progress | FE: In Progress | All: In Progress
