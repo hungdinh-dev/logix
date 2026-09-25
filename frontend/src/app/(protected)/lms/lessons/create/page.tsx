@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowLeft, Save, Eye, Edit2, Sparkles, BookOpen } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -97,6 +97,10 @@ export default function LessonCreatePage() {
   const [content, setContent] = useState(OBJECTS_TEMPLATE)
   const [previewMode, setPreviewMode] = useState(false)
   const [savedData, setSavedData] = useState<any>(null)
+
+  useEffect(() => {
+    router.push("/lms/admin/dashboard")
+  }, [])
 
   const handleLoadTemplate = (templateHtml: string, name: string) => {
     setContent(templateHtml)

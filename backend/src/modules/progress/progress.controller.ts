@@ -37,6 +37,16 @@ export class ProgressController {
     const data = await progressService.getAdminDashboardStats()
     return res.json(ApiResponse.success(data, 'Lấy dữ liệu thống kê Admin Dashboard thành công'))
   }
+
+  public getAdminProgressTracking = async (req: AuthenticatedRequest, res: Response) => {
+    const data = await progressService.getAdminProgressTracking(req.query as any)
+    return res.json(ApiResponse.success(data, 'Lấy danh sách theo dõi tiến độ đào tạo thành công'))
+  }
+
+  public getAdminActivities = async (req: AuthenticatedRequest, res: Response) => {
+    const data = await progressService.getAdminActivities(req.query as any)
+    return res.json(ApiResponse.success(data, 'Lấy nhật ký hoạt động học tập thành công'))
+  }
 }
 
 export const progressController = new ProgressController()

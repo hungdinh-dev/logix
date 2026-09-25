@@ -9,6 +9,8 @@ const router = Router()
 
 router.get('/dashboard', authenticateToken, asyncHandler(progressController.getDashboardProgress))
 router.get('/admin-dashboard', authenticateToken, asyncHandler(progressController.getAdminDashboardStats))
+router.get('/admin-tracking', authenticateToken, asyncHandler(progressController.getAdminProgressTracking))
+router.get('/admin-activities', authenticateToken, asyncHandler(progressController.getAdminActivities))
 router.get('/course/:courseId', authenticateToken, asyncHandler(progressController.getCourseProgress))
 router.post(
   '/lesson',

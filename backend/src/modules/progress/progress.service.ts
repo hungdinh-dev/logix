@@ -76,6 +76,20 @@ export class ProgressService {
     }
 
     const course = lesson.module.course
+
+    // Guard: Người dùng chưa ghi danh khóa học thì toàn bộ bài học đều khóa
+    const enrollment = await prisma.courseEnrollment.findUnique({
+      where: {
+        userId_courseId: {
+          userId,
+          courseId: course.id,
+        },
+      },
+    })
+    if (!enrollment) {
+      return false
+    }
+
     const progressionMode = (course as any).progressionMode || 'LINEAR_LESSON'
 
     // Mode 1: FREE - Không khóa bài nào
@@ -188,10 +202,12 @@ export class ProgressService {
 
     let foundFirstIncomplete = false
 
-    const modulesWithLockStatus = course.modules.map((module, modIndex) => {
-      let isModuleLocked = false
+    const isEnrolled = Boolean(enrollment)
 
-      if (progressionMode === 'LINEAR_MODULE' && modIndex > 0) {
+    const modulesWithLockStatus = course.modules.map((module, modIndex) => {
+      let isModuleLocked = !isEnrolled
+
+      if (isEnrolled && progressionMode === 'LINEAR_MODULE' && modIndex > 0) {
         const prevModule = course.modules[modIndex - 1]
         const isPrevModuleCompleted = prevModule.lessons.every((l) => completedLessonIds.has(l.id))
         isModuleLocked = !isPrevModuleCompleted
@@ -201,21 +217,25 @@ export class ProgressService {
         const progress = progressMap.get(lesson.id)
         const isCompleted = Boolean(progress?.isCompleted)
 
-        let isLocked = false
-        if (progressionMode === 'FREE') {
-          isLocked = false
-        } else if (progressionMode === 'LINEAR_MODULE') {
-          isLocked = isModuleLocked
-        } else if (progressionMode === 'LINEAR_LESSON') {
-          const lessonIndex = allOrderedLessons.findIndex((l) => l.id === lesson.id)
-          if (lessonIndex > 0) {
-            const prevLesson = allOrderedLessons[lessonIndex - 1]
-            isLocked = !completedLessonIds.has(prevLesson.id)
+        let isLocked = !isEnrolled
+        if (isEnrolled) {
+          if (progressionMode === 'FREE') {
+            isLocked = false
+          } else if (progressionMode === 'LINEAR_MODULE') {
+            isLocked = isModuleLocked
+          } else if (progressionMode === 'LINEAR_LESSON') {
+            const lessonIndex = allOrderedLessons.findIndex((l) => l.id === lesson.id)
+            if (lessonIndex > 0) {
+              const prevLesson = allOrderedLessons[lessonIndex - 1]
+              isLocked = !completedLessonIds.has(prevLesson.id)
+            }
           }
         }
 
         let status: 'completed' | 'current' | 'locked' | 'available' = 'available'
-        if (isCompleted) {
+        if (!isEnrolled) {
+          status = 'locked'
+        } else if (isCompleted) {
           status = 'completed'
         } else if (isLocked) {
           status = 'locked'
@@ -647,6 +667,444 @@ export class ProgressService {
       },
       topCourses,
       recentActivities,
+    }
+  }
+
+  // ==========================================
+  // LMS-045: Admin Progress Tracking (Real DB)
+  // ==========================================
+
+  public async getAdminProgressTracking(params?: {
+    page?: number
+    pageSize?: number
+    search?: string
+    courseId?: string
+    departmentId?: string
+    storeId?: string
+    status?: string
+    sortField?: string
+    sortDirection?: string
+  }) {
+    const page = Math.max(1, Number(params?.page) || 1)
+    const pageSize = Math.max(1, Math.min(100, Number(params?.pageSize) || 10))
+    const skip = (page - 1) * pageSize
+
+    const where: any = {}
+
+    if (params?.status && params.status !== 'ALL') {
+      where.status = params.status
+    }
+
+    if (params?.courseId && params.courseId !== 'ALL') {
+      where.courseId = params.courseId
+    }
+
+    const userWhere: any = {}
+    if (params?.departmentId && params.departmentId !== 'ALL') {
+      userWhere.departmentId = params.departmentId
+    }
+    if (params?.storeId && params.storeId !== 'ALL') {
+      userWhere.storeId = params.storeId
+    }
+
+    if (params?.search && params.search.trim()) {
+      const q = params.search.trim()
+      where.OR = [
+        { user: { fullName: { contains: q, mode: 'insensitive' } } },
+        { user: { email: { contains: q, mode: 'insensitive' } } },
+        { user: { employeeCode: { contains: q, mode: 'insensitive' } } },
+        { course: { title: { contains: q, mode: 'insensitive' } } },
+        { course: { code: { contains: q, mode: 'insensitive' } } },
+      ]
+    }
+
+    if (Object.keys(userWhere).length > 0) {
+      where.user = { ...where.user, ...userWhere }
+    }
+
+    // Determine sorting
+    let orderBy: any = { enrolledAt: 'desc' }
+    if (params?.sortField === 'completionPercentage') {
+      orderBy = { completionPercentage: params.sortDirection === 'asc' ? 'asc' : 'desc' }
+    } else if (params?.sortField === 'completedAt') {
+      orderBy = { completedAt: params.sortDirection === 'asc' ? 'asc' : 'desc' }
+    } else if (params?.sortField === 'fullName') {
+      orderBy = { user: { fullName: params.sortDirection === 'asc' ? 'asc' : 'desc' } }
+    } else if (params?.sortField === 'courseTitle') {
+      orderBy = { course: { title: params.sortDirection === 'asc' ? 'asc' : 'desc' } }
+    } else if (params?.sortField === 'enrolledAt') {
+      orderBy = { enrolledAt: params.sortDirection === 'asc' ? 'asc' : 'desc' }
+    }
+
+    const [total, enrollments, allEnrollmentsStats, coursesList, departmentsList] = await Promise.all([
+      prisma.courseEnrollment.count({ where }),
+      prisma.courseEnrollment.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy,
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              employeeCode: true,
+              department: { select: { id: true, deptName: true, deptCode: true } },
+              position: { select: { id: true, positionName: true, positionCode: true } },
+              store: { select: { id: true, storeName: true, storeCode: true } },
+            },
+          },
+          course: {
+            select: {
+              id: true,
+              title: true,
+              code: true,
+              isMandatory: true,
+              durationDays: true,
+              _count: {
+                select: {
+                  modules: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      // Stats count across the whole system
+      prisma.courseEnrollment.groupBy({
+        by: ['status'],
+        _count: { id: true },
+        _avg: { completionPercentage: true },
+      }),
+      // Courses list for filter dropdown
+      prisma.course.findMany({
+        where: { isActive: true },
+        select: { id: true, title: true, code: true },
+        orderBy: { title: 'asc' },
+      }),
+      // Departments list for filter dropdown
+      prisma.department.findMany({
+        where: { isActive: true },
+        select: { id: true, deptName: true, deptCode: true },
+        orderBy: { deptName: 'asc' },
+      }),
+    ])
+
+    let totalEnrollments = 0
+    let completedCount = 0
+    let inProgressCount = 0
+    let enrolledCount = 0
+    let sumRate = 0
+    let countRate = 0
+
+    for (const stat of allEnrollmentsStats) {
+      totalEnrollments += stat._count.id
+      if (stat.status === 'COMPLETED') completedCount = stat._count.id
+      if (stat.status === 'IN_PROGRESS') inProgressCount = stat._count.id
+      if (stat.status === 'ENROLLED') enrolledCount = stat._count.id
+      if (stat._avg.completionPercentage !== null) {
+        sumRate += (stat._avg.completionPercentage || 0) * stat._count.id
+        countRate += stat._count.id
+      }
+    }
+
+    const avgCompletionRate = countRate > 0 ? Math.round((sumRate / countRate) * 10) / 10 : 0
+
+    // Get highest quiz score for each enrollment if any
+    const userIds = enrollments.map((e) => e.userId)
+    const lessonProgresses = await prisma.lessonProgress.findMany({
+      where: {
+        userId: { in: userIds },
+        quizHighestScore: { not: null },
+      },
+      select: {
+        userId: true,
+        quizHighestScore: true,
+        lesson: {
+          select: {
+            moduleId: true,
+            module: { select: { courseId: true } },
+          },
+        },
+      },
+    })
+
+    const items = enrollments.map((enr) => {
+      // Find highest score in this course for this user
+      const userScores = lessonProgresses
+        .filter((lp) => lp.userId === enr.userId && lp.lesson.module.courseId === enr.courseId)
+        .map((lp) => lp.quizHighestScore || 0)
+      const highestQuizScore = userScores.length > 0 ? Math.max(...userScores) : null
+
+      return {
+        id: enr.id,
+        userId: enr.userId,
+        courseId: enr.courseId,
+        status: enr.status,
+        completionPercentage: Math.round(enr.completionPercentage || 0),
+        isPassed: enr.isPassed,
+        enrollmentSource: enr.enrollmentSource,
+        enrolledAt: enr.enrolledAt,
+        completedAt: enr.completedAt,
+        dueDate: enr.dueDate,
+        highestQuizScore,
+        user: enr.user,
+        course: enr.course,
+      }
+    })
+
+    return {
+      items,
+      stats: {
+        totalEnrollments,
+        completedCount,
+        inProgressCount,
+        enrolledCount,
+        avgCompletionRate,
+      },
+      filters: {
+        courses: coursesList,
+        departments: departmentsList,
+      },
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize) || 1,
+      },
+    }
+  }
+
+  // ==========================================
+  // LMS-046: Admin Learning Activities (Live Feed)
+  // ==========================================
+
+  public async getAdminActivities(params?: {
+    page?: number
+    pageSize?: number
+    search?: string
+    type?: string
+    status?: string
+  }) {
+    const page = Math.max(1, Number(params?.page) || 1)
+    const pageSize = Math.max(1, Math.min(100, Number(params?.pageSize) || 15))
+    const search = params?.search?.trim() ? params.search.trim().toLowerCase() : ''
+    const type = params?.type || 'ALL'
+    const status = params?.status || 'ALL'
+
+    // Fetch quiz attempts, lesson progresses, and course enrollments
+    const [recentQuizAttempts, recentLessonProgress, recentEnrollments] = await Promise.all([
+      prisma.quizAttempt.findMany({
+        take: 100,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              department: { select: { deptName: true } },
+            },
+          },
+          quiz: {
+            select: {
+              id: true,
+              title: true,
+              lesson: {
+                select: {
+                  title: true,
+                  module: {
+                    select: {
+                      course: { select: { id: true, title: true, code: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.lessonProgress.findMany({
+        where: { isCompleted: true },
+        take: 100,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              department: { select: { deptName: true } },
+            },
+          },
+          lesson: {
+            select: {
+              id: true,
+              title: true,
+              lessonType: true,
+              module: {
+                select: {
+                  course: { select: { id: true, title: true, code: true } },
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.courseEnrollment.findMany({
+        take: 100,
+        orderBy: { enrolledAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              department: { select: { deptName: true } },
+            },
+          },
+          course: { select: { id: true, title: true, code: true } },
+        },
+      }),
+    ])
+
+    const getAvatarInitials = (name: string) => {
+      if (!name) return 'U'
+      const parts = name.trim().split(/\s+/)
+      if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    }
+
+    type ActivityItem = {
+      id: string
+      type: 'QUIZ' | 'LESSON' | 'COURSE'
+      userId: string
+      user: string
+      email: string
+      avatar: string
+      department?: string
+      action: string
+      target: string
+      courseTitle: string
+      status: 'SUCCESS' | 'ACTIVE' | 'FAILED'
+      statusLabel: string
+      score?: number | null
+      timestamp: string
+    }
+
+    const allActivities: ActivityItem[] = []
+
+    for (const qa of recentQuizAttempts) {
+      if (!qa.user || !qa.quiz?.lesson?.module?.course) continue
+      const courseTitle = qa.quiz.lesson.module.course.title
+      allActivities.push({
+        id: `quiz-${qa.id}`,
+        type: 'QUIZ',
+        userId: qa.user.id,
+        user: qa.user.fullName,
+        email: qa.user.email || '',
+        avatar: getAvatarInitials(qa.user.fullName),
+        department: qa.user.department?.deptName,
+        action: qa.isPassed ? 'Hoàn thành bài kiểm tra' : 'Làm bài kiểm tra (Chưa đạt)',
+        target: qa.quiz.title,
+        courseTitle,
+        status: qa.isPassed ? 'SUCCESS' : 'FAILED',
+        statusLabel: qa.isPassed ? `Đạt (${qa.score || 100}%)` : `Chưa đạt (${qa.score || 0}%)`,
+        score: qa.score,
+        timestamp: (qa.submittedAt || qa.startedAt).toISOString(),
+      })
+    }
+
+    for (const lp of recentLessonProgress) {
+      if (!lp.user || !lp.lesson?.module?.course) continue
+      const courseTitle = lp.lesson.module.course.title
+      allActivities.push({
+        id: `lesson-${lp.id}`,
+        type: 'LESSON',
+        userId: lp.user.id,
+        user: lp.user.fullName,
+        email: lp.user.email || '',
+        avatar: getAvatarInitials(lp.user.fullName),
+        department: lp.user.department?.deptName,
+        action:
+          lp.lesson.lessonType === 'VIDEO'
+            ? 'Hoàn thành bài học Video'
+            : 'Hoàn thành bài đọc / tài liệu',
+        target: lp.lesson.title,
+        courseTitle,
+        status: 'SUCCESS',
+        statusLabel: 'Hoàn thành',
+        timestamp: (lp.completedAt || lp.updatedAt).toISOString(),
+      })
+    }
+
+    for (const enr of recentEnrollments) {
+      if (!enr.user || !enr.course) continue
+      const isCompleted = enr.status === 'COMPLETED'
+      allActivities.push({
+        id: `enroll-${enr.id}`,
+        type: 'COURSE',
+        userId: enr.user.id,
+        user: enr.user.fullName,
+        email: enr.user.email || '',
+        avatar: getAvatarInitials(enr.user.fullName),
+        department: enr.user.department?.deptName,
+        action: isCompleted ? 'Hoàn thành toàn bộ khóa học' : 'Ghi danh khóa học',
+        target: enr.course.title,
+        courseTitle: enr.course.title,
+        status: isCompleted ? 'SUCCESS' : 'ACTIVE',
+        statusLabel: isCompleted ? 'Đạt chứng chỉ' : 'Đang học',
+        timestamp: (enr.completedAt || enr.enrolledAt).toISOString(),
+      })
+    }
+
+    // Sort by timestamp desc
+    allActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+    // Apply filters
+    let filtered = allActivities
+
+    if (type !== 'ALL') {
+      filtered = filtered.filter((a) => a.type === type)
+    }
+
+    if (status !== 'ALL') {
+      filtered = filtered.filter((a) => a.status === status)
+    }
+
+    if (search) {
+      filtered = filtered.filter(
+        (a) =>
+          a.user.toLowerCase().includes(search) ||
+          a.email.toLowerCase().includes(search) ||
+          a.target.toLowerCase().includes(search) ||
+          a.courseTitle.toLowerCase().includes(search) ||
+          (a.department && a.department.toLowerCase().includes(search))
+      )
+    }
+
+    const total = filtered.length
+    const skip = (page - 1) * pageSize
+    const items = filtered.slice(skip, skip + pageSize)
+
+    // Calculate stats
+    const stats = {
+      totalActivities: allActivities.length,
+      quizCount: allActivities.filter((a) => a.type === 'QUIZ').length,
+      lessonCount: allActivities.filter((a) => a.type === 'LESSON').length,
+      courseCount: allActivities.filter((a) => a.type === 'COURSE').length,
+    }
+
+    return {
+      items,
+      stats,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize) || 1,
+      },
     }
   }
 }
