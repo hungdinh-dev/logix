@@ -198,6 +198,9 @@ export class CourseService {
         targetDepartment: true,
         targetStore: true,
         certificateTemplate: true,
+        instructor: {
+          select: { id: true, fullName: true, email: true, employeeCode: true },
+        },
         createdByUser: {
           select: { id: true, fullName: true, email: true, employeeCode: true },
         },
@@ -230,6 +233,9 @@ export class CourseService {
         targetDepartment: true,
         targetStore: true,
         certificateTemplate: true,
+        instructor: {
+          select: { id: true, fullName: true, email: true, employeeCode: true },
+        },
         createdByUser: {
           select: { id: true, fullName: true, email: true, employeeCode: true },
         },
@@ -242,6 +248,9 @@ export class CourseService {
             lessons: {
               orderBy: { sortOrder: 'asc' },
               include: {
+                resources: {
+                  orderBy: { sortOrder: 'asc' },
+                },
                 quiz: {
                   include: {
                     questions: {
@@ -332,6 +341,9 @@ export class CourseService {
         thumbnailUrl: dto.thumbnailUrl,
         categoryId: dto.categoryId,
         courseType: dto.courseType || 'STANDARD',
+        level: (dto.level as any) || 'BEGINNER',
+        learningOutcomes: dto.learningOutcomes || [],
+        instructorId: dto.instructorId || null,
         isMandatory: dto.isMandatory || false,
         durationDays: dto.durationDays !== undefined ? dto.durationDays : null,
         progressionMode: (dto.progressionMode as any) || 'FREE',
@@ -352,6 +364,7 @@ export class CourseService {
         targetDepartment: true,
         targetStore: true,
         certificateTemplate: true,
+        instructor: { select: { id: true, fullName: true, email: true } },
         createdByUser: { select: { id: true, fullName: true, email: true } },
         updatedByUser: { select: { id: true, fullName: true, email: true } },
       },
@@ -387,6 +400,10 @@ export class CourseService {
         thumbnailUrl: dto.thumbnailUrl,
         categoryId: dto.categoryId,
         courseType: dto.courseType,
+        level: dto.level as any,
+        learningOutcomes: dto.learningOutcomes,
+        instructorId:
+          dto.instructorId !== undefined ? dto.instructorId : undefined,
         isMandatory: dto.isMandatory,
         durationDays: dto.durationDays,
         progressionMode: dto.progressionMode as any,
@@ -408,6 +425,7 @@ export class CourseService {
         targetDepartment: true,
         targetStore: true,
         certificateTemplate: true,
+        instructor: { select: { id: true, fullName: true, email: true } },
         createdByUser: { select: { id: true, fullName: true, email: true } },
         updatedByUser: { select: { id: true, fullName: true, email: true } },
       },
@@ -966,8 +984,10 @@ export class CourseService {
       const modulesToDelete = existingModules.filter(
         (m) => !submittedModuleIds.includes(m.id)
       )
-      for (const m of modulesToDelete) {
-        await tx.courseModule.delete({ where: { id: m.id } })
+      if (modulesToDelete.length > 0) {
+        await tx.courseModule.deleteMany({
+          where: { id: { in: modulesToDelete.map((m) => m.id) } },
+        })
       }
 
       // 3. Upsert Modules & Lessons
@@ -1006,8 +1026,10 @@ export class CourseService {
         const lessonsToDelete = existingLessons.filter(
           (l) => !submittedLessonIds.includes(l.id)
         )
-        for (const l of lessonsToDelete) {
-          await tx.lesson.delete({ where: { id: l.id } })
+        if (lessonsToDelete.length > 0) {
+          await tx.lesson.deleteMany({
+            where: { id: { in: lessonsToDelete.map((l) => l.id) } },
+          })
         }
 
         let lesSortOrder = 1
@@ -1104,23 +1126,69 @@ export class CourseService {
                     quizId: quiz.id,
                     questionText: q.questionText,
                     questionType: (q.questionType as any) || 'SINGLE_CHOICE',
+                    explanation: q.explanation || null,
                     sortOrder: qIdx + 1,
                   },
                 })
 
                 if (q.options && q.options.length > 0) {
-                  for (let oIdx = 0; oIdx < q.options.length; oIdx++) {
-                    const opt = q.options[oIdx]
-                    await tx.quizQuestionOption.create({
-                      data: {
-                        questionId: createdQ.id,
-                        optionText: opt.text,
-                        isCorrect: opt.isCorrect ?? false,
-                        sortOrder: oIdx + 1,
-                      },
-                    })
-                  }
+                  await tx.quizQuestionOption.createMany({
+                    data: q.options.map((opt, oIdx) => ({
+                      questionId: createdQ.id,
+                      optionText: opt.text,
+                      isCorrect: opt.isCorrect ?? false,
+                      sortOrder: oIdx + 1,
+                    })),
+                  })
                 }
+              }
+            }
+          }
+
+          // Handle Lesson Resources
+          if (lesData.resources !== undefined) {
+            const submittedResourceIds = (lesData.resources || [])
+              .map((r: any) => r.id)
+              .filter((id: any): id is string => !!id && !id.startsWith('res-'))
+
+            await tx.lessonResource.deleteMany({
+              where: {
+                lessonId: targetLessonId!,
+                id: { notIn: submittedResourceIds },
+              },
+            })
+
+            let resSortOrder = 1
+            for (const resData of lesData.resources || []) {
+              const isNewRes = !resData.id || resData.id.startsWith('res-')
+              if (isNewRes) {
+                await tx.lessonResource.create({
+                  data: {
+                    lessonId: targetLessonId!,
+                    title: resData.title,
+                    resourceType: (resData.resourceType as any) || 'DOCUMENT_FILE',
+                    url: resData.url,
+                    storagePath: resData.storagePath || null,
+                    fileSizeBytes: resData.fileSizeBytes || null,
+                    fileExtension: resData.fileExtension || null,
+                    sortOrder: resSortOrder++,
+                    isDownloadable: resData.isDownloadable ?? true,
+                  },
+                })
+              } else {
+                await tx.lessonResource.update({
+                  where: { id: resData.id },
+                  data: {
+                    title: resData.title,
+                    resourceType: (resData.resourceType as any) || 'DOCUMENT_FILE',
+                    url: resData.url,
+                    storagePath: resData.storagePath || null,
+                    fileSizeBytes: resData.fileSizeBytes || null,
+                    fileExtension: resData.fileExtension || null,
+                    sortOrder: resSortOrder++,
+                    isDownloadable: resData.isDownloadable ?? true,
+                  },
+                })
               }
             }
           }
@@ -1143,6 +1211,9 @@ export class CourseService {
               lessons: {
                 orderBy: { sortOrder: 'asc' },
                 include: {
+                  resources: {
+                    orderBy: { sortOrder: 'asc' },
+                  },
                   quiz: {
                     include: {
                       questions: {
@@ -1161,6 +1232,9 @@ export class CourseService {
           },
         },
       })
+    }, {
+      maxWait: 10000,
+      timeout: 60000,
     })
 
     // ==========================================
@@ -1248,6 +1322,126 @@ export class CourseService {
     })
 
     return synced
+  }
+
+  // ==========================================
+  // 6. COURSE ENROLLMENTS (LMS Admin Side Peek)
+  // ==========================================
+
+  public async getCourseEnrollments(
+    courseId: string,
+    params?: {
+      search?: string
+      departmentId?: string
+      storeId?: string
+      status?: string
+    }
+  ) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: {
+        id: true,
+        code: true,
+        title: true,
+        status: true,
+        isMandatory: true,
+        durationDays: true,
+      },
+    })
+
+    if (!course) {
+      throw new NotFoundError('Khóa học')
+    }
+
+    const whereCondition: any = {
+      courseId,
+    }
+
+    if (params?.status) {
+      whereCondition.status = params.status
+    }
+
+    const userWhere: any = {}
+
+    if (params?.departmentId) {
+      userWhere.departmentId = params.departmentId
+    }
+
+    if (params?.storeId) {
+      userWhere.storeId = params.storeId
+    }
+
+    if (params?.search) {
+      const searchTerm = params.search.trim()
+      userWhere.OR = [
+        { fullName: { contains: searchTerm, mode: 'insensitive' } },
+        { email: { contains: searchTerm, mode: 'insensitive' } },
+        { employeeCode: { contains: searchTerm, mode: 'insensitive' } },
+      ]
+    }
+
+    if (Object.keys(userWhere).length > 0) {
+      whereCondition.user = userWhere
+    }
+
+    const enrollments = await prisma.courseEnrollment.findMany({
+      where: whereCondition,
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            employeeCode: true,
+            status: true,
+            userType: true,
+            employmentStatus: true,
+            department: {
+              select: { id: true, deptName: true, deptCode: true },
+            },
+            position: {
+              select: { id: true, positionName: true, positionCode: true },
+            },
+            store: {
+              select: { id: true, storeName: true, storeCode: true },
+            },
+          },
+        },
+      },
+      orderBy: [
+        { status: 'asc' },
+        { enrolledAt: 'desc' },
+      ],
+    })
+
+    // Toàn bộ các lượt ghi danh của khóa để tính stats tổng quát
+    const allEnrollmentsStats = await prisma.courseEnrollment.groupBy({
+      by: ['status'],
+      where: { courseId },
+      _count: { id: true },
+    })
+
+    const stats = {
+      total: 0,
+      enrolled: 0,
+      inProgress: 0,
+      completed: 0,
+      cancelled: 0,
+    }
+
+    for (const item of allEnrollmentsStats) {
+      stats.total += item._count.id
+      if (item.status === 'ENROLLED') stats.enrolled = item._count.id
+      if (item.status === 'IN_PROGRESS') stats.inProgress = item._count.id
+      if (item.status === 'COMPLETED') stats.completed = item._count.id
+      if (item.status === 'CANCELLED') stats.cancelled = item._count.id
+    }
+
+    return {
+      course,
+      stats,
+      enrollments,
+    }
   }
 }
 

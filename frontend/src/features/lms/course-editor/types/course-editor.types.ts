@@ -9,14 +9,22 @@ export type QuizQuestionOption = {
 export type QuizQuestionItem = {
   id: string
   questionText: string
+  questionType?: 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE'
+  explanation?: string | null
   options: QuizQuestionOption[]
 }
+
+export type ResourceType = 'EXTERNAL_LINK' | 'DOCUMENT_FILE'
 
 export type ResourceAttachment = {
   id: string
   name: string
-  size: string
   url: string
+  size?: string
+  type?: ResourceType
+  description?: string | null
+  extension?: string | null
+  fileSizeBytes?: number | null
 }
 
 export type TranscriptEntry = {

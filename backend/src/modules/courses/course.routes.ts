@@ -142,6 +142,9 @@ router.post(
 // LMS-044 & LMS-011: Ghi danh cá nhân
 router.post('/:id/enroll', authenticateToken, asyncHandler(courseController.enrollCourse))
 
+// Danh sách học viên ghi danh khóa học (Admin Side Peek)
+router.get('/:id/enrollments', authenticateToken, asyncHandler(courseController.getCourseEnrollments))
+
 // ==========================================
 // Curriculum & Module Routes (LMS-017)
 // ==========================================

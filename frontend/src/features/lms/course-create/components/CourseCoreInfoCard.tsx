@@ -8,8 +8,11 @@ import {
   CheckCircle,
   Image as ImageIcon,
   Loader2,
+  X,
+  Plus,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -42,6 +45,20 @@ export function CourseCoreInfoCard({
   onSlugChange,
   onRegenerateCode,
 }: CourseCoreInfoCardProps) {
+  const [newOutcome, setNewOutcome] = React.useState('')
+
+  const handleAddOutcome = () => {
+    if (!newOutcome.trim()) return
+    const current = formData.learningOutcomes || []
+    setFormData({ ...formData, learningOutcomes: [...current, newOutcome.trim()] })
+    setNewOutcome('')
+  }
+
+  const handleRemoveOutcome = (index: number) => {
+    const current = formData.learningOutcomes || []
+    setFormData({ ...formData, learningOutcomes: current.filter((_, i) => i !== index) })
+  }
+
   return (
     <Card className="border-border shadow-sm">
       <CardHeader className="pb-3 border-b flex flex-row items-center justify-between">
@@ -177,6 +194,67 @@ export function CourseCoreInfoCard({
             placeholder="Ví dụ:&#10;# Giới thiệu khóa học&#10;Khóa học trang bị cho học viên toàn bộ kiến thức và kỹ năng...&#10;&#10;### Mục tiêu đầu ra:&#10;- Nắm vững quy trình vận hành&#10;- Sử dụng thành thạo hệ thống"
             minHeight="180px"
           />
+        </div>
+
+        {/* Mục tiêu đầu ra (Learning Outcomes / What You'll Learn) */}
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between">
+            <Label className="font-semibold text-xs flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Mục tiêu đạt được (What You'll Learn)</span>
+            </Label>
+            <span className="text-[10px] text-muted-foreground">
+              Mỗi mục tiêu là 1 kỹ năng/chuẩn đầu ra thực tế
+            </span>
+          </div>
+
+          <div className="flex gap-2">
+            <Input
+              placeholder="vd: Nắm vững kiến trúc phân tầng 3-Tier và Clean Architecture..."
+              value={newOutcome}
+              onChange={(e) => setNewOutcome(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleAddOutcome()
+                }
+              }}
+              className="text-xs flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAddOutcome}
+              className="text-xs shrink-0 gap-1"
+            >
+              <Plus className="h-3 w-3" />
+              <span>Thêm</span>
+            </Button>
+          </div>
+
+          {formData.learningOutcomes && formData.learningOutcomes.length > 0 && (
+            <ul className="space-y-1.5 pt-1">
+              {formData.learningOutcomes.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-center justify-between p-2 rounded-lg bg-muted/40 border text-xs gap-2"
+                >
+                  <div className="flex items-start gap-2 min-w-0">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-foreground text-xs leading-snug">{item}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveOutcome(idx)}
+                    className="text-muted-foreground hover:text-destructive p-0.5 rounded transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Ảnh đại diện / Thumbnail Khóa học (Chuẩn 16:9) */}

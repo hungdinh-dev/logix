@@ -172,6 +172,17 @@ export class CourseController {
     const course = await courseService.syncCourseCurriculum(req.params.id, req.body, req.user?.id)
     return res.json(ApiResponse.success(course, 'Đồng bộ giáo trình khóa học thành công'))
   }
+
+  public getCourseEnrollments = async (req: AuthenticatedRequest, res: Response) => {
+    const { search, departmentId, storeId, status } = req.query
+    const result = await courseService.getCourseEnrollments(req.params.id, {
+      search: search ? String(search) : undefined,
+      departmentId: departmentId ? String(departmentId) : undefined,
+      storeId: storeId ? String(storeId) : undefined,
+      status: status ? String(status) : undefined,
+    })
+    return res.json(ApiResponse.success(result, 'Lấy danh sách học viên ghi danh thành công'))
+  }
 }
 
 export const courseController = new CourseController()

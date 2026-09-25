@@ -54,11 +54,22 @@ export function useCurriculumState(courseId: string) {
                   }
                 })()
               : [],
+            resources: (l.resources || []).map((r: any) => ({
+              id: r.id,
+              name: r.title,
+              url: r.url,
+              type: r.resourceType,
+              size: r.fileSizeBytes ? `${Math.round(r.fileSizeBytes / 1024)} KB` : undefined,
+              extension: r.fileExtension,
+              description: r.description,
+            })),
             quizPassScore: l.quiz?.passScore || 80,
             quizTimeLimit: l.quiz?.timeLimitMinutes || 15,
             quizQuestions: l.quiz?.questions?.map((q: any) => ({
               id: q.id,
               questionText: q.questionText,
+              questionType: q.questionType || 'SINGLE_CHOICE',
+              explanation: q.explanation || '',
               options: (q.options || []).map((o: any) => ({
                 id: o.id,
                 text: o.optionText,
@@ -231,6 +242,8 @@ export function useCurriculumState(courseId: string) {
     const newQ: QuizQuestionItem = {
       id: `q-${Date.now()}`,
       questionText: `Câu hỏi số ${currentQuestions.length + 1}: Nhập nội dung câu hỏi tại đây...`,
+      questionType: 'SINGLE_CHOICE',
+      explanation: '',
       options: [
         { id: `opt-${Date.now()}-1`, text: 'Lựa chọn A (Đúng)', isCorrect: true },
         { id: `opt-${Date.now()}-2`, text: 'Lựa chọn B', isCorrect: false },
@@ -278,11 +291,22 @@ export function useCurriculumState(courseId: string) {
                     }
                   })()
                 : [],
-              quizPassScore: l.quiz?.passScore || 80,
+              resources: (l.resources || []).map((r: any) => ({
+              id: r.id,
+              name: r.title,
+              url: r.url,
+              type: r.resourceType,
+              size: r.fileSizeBytes ? `${Math.round(r.fileSizeBytes / 1024)} KB` : undefined,
+              extension: r.fileExtension,
+              description: r.description,
+            })),
+            quizPassScore: l.quiz?.passScore || 80,
               quizTimeLimit: l.quiz?.timeLimitMinutes || 15,
               quizQuestions: l.quiz?.questions?.map((q: any) => ({
                 id: q.id,
                 questionText: q.questionText,
+                questionType: q.questionType || 'SINGLE_CHOICE',
+                explanation: q.explanation || '',
                 options: (q.options || []).map((o: any) => ({
                   id: o.id,
                   text: o.optionText,

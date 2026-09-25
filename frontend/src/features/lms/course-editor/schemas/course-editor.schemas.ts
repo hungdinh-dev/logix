@@ -9,6 +9,8 @@ export const quizQuestionOptionSchema = z.object({
 export const quizQuestionSchema = z.object({
   id: z.string().optional(),
   questionText: z.string().min(1, 'Nội dung câu hỏi là bắt buộc'),
+  questionType: z.enum(['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE']).optional().default('SINGLE_CHOICE'),
+  explanation: z.string().optional(),
   options: z.array(quizQuestionOptionSchema).min(2, 'Phải có ít nhất 2 đáp án lựa chọn'),
 })
 

@@ -25,6 +25,15 @@ export const courseEditorService = {
           bodyHtml: l.type === 'ARTICLE' ? (l.content || '') : null,
           sopCode: l.sopCode || null,
           allowSeeking: l.allowSeeking !== false,
+          resources: (l.resources || []).map((r, rIdx) => ({
+            id: r.id.startsWith('res-') ? undefined : r.id,
+            title: r.name,
+            url: r.url,
+            resourceType: (r.type as any) || 'DOCUMENT_FILE',
+            sortOrder: rIdx + 1,
+            fileExtension: r.extension || null,
+            fileSizeBytes: r.fileSizeBytes || null,
+          })),
           checklistItems:
             l.transcripts && l.transcripts.length > 0
               ? JSON.stringify(l.transcripts)
@@ -34,7 +43,8 @@ export const courseEditorService = {
           quizQuestions: (l.quizQuestions || []).map((q) => ({
             id: q.id.startsWith('q-') ? undefined : q.id,
             questionText: q.questionText,
-            questionType: 'SINGLE_CHOICE' as const,
+            explanation: q.explanation || null,
+            questionType: (q.questionType || 'SINGLE_CHOICE') as 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'TRUE_FALSE',
             options: (q.options || []).map((o) => ({
               id: o.id.startsWith('opt-') ? undefined : o.id,
               text: o.text,

@@ -45,6 +45,9 @@ export const createCourseSchema = z.object({
     targetDepartmentId: z.string().nullable().optional(), // LMS-008
     targetStoreId: z.string().nullable().optional(), // LMS-007
     targetEmploymentStatus: z.enum(['PROBATION', 'OFFICIAL', 'TEMPORARY', 'ALL']).nullable().optional(), // LMS-006
+    level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional().default('BEGINNER'),
+    learningOutcomes: z.array(z.string()).optional().default([]),
+    instructorId: z.string().uuid().nullable().optional(),
     hasCertificate: z.boolean().optional().default(false),
     certificateTemplateId: z.string().uuid().nullable().optional(),
   }),
@@ -57,6 +60,9 @@ export const updateCourseSchema = z.object({
     thumbnailUrl: z.string().optional(),
     categoryId: z.string().optional(),
     courseType: z.enum(['STANDARD', 'ATTP', 'ONBOARDING']).optional(),
+    level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
+    learningOutcomes: z.array(z.string()).optional(),
+    instructorId: z.string().uuid().nullable().optional(),
     isMandatory: z.boolean().optional(),
     durationDays: z.number().min(1).nullable().optional(),
     progressionMode: z.enum(['FREE', 'LINEAR_LESSON', 'LINEAR_MODULE']).optional(),
@@ -165,6 +171,19 @@ export const syncCurriculumSchema = z.object({
             sopCode: z.string().nullable().optional(),
             sopType: z.string().nullable().optional(),
             allowSeeking: z.boolean().optional().default(true),
+            resources: z.array(
+              z.object({
+                id: z.string().optional(),
+                title: z.string().min(1, 'Tiêu đề tài nguyên là bắt buộc'),
+                resourceType: z.enum(['EXTERNAL_LINK', 'DOCUMENT_FILE']).optional().default('DOCUMENT_FILE'),
+                url: z.string().min(1, 'Đường dẫn tài nguyên là bắt buộc'),
+                storagePath: z.string().nullable().optional(),
+                fileSizeBytes: z.number().nullable().optional(),
+                fileExtension: z.string().nullable().optional(),
+                sortOrder: z.number().optional().default(1),
+                isDownloadable: z.boolean().optional().default(true),
+              })
+            ).optional().default([]),
             quizPassScore: z.number().optional(),
             quizTimeLimit: z.number().optional(),
             quizQuestions: z.array(
@@ -172,6 +191,7 @@ export const syncCurriculumSchema = z.object({
                 id: z.string().optional(),
                 questionText: z.string().min(1, 'Nội dung câu hỏi là bắt buộc'),
                 questionType: z.enum(['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER']).optional().default('SINGLE_CHOICE'),
+                explanation: z.string().nullable().optional(),
                 options: z.array(
                   z.object({
                     id: z.string().optional(),
@@ -190,3 +210,13 @@ export const syncCurriculumSchema = z.object({
 
 export type SyncCurriculumDto = z.infer<typeof syncCurriculumSchema>['body']
 
+export const getCourseEnrollmentsQuerySchema = z.object({
+  query: z.object({
+    search: z.string().optional(),
+    departmentId: z.string().optional(),
+    storeId: z.string().optional(),
+    status: z.enum(['ENROLLED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
+  }).optional(),
+})
+
+export type GetCourseEnrollmentsQueryDto = z.infer<typeof getCourseEnrollmentsQuerySchema>['query']

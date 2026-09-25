@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { VideoLessonEditor } from './VideoLessonEditor'
 import { ArticleLessonEditor } from './ArticleLessonEditor'
 import { QuizLessonEditor } from './QuizLessonEditor'
+import { LessonResourcesEditor } from './LessonResourcesEditor'
 import type { LessonItem } from '../types/course-editor.types'
 
 interface LessonEditorPanelProps {
@@ -91,6 +92,9 @@ export function LessonEditorPanel({
               onAddQuestion={onAddQuizQuestion}
             />
           )}
+
+          {/* Inline Resources Editor for all lesson types */}
+          <LessonResourcesEditor lesson={selectedLesson} onChange={onChange} />
         </div>
       </div>
     </main>

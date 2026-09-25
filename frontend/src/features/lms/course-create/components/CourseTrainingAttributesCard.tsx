@@ -101,6 +101,40 @@ export function CourseTrainingAttributesCard({
             </div>
           </div>
 
+          {/* Cấp độ đào tạo (Level) */}
+          <div className="space-y-2">
+            <Label className="font-semibold text-xs">Cấp độ đào tạo (Level)</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { level: 'BEGINNER', title: 'Cơ bản', sub: 'Nhập môn / Phổ thông' },
+                { level: 'INTERMEDIATE', title: 'Tiêu chuẩn', sub: 'Vận hành chuyên môn' },
+                { level: 'ADVANCED', title: 'Nâng cao', sub: 'Quản lý & Tối ưu' },
+              ].map((item) => {
+                const isSelected = (formData.level || 'BEGINNER') === item.level
+                return (
+                  <button
+                    key={item.level}
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        level: item.level as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED',
+                      })
+                    }
+                    className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-0.5 ${
+                      isSelected
+                        ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/20 font-bold shadow-sm'
+                        : 'hover:bg-muted/50 text-muted-foreground border-border'
+                    }`}
+                  >
+                    <span className="text-xs font-semibold block leading-tight">{item.title}</span>
+                    <span className="text-[10px] opacity-75 block">{item.sub}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           {/* Khóa học bắt buộc (Mandatory) */}
           <div className="flex items-center justify-between p-3 rounded-xl border bg-muted/20">
             <div className="space-y-0.5">
