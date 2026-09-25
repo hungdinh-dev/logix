@@ -1,6 +1,6 @@
 import { api } from '@/lib/axios'
 import { apiRoutes } from '@/config/api-routes'
-import type { BackendCourse, BackendCategory } from '../types/course.types'
+import type { BackendCourse, BackendCategory, CourseEnrollmentsResponse } from '../types/course.types'
 
 export interface CreateCoursePayload {
   code: string
@@ -10,6 +10,9 @@ export interface CreateCoursePayload {
   description?: string
   thumbnailUrl?: string
   courseType?: 'STANDARD' | 'ATTP' | 'ONBOARDING'
+  level?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
+  learningOutcomes?: string[]
+  instructorId?: string | null
   isMandatory?: boolean
   durationDays?: number | null
   progressionMode?: 'FREE' | 'LINEAR_LESSON' | 'LINEAR_MODULE'
@@ -169,6 +172,20 @@ export const courseApiService = {
   // LMS-044: Enroll Course
   async enrollCourse(courseId: string) {
     const res = await api.post(apiRoutes.courses.enroll(courseId))
+    return res.data?.data
+  },
+
+  // LMS Admin Side Peek: Get Course Enrollments
+  async getCourseEnrollments(
+    courseId: string,
+    params?: {
+      search?: string
+      departmentId?: string
+      storeId?: string
+      status?: string
+    }
+  ): Promise<CourseEnrollmentsResponse> {
+    const res = await api.get(apiRoutes.courses.enrollments(courseId), { params })
     return res.data?.data
   },
 }
