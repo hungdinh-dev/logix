@@ -20,7 +20,7 @@ interface LessonRowProps {
 
 function LessonRow({ courseId, lesson, isEnrolled }: LessonRowProps) {
   const Icon = lesson.type === 'video' ? PlayCircle : lesson.type === 'quiz' ? HelpCircle : FileText;
-  const targetUrl = lesson.type === 'quiz' ? `/lms/quizzes/${lesson.id}` : `/lms/lessons/${lesson.id}`;
+  const targetUrl = `/lms/lessons/${lesson.id}`;
   const isLocked = lesson.locked || !isEnrolled;
 
   const content = (
@@ -92,24 +92,25 @@ export function CourseContentAccordion({ courseId, sections, isEnrolled }: Cours
   );
 
   return (
-    <div className="mb-8 space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Nội dung khóa học</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {sections.length} phần · {totalLessons} bài học
-            {isEnrolled && ` · Đã hoàn thành ${completedLessons}/${totalLessons} bài`}
-          </p>
+    <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      {/* Card Header Bar */}
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-base font-semibold text-foreground">Nội dung khóa học</h2>
+          {!isEnrolled && (
+            <Badge variant="outline" className="text-[11px] text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/40">
+              🔒 Chưa ghi danh
+            </Badge>
+          )}
         </div>
-        {!isEnrolled && (
-          <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/40">
-            🔒 Chưa ghi danh
-          </Badge>
-        )}
+        <span className="text-xs text-muted-foreground font-medium">
+          {sections.length} phần · {totalLessons} bài học
+          {isEnrolled && ` · Đã hoàn thành ${completedLessons}/${totalLessons} bài`}
+        </span>
       </div>
 
       {!isEnrolled && (
-        <div className="flex items-center gap-2.5 rounded-lg border border-amber-300/70 bg-amber-50/60 p-3 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-200">
+        <div className="flex items-center gap-2.5 border-b border-amber-200/60 bg-amber-50/50 px-6 py-2.5 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
           <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <span>
             Giáo trình đang ở chế độ xem mục lục. <strong>Ghi danh khóa học</strong> ở khung bên phải để mở khóa toàn bộ bài học.
@@ -117,9 +118,16 @@ export function CourseContentAccordion({ courseId, sections, isEnrolled }: Cours
         </div>
       )}
 
-      <Accordion type="single" collapsible defaultValue={sections[0]?.id} className="rounded-xl border border-border bg-card">
-        {sections.map((section) => (
-          <AccordionItem key={section.id} value={section.id} className="border-border px-4">
+      <Accordion type="single" collapsible defaultValue={sections[0]?.id} className="w-full">
+        {sections.map((section, idx) => (
+          <AccordionItem
+            key={section.id}
+            value={section.id}
+            className={cn(
+              "border-border px-6",
+              idx === sections.length - 1 && "border-b-0"
+            )}
+          >
             <AccordionTrigger className="py-4 hover:no-underline">
               <div className="flex flex-1 items-center justify-between pr-3">
                 <span className="text-left text-sm font-semibold text-foreground">

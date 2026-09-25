@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, Globe, ExternalLink } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import type { TranscriptLine, ResourceFile } from '../../types/lesson-player.types';
@@ -28,14 +28,21 @@ function TranscriptTab({
             type="button"
             onClick={() => onSeek(line.timestampSeconds)}
             className={cn(
-              'flex w-full cursor-pointer gap-3 rounded-lg px-3 py-2 text-left transition-colors',
-              isCurrent ? 'bg-muted/50' : 'hover:bg-muted/50',
+              'group flex w-full items-start gap-3 rounded-md px-2.5 py-1.5 text-left transition-colors',
+              isCurrent
+                ? 'bg-primary/10 text-primary font-medium'
+                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
             )}
           >
-            <span className="mt-0.5 shrink-0 text-[10px] tabular-nums text-muted-foreground">{line.timestamp}</span>
-            <p className={cn('text-xs leading-relaxed', isCurrent ? 'font-medium text-primary' : 'text-foreground')}>
-              {line.text}
-            </p>
+            <span
+              className={cn(
+                'shrink-0 text-xs font-mono pt-0.5',
+                isCurrent ? 'text-primary font-semibold' : 'text-muted-foreground group-hover:text-foreground'
+              )}
+            >
+              {line.timestamp}
+            </span>
+            <span className="text-xs leading-relaxed">{line.text}</span>
           </button>
         );
       })}
@@ -45,25 +52,61 @@ function TranscriptTab({
 
 /* ── Resources ── */
 function ResourcesTab({ files }: { files: readonly ResourceFile[] }) {
+  if (!files || files.length === 0) {
+    return (
+      <div className="py-8 text-center text-xs text-muted-foreground border border-dashed border-border rounded-lg bg-card/50">
+        Bài học này chưa có tài nguyên đính kèm.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
-      {files.map((file) => (
-        <div key={file.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-          <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-foreground">{file.name}</p>
-            <p className="text-[10px] text-muted-foreground">{file.size}</p>
+      {files.map((file) => {
+        const isLink = file.type === 'EXTERNAL_LINK';
+        return (
+          <div key={file.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 hover:border-border/80 transition-colors">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted/60">
+              {isLink ? (
+                <Globe className="h-5 w-5 text-blue-500" />
+              ) : (
+                <FileText className="h-5 w-5 text-amber-500" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <p className="truncate text-xs font-medium text-foreground">{file.name}</p>
+                <span
+                  className={cn(
+                    'text-[10px] px-1.5 py-0.2 rounded font-medium',
+                    isLink
+                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                  )}
+                >
+                  {isLink ? 'Link ngoài' : file.extension ? file.extension.toUpperCase() : 'Tài liệu'}
+                </span>
+              </div>
+              {file.size && <p className="text-[10px] text-muted-foreground mt-0.5">{file.size}</p>}
+              {isLink && (
+                <p className="text-[10px] text-muted-foreground/80 truncate font-mono mt-0.5">
+                  {file.url}
+                </p>
+              )}
+            </div>
+            <a
+              href={file.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              download={!isLink}
+              aria-label={isLink ? `Open link ${file.name}` : `Download ${file.name}`}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary hover:bg-primary/5"
+            >
+              {isLink ? <ExternalLink className="h-3.5 w-3.5" /> : <Download className="h-3.5 w-3.5" />}
+            </a>
           </div>
-          <a
-            href={file.url}
-            download
-            aria-label={`Download ${file.name}`}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-          >
-            <Download className="h-3.5 w-3.5" />
-          </a>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

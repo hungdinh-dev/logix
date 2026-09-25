@@ -126,14 +126,21 @@ function AiAssistantPanel({ initialMessages }: { initialMessages: readonly ChatM
 
 /* ── Main ── */
 import { ChevronRight } from 'lucide-react';
+import { LessonCommentsList } from '../../../comments/components/LessonCommentsList';
 
 interface LessonRightPanelProps {
-  readonly comments: readonly DiscussionComment[];
+  readonly lessonId?: string;
+  readonly comments?: readonly DiscussionComment[];
   readonly initialAiMessages: readonly ChatMessage[];
   readonly onClose?: () => void;
 }
 
-export function LessonRightPanel({ comments, initialAiMessages, onClose }: LessonRightPanelProps) {
+export function LessonRightPanel({
+  lessonId,
+  comments = [],
+  initialAiMessages,
+  onClose,
+}: LessonRightPanelProps) {
   return (
     <div className="flex h-full w-[320px] shrink-0 flex-col border-l border-border bg-card">
       <Tabs defaultValue="discussion" className="flex h-full flex-col overflow-hidden">
@@ -166,7 +173,11 @@ export function LessonRightPanel({ comments, initialAiMessages, onClose }: Lesso
         </TabsList>
 
         <TabsContent value="discussion" className="flex flex-1 flex-col overflow-hidden px-4 pb-4 pt-2">
-          <DiscussionPanel comments={comments} />
+          {lessonId ? (
+            <LessonCommentsList lessonId={lessonId} />
+          ) : (
+            <DiscussionPanel comments={comments} />
+          )}
         </TabsContent>
         <TabsContent value="ai" className="flex flex-1 flex-col overflow-hidden px-4 pb-4 pt-2">
           <AiAssistantPanel initialMessages={initialAiMessages} />

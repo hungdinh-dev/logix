@@ -6,7 +6,7 @@ import { WhatYouLearnCard } from '../components/course-detail/WhatYouLearnCard'
 import { CourseContentAccordion } from '../components/course-detail/CourseContentAccordion'
 import { CourseDetailTabs } from '../components/course-detail/CourseDetailTabs'
 import { CourseEnrollmentCard } from '../components/course-detail/CourseEnrollmentCard'
-import type { CourseDetail } from '../types/course.types'
+import type { CourseDetail, CourseLevel } from '../types/course.types'
 import { useCourseDetail } from '@/features/lms/hooks/use-course-detail'
 import { useCourseProgress, useEnrollCourse } from '@/features/lms/hooks/use-course-progress'
 import { JS_INFO_COURSES } from '@/features/lms/mocks/javascript-info.mock'
@@ -38,13 +38,11 @@ export function getFallbackCourseDetail(courseId: string): CourseDetail {
     language: 'Tiếng Việt',
     lastUpdated: 'Tháng 8, 2026',
     isSponsored: false,
-    learningOutcomes: [
+    learningOutcomes: course.learningOutcomes || [
       'Nắm vững các quy chuẩn vệ sinh an toàn và SOP vận hành chuẩn',
       'Thành thạo kỹ thuật và quy trình thao tác máy móc chuyên dụng',
       'Đạt điểm đánh giá tiêu chuẩn qua bài kiểm tra trắc nghiệm cuối khóa',
     ],
-    requirements: ['Nhân sự mới onboard hoặc nhân viên định kỳ cập nhật kiến thức'],
-    targetAudience: ['Toàn bộ nhân sự thuộc khối cửa hàng, xưởng sản xuất và vận hành'],
     sections: [
       {
         id: 'sec-1',
@@ -173,37 +171,64 @@ export default function CourseDetailPage({ courseId = '1' }: { courseId?: string
       }
     })
 
+    const levelMap: Record<string, CourseLevel> = {
+      BEGINNER: 'Beginner',
+      INTERMEDIATE: 'Intermediate',
+      ADVANCED: 'Advanced',
+    }
+    const resolvedLevel: CourseLevel =
+      (realCourse.level && levelMap[realCourse.level]) ||
+      (realCourse.courseType === 'ATTP' ? 'Advanced' : 'Beginner')
+
+    const instructorName =
+      realCourse.instructor?.fullName ||
+      realCourse.createdByUser?.fullName ||
+      'Ban Đào Tạo & R&D Ba Hưng'
+
+    const instructorBio = realCourse.instructor?.email
+      ? `Cố vấn chuyên môn & giảng viên phụ trách (${realCourse.instructor.email})`
+      : 'Phụ trách tiêu chuẩn chất lượng, quy trình đào tạo và an toàn vận hành.'
+
+    const outcomes =
+      realCourse.learningOutcomes && realCourse.learningOutcomes.length > 0
+        ? realCourse.learningOutcomes
+        : [
+          'Nắm vững kiến thức và kỹ năng thực hành theo chuẩn nghiệp vụ LogiX',
+          'Thành thạo quy trình thao tác và xử lý tình huống thực tế',
+          'Hoàn thành bài đánh giá tiêu chuẩn qua hệ thống bài kiểm tra',
+        ]
+
+    const formattedLastUpdated = realCourse.updatedAt
+      ? `Tháng ${new Date(realCourse.updatedAt).getMonth() + 1}, ${new Date(realCourse.updatedAt).getFullYear()}`
+      : 'Mới cập nhật'
+
     return {
       id: realCourse.id,
       title: realCourse.title,
       subtitle: realCourse.description || `Chương trình đào tạo chuẩn mã ${realCourse.code}`,
       category: realCourse.category?.name || 'Đào tạo nội bộ',
       instructor: {
-        name: 'Ban Đào Tạo & R&D Ba Hưng',
-        title: 'Giảng viên chuyên môn Ba Hưng LMS',
-        bio: 'Phụ trách tiêu chuẩn chất lượng, quy trình vận hành chuỗi và an toàn vệ sinh.',
-        coursesCount: 6,
-        studentsCount: realCourse._count?.enrollments || 120,
-        rating: 4.9,
+        name: instructorName,
+        title: 'Giảng viên Chuyên môn LogiX',
+        bio: instructorBio,
+        coursesCount: 1,
+        studentsCount: realCourse._count?.enrollments || 0,
+        rating: 5.0,
       },
       duration: `${realCourse.durationDays || 14} ngày`,
-      enrolledCount: realCourse._count?.enrollments || 120,
-      rating: 4.9,
-      reviewCount: 28,
+      enrolledCount: realCourse._count?.enrollments || 0,
+      rating: 5.0,
+      reviewCount: 18,
       enrolled: isEnrolled,
+      isMandatory: realCourse.isMandatory,
+      durationDays: realCourse.durationDays || undefined,
       description:
         realCourse.description || 'Chương trình đào tạo toàn diện trang bị kiến thức và kỹ năng thực tế.',
-      level: realCourse.courseType === 'ATTP' ? 'Advanced' : 'Beginner',
+      level: resolvedLevel,
       language: 'Tiếng Việt',
-      lastUpdated: 'Tháng 8, 2026',
+      lastUpdated: formattedLastUpdated,
       isSponsored: false,
-      learningOutcomes: [
-        'Hiểu rõ và tuân thủ đúng quy chuẩn SOP và vệ sinh an toàn',
-        'Nắm chắc kỹ thuật thao tác máy móc và định lượng nguyên vật liệu',
-        'Hoàn thành bài kiểm tra trắc nghiệm đánh giá năng lực đạt chuẩn công ty',
-      ],
-      requirements: ['Nhân sự thuộc các chi nhánh cửa hàng, bar, bếp và xưởng sản xuất'],
-      targetAudience: ['Toàn bộ nhân sự thuộc khối vận hành và sản xuất F&B'],
+      learningOutcomes: outcomes,
       sections: mappedSections.length > 0 ? mappedSections : getFallbackCourseDetail(courseId).sections,
       reviews: [
         {
@@ -211,7 +236,7 @@ export default function CourseDetailPage({ courseId = '1' }: { courseId?: string
           reviewerName: 'Nguyễn Văn An',
           rating: 5,
           date: 'Hôm nay',
-          comment: 'Khóa học được cấu trúc rất bài bản, video chi tiết!',
+          comment: 'Khóa học được cấu trúc rất bài bản, kiến thức thực tế và dễ tiếp thu.',
         },
         {
           id: 'r2',
@@ -251,23 +276,24 @@ export default function CourseDetailPage({ courseId = '1' }: { courseId?: string
 
   return (
     <div className="min-h-screen bg-t-bg-primary">
-      <div className="mx-auto max-w-6xl px-6 py-8">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-          {/* Left column — 60% */}
-          <div className="min-w-0 lg:flex-[3]">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
+          {/* Main Content Column — 8 cols */}
+          <div className="min-w-0 space-y-6 lg:col-span-8">
             <CourseHero course={course} />
-            <WhatYouLearnCard outcomes={course.learningOutcomes} />
             <CourseContentAccordion
               courseId={course.id}
               sections={course.sections}
               isEnrolled={isEnrolled}
             />
+            <WhatYouLearnCard outcomes={course.learningOutcomes} />
             <CourseDetailTabs course={course} />
           </div>
 
-          {/* Right column — 40% sticky */}
-          <aside className="shrink-0 lg:flex-[2]">
-            <div className="lg:sticky lg:top-24">
+          {/* Right Column — 4 cols sticky sidebar */}
+          <aside className="shrink-0 lg:col-span-4">
+            <div className="lg:sticky lg:top-20">
               <CourseEnrollmentCard
                 course={course}
                 isEnrolled={isEnrolled}

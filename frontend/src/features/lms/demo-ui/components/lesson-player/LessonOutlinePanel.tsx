@@ -32,12 +32,6 @@ function LessonRow({ courseId, lesson, currentLessonId }: LessonRowProps) {
 
   function handleOpenLesson() {
     if (lesson.status === 'locked') return;
-
-    if (lesson.type === 'quiz') {
-      router.push(`/lms/quizzes/${lesson.id}`);
-      return;
-    }
-
     router.push(`/lms/lessons/${lesson.id}`);
   }
 

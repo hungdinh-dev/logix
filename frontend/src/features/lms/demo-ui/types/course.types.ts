@@ -64,6 +64,15 @@ export interface BackendCourse {
   categoryId: string;
   category?: BackendCategory;
   courseType: 'STANDARD' | 'ATTP' | 'ONBOARDING';
+  level?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  learningOutcomes?: string[];
+  instructorId?: string | null;
+  instructor?: {
+    id: string;
+    fullName: string;
+    email?: string | null;
+    employeeCode?: string | null;
+  } | null;
   isMandatory: boolean;
   durationDays?: number;
   progressionMode: 'FREE' | 'LINEAR_LESSON' | 'LINEAR_MODULE';
@@ -108,6 +117,8 @@ export interface Course {
   readonly enrolledCount: number;
   readonly rating: number;
   readonly reviewCount: number;
+  readonly price?: number;
+  readonly image?: string;
   readonly enrolled: boolean;
   readonly isMandatory?: boolean;
   readonly durationDays?: number;
@@ -168,8 +179,8 @@ export interface CourseDetail extends Omit<Course, 'instructor'> {
   readonly price?: number;
   readonly isSponsored: boolean;
   readonly learningOutcomes: readonly string[];
-  readonly requirements: readonly string[];
-  readonly targetAudience: readonly string[];
+  readonly requirements?: readonly string[];
+  readonly targetAudience?: readonly string[];
   readonly sections: readonly CourseSection[];
   readonly instructor: CourseInstructorProfile;
   readonly reviews: readonly CourseReview[];

@@ -43,7 +43,7 @@ import {
   MOCK_COMMENTS,
   INITIAL_AI_MESSAGES,
 } from '@/features/lms/mocks/lesson-player.mock';
-import type { LessonChapter, LessonType, TranscriptLine } from '../types/lesson-player.types';
+import type { LessonChapter, LessonType, TranscriptLine, ResourceFile } from '../types/lesson-player.types';
 
 function decodeHtmlEntities(str: string) {
   return str
@@ -297,6 +297,22 @@ export default function LessonPlayerPage() {
     }
     return MOCK_TRANSCRIPT;
   }, [backendLesson?.checklistItems]);
+
+  // Dynamic lesson resources from backend or fallback to MOCK_RESOURCES
+  const lessonResources: readonly ResourceFile[] = useMemo(() => {
+    if (backendLesson?.resources && Array.isArray(backendLesson.resources) && backendLesson.resources.length > 0) {
+      return backendLesson.resources.map((r: any) => ({
+        id: r.id,
+        name: r.title,
+        url: r.url,
+        type: r.resourceType,
+        size: r.fileSizeBytes ? `${Math.round(r.fileSizeBytes / 1024)} KB` : undefined,
+        extension: r.fileExtension,
+        description: r.description,
+      }));
+    }
+    return MOCK_RESOURCES;
+  }, [backendLesson?.resources]);
 
   const currentLessonIndex = allLessons.findIndex((l) => l.id === lessonId);
   const totalLessons = allLessons.length > 0 ? allLessons.length : 1;
@@ -676,23 +692,94 @@ export default function LessonPlayerPage() {
               </div>
             ) : (
               /* Quiz Lesson View */
-              <div className="bg-card border-border rounded-xl border p-8 shadow-sm flex flex-col items-center justify-center min-h-[300px] text-center space-y-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <HelpCircle className="h-7 w-7" />
+              <div className="bg-card border-border rounded-2xl border p-6 sm:p-8 shadow-sm space-y-6">
+                <div className="flex items-start gap-4 border-b border-border pb-5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <HelpCircle className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-foreground text-lg sm:text-xl font-bold">{lessonTitle}</h2>
+                      {(backendLesson?.progress?.isCompleted || (backendLesson as any)?.isCompleted) && (
+                        <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-300 text-xs font-semibold gap-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Đã Đạt
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground text-xs leading-relaxed">
+                      {backendLesson?.description ||
+                        'Bài kiểm tra trắc nghiệm đánh giá kiến thức và quy trình nghiệp vụ đã học trong chương trình.'}
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-1 max-w-md">
-                  <h2 className="text-foreground text-lg font-bold">{lessonTitle}</h2>
-                  <p className="text-muted-foreground text-xs">
-                    {backendLesson?.description || 'Bài học trắc nghiệm đánh giá kiến thức và quy trình nghiệp vụ đã học.'}
-                  </p>
+
+                {/* Quiz Requirements Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="rounded-xl border border-border bg-muted/30 p-3.5 text-center">
+                    <p className="text-[11px] text-muted-foreground font-medium">Điểm đạt yêu cầu</p>
+                    <p className="mt-1 text-base font-bold text-foreground font-mono">
+                      {backendLesson?.quiz?.passScore ?? 80}%
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-border bg-muted/30 p-3.5 text-center">
+                    <p className="text-[11px] text-muted-foreground font-medium">Thời gian làm bài</p>
+                    <p className="mt-1 text-base font-bold text-foreground font-mono">
+                      {backendLesson?.quiz?.timeLimitMinutes
+                        ? `${backendLesson.quiz.timeLimitMinutes} phút`
+                        : 'Không giới hạn'}
+                    </p>
+                  </div>
+
+                  <div className="col-span-2 sm:col-span-1 rounded-xl border border-border bg-muted/30 p-3.5 text-center">
+                    <p className="text-[11px] text-muted-foreground font-medium">Số lần thi tối đa</p>
+                    <p className="mt-1 text-base font-bold text-foreground font-mono">
+                      {backendLesson?.quiz?.maxAttempts
+                        ? `${backendLesson.quiz.maxAttempts} lần`
+                        : 'Không giới hạn'}
+                    </p>
+                  </div>
                 </div>
-                <Button
-                  onClick={() => router.push(`/lms/quizzes/${backendLesson?.quiz?.id || lessonId}`)}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 gap-2"
-                >
-                  <PlayCircle className="h-4 w-4" />
-                  Bắt Đầu Làm Bài Kiểm Tra
-                </Button>
+
+                {/* Progress highlight if previously attempted */}
+                {backendLesson?.progress?.quizHighestScore !== undefined &&
+                  backendLesson?.progress?.quizHighestScore !== null && (
+                    <div className="flex items-center justify-between rounded-xl border border-emerald-300/60 bg-emerald-50/50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/20 text-xs">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <span className="font-semibold text-emerald-900 dark:text-emerald-200">
+                          Điểm cao nhất của bạn: {backendLesson.progress.quizHighestScore}%
+                        </span>
+                      </div>
+                      <span className="text-emerald-700 dark:text-emerald-300 font-medium">
+                        {backendLesson.progress.isCompleted ? 'Đã hoàn thành' : 'Chưa đạt'}
+                      </span>
+                    </div>
+                  )}
+
+                {/* Big Action CTA */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                  <Button
+                    onClick={() => router.push(`/lms/quizzes/${backendLesson?.quiz?.id || lessonId}`)}
+                    className="w-full sm:flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 gap-2.5 shadow-sm text-sm"
+                  >
+                    <PlayCircle className="h-5 w-5" />
+                    {backendLesson?.progress?.isCompleted
+                      ? 'Làm Lại Bài Kiểm Tra'
+                      : 'Bắt Đầu Làm Bài Kiểm Tra'}
+                  </Button>
+
+                  {nextLesson && (backendLesson?.progress?.isCompleted || (backendLesson as any)?.isCompleted) && (
+                    <Button
+                      variant="outline"
+                      onClick={handleNext}
+                      className="w-full sm:w-auto text-xs py-6 border-border font-semibold gap-2"
+                    >
+                      Qua bài tiếp theo
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
 
@@ -729,7 +816,7 @@ export default function LessonPlayerPage() {
             <div className="mt-6">
               <LessonContentTabs
                 transcript={lessonTranscripts}
-                resources={MOCK_RESOURCES}
+                resources={lessonResources}
                 currentTimeSeconds={currentTime}
                 onSeek={(sec) => {
                   setCurrentTime(sec);
@@ -748,6 +835,7 @@ export default function LessonPlayerPage() {
           )}
         >
           <LessonRightPanel
+            lessonId={lessonId}
             comments={MOCK_COMMENTS}
             initialAiMessages={INITIAL_AI_MESSAGES}
             onClose={() => setShowRightPanel(false)}
