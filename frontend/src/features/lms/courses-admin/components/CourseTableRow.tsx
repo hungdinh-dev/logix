@@ -26,6 +26,11 @@ import type {
 } from '../types/courses-admin.types'
 import { routePath } from '@/config/route-path'
 import { StatusBadgeDropdown, type StatusBadgeOption } from '@/components/common/StatusBadgeDropdown'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 const COURSE_STATUS_OPTIONS: StatusBadgeOption<CourseStatus>[] = [
   {
@@ -110,6 +115,7 @@ interface CourseTableRowProps {
   onRequestClone: (course: BackendCourse) => void
   onRequestDelete: (course: BackendCourse) => void
   onRequestViewAudit?: (course: BackendCourse) => void
+  onRequestViewEnrollments?: (course: BackendCourse) => void
 }
 
 export function CourseTableRow({
@@ -123,6 +129,7 @@ export function CourseTableRow({
   onRequestClone,
   onRequestDelete,
   onRequestViewAudit,
+  onRequestViewEnrollments,
 }: CourseTableRowProps) {
   return (
     <TableRow data-state={isSelected ? 'selected' : undefined} className="hover:bg-muted/30 transition-colors">
@@ -137,14 +144,20 @@ export function CourseTableRow({
       </TableCell>
 
       {/* Tên Khóa Học */}
-      <TableCell className="py-3.5">
-        <div
-          className="font-semibold text-foreground text-sm hover:text-primary transition-colors cursor-pointer line-clamp-1"
-          onClick={() => onNavigate(`${routePath.lmsAdminCourses}/${course.id}`)}
-          title={course.title}
-        >
-          {course.title}
-        </div>
+      <TableCell className="py-3.5 max-w-[220px] sm:max-w-[280px] lg:max-w-[340px]">
+        <Tooltip delayDuration={150}>
+          <TooltipTrigger asChild>
+            <div
+              className="font-semibold text-foreground text-sm hover:text-primary transition-colors cursor-pointer truncate block"
+              onClick={() => onNavigate(`${routePath.lmsAdminCourses}/${course.id}`)}
+            >
+              {course.title}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" align="start" sideOffset={4} className="max-w-md font-medium text-xs">
+            <span>{course.title}</span>
+          </TooltipContent>
+        </Tooltip>
         {!columnVisibility.code && (
           <div className="text-[11px] text-muted-foreground font-mono mt-0.5">{course.code}</div>
         )}
@@ -223,30 +236,56 @@ export function CourseTableRow({
 
       {/* Ghi Danh */}
       {columnVisibility.enrollment && (
-        <TableCell className="py-3.5 text-center text-xs font-medium text-foreground">
-          <span className="font-semibold">{course._count?.enrollments || 0}</span>{' '}
-          <span className="text-muted-foreground text-[11px]">học viên</span>
+        <TableCell className="py-3.5 text-center">
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onRequestViewEnrollments?.(course)}
+                className="h-7 gap-1.5 px-2.5 text-xs font-medium hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer rounded-full border border-border/70 hover:border-primary/40 group"
+                aria-label="Xem danh sách học viên ghi danh"
+              >
+                <Users className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                <span className="font-bold text-foreground group-hover:text-primary">
+                  {course._count?.enrollments || 0}
+                </span>
+                <span className="text-muted-foreground text-[11px] group-hover:text-primary/80">học viên</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={4} className="font-medium text-xs">
+              <span>Xem danh sách học viên ghi danh (Side Peek)</span>
+            </TooltipContent>
+          </Tooltip>
         </TableCell>
       )}
 
       {/* Ngày Cập Nhật */}
       {columnVisibility.updatedAt && (
         <TableCell className="py-3.5 text-center text-xs text-muted-foreground">
-          <button
-            type="button"
-            onClick={() => onRequestViewAudit?.(course)}
-            className="inline-flex flex-col items-center hover:text-primary transition-colors cursor-pointer group"
-            title="Bấm để xem lịch sử chỉnh sửa chi tiết"
-          >
-            <span className="font-medium text-foreground group-hover:text-primary">
-              {course.updatedAt ? new Date(course.updatedAt).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
-            </span>
-            {course.updatedByUser && (
-              <span className="text-[10px] text-muted-foreground group-hover:text-primary/80 truncate max-w-[120px]">
-                bởi {course.updatedByUser.fullName}
-              </span>
-            )}
-          </button>
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => onRequestViewAudit?.(course)}
+                className="inline-flex flex-col items-center hover:text-primary transition-colors cursor-pointer group"
+                aria-label="Xem lịch sử chỉnh sửa chi tiết"
+              >
+                <span className="font-medium text-foreground group-hover:text-primary">
+                  {course.updatedAt ? new Date(course.updatedAt).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+                </span>
+                {course.updatedByUser && (
+                  <span className="text-[10px] text-muted-foreground group-hover:text-primary/80 truncate max-w-[120px]">
+                    bởi {course.updatedByUser.fullName}
+                  </span>
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={4} className="font-medium text-xs">
+              <span>Xem chi tiết nhật ký kiểm toán (Side Peek)</span>
+            </TooltipContent>
+          </Tooltip>
         </TableCell>
       )}
 
@@ -254,51 +293,90 @@ export function CourseTableRow({
       {columnVisibility.actions && (
         <TableCell className="py-3.5 pr-4 text-right">
           <div className="flex items-center justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer"
-              onClick={() => onRequestViewAudit?.(course)}
-              title="Xem lịch sử chỉnh sửa (Side Peek)"
-            >
-              <History className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-primary hover:bg-primary/10 cursor-pointer"
-              onClick={() => onNavigate(`${routePath.lmsAdminCourses}/${course.id}`)}
-              title="Soạn giáo trình & bài học (Curriculum Editor)"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer"
-              onClick={() => onNavigate(`${routePath.lmsAdminCourses}/${course.id}/targeting`)}
-              title="Phân bổ nhân sự tự động (Auto-Assign Rule)"
-            >
-              <Users className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
-              onClick={() => onRequestClone(course)}
-              title="Sao chép khóa học (Clone)"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive hover:bg-destructive/10 cursor-pointer"
-              onClick={() => onRequestDelete(course)}
-              title="Xóa khóa học"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer"
+                  onClick={() => onRequestViewAudit?.(course)}
+                  aria-label="Xem lịch sử chỉnh sửa"
+                >
+                  <History className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4} className="font-medium text-xs">
+                <span>Xem lịch sử chỉnh sửa</span>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-primary hover:bg-primary/10 cursor-pointer"
+                  onClick={() => onNavigate(`${routePath.lmsAdminCourses}/${course.id}`)}
+                  aria-label="Soạn giáo trình & bài học"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4} className="font-medium text-xs">
+                <span>Soạn giáo trình & bài học</span>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer"
+                  onClick={() => onNavigate(`${routePath.lmsAdminCourses}/${course.id}/targeting`)}
+                  aria-label="Phân bổ nhân sự tự động"
+                >
+                  <Users className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4} className="font-medium text-xs">
+                <span>Phân bổ nhân sự tự động</span>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
+                  onClick={() => onRequestClone(course)}
+                  aria-label="Sao chép khóa học"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4} className="font-medium text-xs">
+                <span>Sao chép khóa học (Clone)</span>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:bg-destructive/10 cursor-pointer"
+                  onClick={() => onRequestDelete(course)}
+                  aria-label="Xóa khóa học"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4} className="font-medium text-xs">
+                <span>Xóa khóa học</span>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </TableCell>
       )}

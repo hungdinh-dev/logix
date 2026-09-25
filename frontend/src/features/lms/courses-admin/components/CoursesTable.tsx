@@ -42,6 +42,7 @@ interface CoursesTableProps {
   onRequestClone: (course: BackendCourse) => void
   onRequestDelete: (course: BackendCourse) => void
   onRequestViewAudit?: (course: BackendCourse) => void
+  onRequestViewEnrollments?: (course: BackendCourse) => void
 }
 
 export function CoursesTable({
@@ -63,6 +64,7 @@ export function CoursesTable({
   onRequestClone,
   onRequestDelete,
   onRequestViewAudit,
+  onRequestViewEnrollments,
 }: CoursesTableProps) {
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
@@ -103,7 +105,7 @@ export function CoursesTable({
             </TableHead>
 
             {/* Tên Khóa Học (Sortable) */}
-            <TableHead className="py-3 text-xs font-semibold text-muted-foreground">
+            <TableHead className="py-3 text-xs font-semibold text-muted-foreground min-w-[200px] max-w-[340px]">
               <button
                 type="button"
                 onClick={() => onSort('title')}
@@ -193,7 +195,7 @@ export function CoursesTable({
 
             {/* Thao Tác */}
             {columnVisibility.actions && (
-              <TableHead className="pr-4 py-3 text-xs font-semibold text-right text-muted-foreground">
+              <TableHead className="pr-4 py-3 text-xs font-semibold text-right text-muted-foreground min-w-[180px]">
                 Thao Tác
               </TableHead>
             )}
@@ -243,6 +245,7 @@ export function CoursesTable({
                 onRequestClone={onRequestClone}
                 onRequestDelete={onRequestDelete}
                 onRequestViewAudit={onRequestViewAudit}
+                onRequestViewEnrollments={onRequestViewEnrollments}
               />
             ))
           )}

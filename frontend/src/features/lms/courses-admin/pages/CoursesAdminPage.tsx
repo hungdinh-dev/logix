@@ -17,6 +17,7 @@ import {
   CoursesBulkActionBar,
   CoursesTable,
   CourseAssignDialog,
+  CourseEnrollmentsSidePeek,
 } from '../components'
 import { useCoursesAdmin } from '../hooks/use-courses-admin'
 import { toast } from 'sonner'
@@ -96,6 +97,7 @@ export default function CoursesAdminPage() {
   } = useCoursesAdmin()
 
   const [auditTargetCourse, setAuditTargetCourse] = React.useState<BackendCourse | null>(null)
+  const [enrollmentTargetCourse, setEnrollmentTargetCourse] = React.useState<BackendCourse | null>(null)
 
   return (
     <div className="p-6 mx-auto space-y-6">
@@ -248,6 +250,7 @@ export default function CoursesAdminPage() {
         onRequestClone={(course) => setCloneTarget(course)}
         onRequestDelete={(course) => setDeleteTarget(course)}
         onRequestViewAudit={(course) => setAuditTargetCourse(course)}
+        onRequestViewEnrollments={(course) => setEnrollmentTargetCourse(course)}
       />
 
       {/* 7. Data Table Pagination */}
@@ -458,6 +461,14 @@ export default function CoursesAdminPage() {
         entityId={auditTargetCourse?.id}
         entityTitle={auditTargetCourse?.title}
         entitySubtitle={`Mã khóa học: ${auditTargetCourse?.code || ''}`}
+      />
+
+      {/* 15. Course Enrollments Side Peek */}
+      <CourseEnrollmentsSidePeek
+        isOpen={!!enrollmentTargetCourse}
+        onClose={() => setEnrollmentTargetCourse(null)}
+        course={enrollmentTargetCourse}
+        onOpenAssignDialog={() => setIsAssignOpen(true)}
       />
     </div>
   )
