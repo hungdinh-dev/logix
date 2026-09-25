@@ -29,6 +29,7 @@ export const apiRoutes = {
     clone: (id: string) => `/api/courses/${id}/clone`, // POST (LMS-003)
     status: (id: string) => `/api/courses/${id}/status`, // PATCH (LMS-004)
     enroll: (id: string) => `/api/courses/${id}/enroll`, // POST (LMS-044, 011)
+    enrollments: (id: string) => `/api/courses/${id}/enrollments`, // GET (Admin Side Peek)
     assignPosition: (id: string) => `/api/courses/${id}/assign-position`, // POST (LMS-005)
     assignEmploymentStatus: (id: string) => `/api/courses/${id}/assign-employment-status`, // POST (LMS-006)
     assignStore: (id: string) => `/api/courses/${id}/assign-store`, // POST (LMS-007)
@@ -41,9 +42,31 @@ export const apiRoutes = {
     byId: (id: string) => `/api/lessons/${id}`,
   },
 
+  quizzes: {
+    base: '/api/quizzes',
+    byId: (id: string) => `/api/quizzes/${id}`,
+    byLessonId: (lessonId: string) => `/api/quizzes/lessons/${lessonId}`,
+    take: (id: string) => `/api/quizzes/${id}/take`,
+    submit: (id: string) => `/api/quizzes/${id}/submit`,
+    attempts: (id: string) => `/api/quizzes/${id}/attempts`,
+    preview: (id: string) => `/api/quizzes/${id}/preview`,
+  },
+
+  questionBanks: {
+    base: '/api/question-banks',
+    byId: (id: string) => `/api/question-banks/${id}`,
+    template: '/api/question-banks/template',
+    syncSheets: (id: string) => `/api/question-banks/${id}/sync-sheets`,
+    importCsv: (id: string) => `/api/question-banks/${id}/import-csv`,
+    questions: (id: string) => `/api/question-banks/${id}/questions`,
+    questionById: (bankId: string, qId: string) => `/api/question-banks/${bankId}/questions/${qId}`,
+  },
+
   progress: {
     dashboard: '/api/progress/dashboard',
     adminDashboard: '/api/progress/admin-dashboard',
+    adminTracking: '/api/progress/admin-tracking',
+    adminActivities: '/api/progress/admin-activities',
     lesson: '/api/progress/lesson',
   },
 

@@ -11,9 +11,11 @@ export const lmsRoutes: RouteConfig[] = [
 
   // LMS Training Admin
   { path: '/lms/admin/dashboard', roles: [Role.ADMIN, 'TRAINER', 'INSTRUCTOR'], label: 'Tổng quan Đào tạo', icon: 'LayoutDashboard' },
+  { path: '/lms/admin/activities', roles: [Role.ADMIN, 'TRAINER', 'INSTRUCTOR'], label: 'Hoạt động Học tập', icon: 'History' },
   { path: '/lms/admin/courses', roles: [Role.ADMIN, 'TRAINER', 'INSTRUCTOR'], label: 'Quản lý Khóa học', icon: 'BookOpen' },
   { path: '/lms/admin/courses/categories', roles: [Role.ADMIN, 'TRAINER', 'INSTRUCTOR'], label: 'Danh mục Chương trình', icon: 'FolderTree' },
   { path: '/lms/admin/certificates', roles: [Role.ADMIN, 'TRAINER', 'INSTRUCTOR'], label: 'Quản lý Chứng chỉ & ATTP', icon: 'Award' },
+  { path: '/lms/admin/question-banks', roles: [Role.ADMIN, 'TRAINER', 'INSTRUCTOR'], label: 'Ngân hàng Câu hỏi', icon: 'HelpCircle' },
   { path: '/lms/admin/progress', roles: [Role.ADMIN, 'TRAINER', 'INSTRUCTOR'], label: 'Theo dõi Tiến độ Đào tạo', icon: 'Activity' },
 
   // LMS Demo Showcase

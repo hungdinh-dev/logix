@@ -15,12 +15,15 @@ export const routePath = {
 
   // 🏢 LMS Training Admin (Tách biệt hoàn toàn khỏi System Admin)
   lmsAdminDashboard: '/lms/admin/dashboard',
+  lmsAdminActivities: '/lms/admin/activities',
   lmsAdminCourses: '/lms/admin/courses',
   lmsAdminCourseCreate: '/lms/admin/courses/create',
   lmsAdminCourseCategories: '/lms/admin/courses/categories',
   lmsAdminCourseDetail: '/lms/admin/courses/:id',
   lmsAdminCourseTargeting: '/lms/admin/courses/:id/targeting',
   lmsAdminProgress: '/lms/admin/progress',
+  lmsAdminQuestionBanks: '/lms/admin/question-banks',
+  lmsAdminQuestionBankDetail: (id: string) => `/lms/admin/question-banks/${id}`,
   lmsAdminCertificates: '/lms/admin/certificates',
 
   // 🎨 LMS Demo UI Showcase
