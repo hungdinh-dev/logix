@@ -36,6 +36,28 @@ export class LessonController {
     const result = lessonService.parseYoutubeUrl(req.body)
     return res.json(ApiResponse.success(result, 'Trích xuất video YouTube thành công'))
   }
+
+  public getLessonResources = async (req: Request, res: Response) => {
+    const resources = await lessonService.getLessonResources(req.params.id)
+    return res.json(ApiResponse.success(resources, 'Lấy danh sách tài nguyên bài học thành công'))
+  }
+
+  public addLessonResource = async (req: AuthenticatedRequest, res: Response) => {
+    const resource = await lessonService.addLessonResource(req.params.id, req.body)
+    return res
+      .status(HttpStatus.CREATED)
+      .json(ApiResponse.success(resource, 'Thêm tài nguyên bài học thành công', HttpStatus.CREATED))
+  }
+
+  public updateLessonResource = async (req: AuthenticatedRequest, res: Response) => {
+    const resource = await lessonService.updateLessonResource(req.params.resourceId, req.body)
+    return res.json(ApiResponse.success(resource, 'Cập nhật tài nguyên bài học thành công'))
+  }
+
+  public deleteLessonResource = async (req: AuthenticatedRequest, res: Response) => {
+    const result = await lessonService.deleteLessonResource(req.params.resourceId)
+    return res.json(ApiResponse.success(result, 'Xóa tài nguyên bài học thành công'))
+  }
 }
 
 export const lessonController = new LessonController()

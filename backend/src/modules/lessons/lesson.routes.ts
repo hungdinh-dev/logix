@@ -5,13 +5,20 @@ import {
   updateLessonSchema,
   reorderLessonsSchema,
   parseYoutubeSchema,
+  createLessonResourceSchema,
+  updateLessonResourceSchema,
 } from './lesson.dto'
 import { validateRequest } from '../../common/middlewares/validate.middleware'
 import { asyncHandler } from '../../common/utils/async-handler'
 import { authenticateToken } from '../../middlewares/auth.middleware'
 import { requirePermission } from '../../middlewares/permission.middleware'
 
+import lessonCommentRouter from '../lesson-comments/lesson-comment.routes'
+
 const router = Router()
+
+// Bình luận & Thảo luận bài học (Lesson Comments & Q&A)
+router.use('/:lessonId/comments', lessonCommentRouter)
 
 // Utility: Parse YouTube link
 router.post(
@@ -58,4 +65,33 @@ router.post(
   asyncHandler(lessonController.reorderLessons)
 )
 
+// ==========================================
+// Tài nguyên bài học (Lesson Resources)
+// ==========================================
+router.get('/:id/resources', asyncHandler(lessonController.getLessonResources))
+
+router.post(
+  '/:id/resources',
+  authenticateToken,
+  requirePermission('COURSE.CREATE'),
+  validateRequest(createLessonResourceSchema),
+  asyncHandler(lessonController.addLessonResource)
+)
+
+router.put(
+  '/resources/:resourceId',
+  authenticateToken,
+  requirePermission('COURSE.CREATE'),
+  validateRequest(updateLessonResourceSchema),
+  asyncHandler(lessonController.updateLessonResource)
+)
+
+router.delete(
+  '/resources/:resourceId',
+  authenticateToken,
+  requirePermission('COURSE.CREATE'),
+  asyncHandler(lessonController.deleteLessonResource)
+)
+
 export default router
+

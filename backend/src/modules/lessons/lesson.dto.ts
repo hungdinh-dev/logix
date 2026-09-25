@@ -75,7 +75,37 @@ export const parseYoutubeSchema = z.object({
   }),
 })
 
+export const createLessonResourceSchema = z.object({
+  body: z.object({
+    title: z.string().min(1, 'Tiêu đề tài nguyên là bắt buộc'),
+    description: z.string().optional(),
+    resourceType: z.enum(['EXTERNAL_LINK', 'DOCUMENT_FILE']).optional().default('DOCUMENT_FILE'),
+    url: z.string().min(1, 'Đường dẫn tài nguyên là bắt buộc'),
+    storagePath: z.string().optional(),
+    fileSizeBytes: z.number().optional(),
+    fileExtension: z.string().optional(),
+    sortOrder: z.number().optional().default(1),
+    isDownloadable: z.boolean().optional().default(true),
+  }),
+})
+
+export const updateLessonResourceSchema = z.object({
+  body: z.object({
+    title: z.string().min(1, 'Tiêu đề tài nguyên là bắt buộc').optional(),
+    description: z.string().nullable().optional(),
+    resourceType: z.enum(['EXTERNAL_LINK', 'DOCUMENT_FILE']).optional(),
+    url: z.string().min(1, 'Đường dẫn tài nguyên là bắt buộc').optional(),
+    storagePath: z.string().nullable().optional(),
+    fileSizeBytes: z.number().nullable().optional(),
+    fileExtension: z.string().nullable().optional(),
+    sortOrder: z.number().optional(),
+    isDownloadable: z.boolean().optional(),
+  }),
+})
+
 export type CreateLessonDto = z.infer<typeof createLessonSchema>['body']
 export type UpdateLessonDto = z.infer<typeof updateLessonSchema>['body']
 export type ReorderLessonsDto = z.infer<typeof reorderLessonsSchema>['body']
 export type ParseYoutubeDto = z.infer<typeof parseYoutubeSchema>['body']
+export type CreateLessonResourceDto = z.infer<typeof createLessonResourceSchema>['body']
+export type UpdateLessonResourceDto = z.infer<typeof updateLessonResourceSchema>['body']

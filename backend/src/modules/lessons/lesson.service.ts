@@ -1,6 +1,13 @@
 import prisma from '../../config/prisma'
 import { NotFoundError, BadRequestError } from '../../common/errors/app.error'
-import { CreateLessonDto, UpdateLessonDto, ReorderLessonsDto, ParseYoutubeDto } from './lesson.dto'
+import {
+  CreateLessonDto,
+  UpdateLessonDto,
+  ReorderLessonsDto,
+  ParseYoutubeDto,
+  CreateLessonResourceDto,
+  UpdateLessonResourceDto,
+} from './lesson.dto'
 
 export class LessonService {
   // ==========================================
@@ -36,6 +43,9 @@ export class LessonService {
               },
             },
           },
+        },
+        resources: {
+          orderBy: { sortOrder: 'asc' },
         },
       },
     })
@@ -256,6 +266,84 @@ export class LessonService {
       embedUrl: `https://www.youtube.com/embed/${videoId}`,
       thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
     }
+  }
+
+  // ==========================================
+  // 3. LESSON RESOURCES (Tài nguyên bài học)
+  // ==========================================
+
+  public async getLessonResources(lessonId: string) {
+    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } })
+    if (!lesson) {
+      throw new NotFoundError('Bài học')
+    }
+
+    return prisma.lessonResource.findMany({
+      where: { lessonId },
+      orderBy: { sortOrder: 'asc' },
+    })
+  }
+
+  public async addLessonResource(lessonId: string, dto: CreateLessonResourceDto) {
+    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } })
+    if (!lesson) {
+      throw new NotFoundError('Bài học')
+    }
+
+    let sortOrder = dto.sortOrder
+    if (sortOrder === undefined) {
+      const lastResource = await prisma.lessonResource.findFirst({
+        where: { lessonId },
+        orderBy: { sortOrder: 'desc' },
+      })
+      sortOrder = (lastResource?.sortOrder || 0) + 1
+    }
+
+    return prisma.lessonResource.create({
+      data: {
+        lessonId,
+        title: dto.title,
+        description: dto.description,
+        resourceType: dto.resourceType,
+        url: dto.url,
+        storagePath: dto.storagePath,
+        fileSizeBytes: dto.fileSizeBytes,
+        fileExtension: dto.fileExtension,
+        sortOrder,
+        isDownloadable: dto.isDownloadable ?? true,
+      },
+    })
+  }
+
+  public async updateLessonResource(resourceId: string, dto: UpdateLessonResourceDto) {
+    const resource = await prisma.lessonResource.findUnique({ where: { id: resourceId } })
+    if (!resource) {
+      throw new NotFoundError('Tài nguyên bài học')
+    }
+
+    return prisma.lessonResource.update({
+      where: { id: resourceId },
+      data: {
+        title: dto.title,
+        description: dto.description,
+        resourceType: dto.resourceType,
+        url: dto.url,
+        storagePath: dto.storagePath,
+        fileSizeBytes: dto.fileSizeBytes,
+        fileExtension: dto.fileExtension,
+        sortOrder: dto.sortOrder,
+        isDownloadable: dto.isDownloadable,
+      },
+    })
+  }
+
+  public async deleteLessonResource(resourceId: string) {
+    const resource = await prisma.lessonResource.findUnique({ where: { id: resourceId } })
+    if (!resource) {
+      throw new NotFoundError('Tài nguyên bài học')
+    }
+
+    return prisma.lessonResource.delete({ where: { id: resourceId } })
   }
 }
 
