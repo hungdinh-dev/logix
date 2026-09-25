@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/features/auth/hooks/use-auth'
+import { NotificationBell } from '@/features/notifications'
 import { cn } from '@/lib/utils'
 
 export function Header() {
@@ -213,6 +214,9 @@ export function Header() {
               <Separator orientation="vertical" className="mx-1 h-6" />
             </div>
           )}
+
+          {/* Notification Bell */}
+          {showAuthenticated && <NotificationBell />}
 
           {/* User Auth Menu (Dropdown / Login-Signup buttons) */}
           {showAuthenticated ? (

@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 export function DetailSkeleton() {
   return (
     <div className="min-h-screen bg-background" aria-busy="true">
-      <div className="mx-auto max-w-6xl px-6 py-8 space-y-8">
+      <div className="mx-auto max-w-7xl px-6 py-8 space-y-8">
         {/* Hero Section Skeleton */}
         <div className="rounded-2xl border bg-card/60 p-8 space-y-4">
           <div className="flex items-center gap-2">

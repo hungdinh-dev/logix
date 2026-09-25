@@ -69,6 +69,9 @@ const FIELD_LABEL_MAP: Record<string, string> = {
   hasCertificate: 'Cấp chứng chỉ hoàn thành',
   certificateTemplateId: 'Mẫu chứng chỉ',
   isActive: 'Trạng thái hoạt động',
+  syncStats: 'Kết quả đồng bộ',
+  totalQuestions: 'Tổng số câu hỏi',
+  googleSheetUrl: 'Đường dẫn Google Sheets',
 }
 
 const ACTION_CONFIG: Record<
@@ -109,6 +112,20 @@ const ACTION_CONFIG: Record<
     color: 'purple',
     badgeClass:
       'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+  },
+  SYNC_SHEET: {
+    label: 'Đồng bộ Google Sheets',
+    icon: Layers,
+    color: 'emerald',
+    badgeClass:
+      'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+  },
+  IMPORT_CSV: {
+    label: 'Import CSV/Excel',
+    icon: Layers,
+    color: 'blue',
+    badgeClass:
+      'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
   },
   DELETE: {
     label: 'Xóa',
