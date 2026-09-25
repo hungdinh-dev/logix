@@ -23,11 +23,16 @@ export interface TranscriptLine {
   readonly text: string;
 }
 
+export type ResourceType = 'EXTERNAL_LINK' | 'DOCUMENT_FILE';
+
 export interface ResourceFile {
   readonly id: string;
   readonly name: string;
-  readonly size: string;
+  readonly size?: string;
   readonly url: string;
+  readonly type?: ResourceType;
+  readonly description?: string;
+  readonly extension?: string;
 }
 
 export interface DiscussionComment {

@@ -1,4 +1,4 @@
-import { Clock, Users, Star } from 'lucide-react';
+import { Clock, Star, GraduationCap, CheckCircle2, Globe } from 'lucide-react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,32 +8,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
-import type { CourseDetail, CourseLevel } from '../../types/course.types';
-
-const LEVEL_STYLES: Record<CourseLevel, string> = {
-  Beginner: 'bg-emerald-100 text-emerald-700',
-  Intermediate: 'bg-amber-100 text-amber-700',
-  Advanced: 'bg-red-100 text-red-700',
-};
-
-function StarRating({ rating }: { readonly rating: number }) {
-  const filled = Math.floor(rating);
-  return (
-    <div className="flex items-center gap-0.5" aria-label={`${rating} out of 5 stars`}>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <Star
-          key={index}
-          aria-hidden
-          className={cn(
-            'h-4 w-4',
-            index < filled ? 'fill-amber-400 text-amber-400' : 'fill-t-bg-selected text-t-bg-selected',
-          )}
-        />
-      ))}
-    </div>
-  );
-}
+import type { CourseDetail } from '../../types/course.types';
 
 interface CourseHeroProps {
   readonly course: CourseDetail;
@@ -49,87 +24,110 @@ export function CourseHero({ course }: CourseHeroProps) {
 
   return (
     <div className="mb-8">
-      <Breadcrumb className="mb-5">
+      <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              href="/lms/explore"
-              className="text-sm text-t-text-muted transition-colors hover:text-t-text-primary"
+              href="/lms/courses"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              Catalog
+              Danh mục
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              href="/lms/explore"
-              className="text-sm text-t-text-muted transition-colors hover:text-t-text-primary"
+              href="/lms/courses"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {course.category}
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage className="text-sm text-t-text-secondary">{course.title}</BreadcrumbPage>
+            <BreadcrumbPage className="text-sm text-foreground font-medium">{course.title}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      <h1 className="mb-3 font-display text-3xl font-normal tracking-tight text-t-text-primary">
+      <h1 className="mb-3 font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
         {course.title}
       </h1>
 
-      <p className="mb-5 line-clamp-3 text-base leading-relaxed text-t-text-secondary">
+      <p className="mb-5 line-clamp-3 text-base leading-relaxed text-muted-foreground">
         {course.subtitle}
       </p>
 
-      <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex items-center gap-1.5">
-          <StarRating rating={course.rating} />
-          <span className="text-sm font-medium text-amber-600">{course.rating.toFixed(1)}</span>
-          <span className="text-sm text-t-text-muted">
-            ({course.reviewCount.toLocaleString()} reviews)
-          </span>
+      {/* 5-Column Metric / Stat Strip (Image 2 reference) */}
+      {/* <div className="mt-6 rounded-xl border border-border bg-card p-4 shadow-sm"> */}
+      {/* <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 md:divide-x md:divide-border/60"> */}
+      <div className='mt-6'>
+        <div className='flex gap-x-5'>
+          {/* Stat 1: Rating */}
+          <div className="flex flex-col gap-1 md:px-3 first:md:pl-0">
+            <div className="flex items-center gap-1.5 font-bold text-foreground">
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" />
+              <span className="text-base font-semibold">{course.rating.toFixed(1)}</span>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {course.reviewCount.toLocaleString()} Đánh giá
+            </span>
+          </div>
+
+          {/* Stat 2: Enrolled */}
+          <div className="flex flex-col gap-1 md:px-3">
+            <div className="flex items-center gap-1.5 font-bold text-foreground">
+              <GraduationCap className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-base font-semibold">{course.enrolledCount.toLocaleString()}</span>
+            </div>
+            <span className="text-xs text-muted-foreground">Học viên tham gia</span>
+          </div>
+
+          {/* Stat 3: Duration */}
+          {/* <div className="flex flex-col gap-1 md:px-3">
+            <div className="flex items-center gap-1.5 font-bold text-foreground">
+              <Clock className="h-4 w-4 text-amber-500 shrink-0" />
+              <span className="text-base font-semibold">{course.duration}</span>
+            </div>
+            <span className="text-xs text-muted-foreground">Tổng thời lượng</span>
+          </div> */}
+
+          {/* Stat 4: Last Updated */}
+          <div className="flex flex-col gap-1 md:px-3">
+            <div className="flex items-center gap-1.5 font-bold text-foreground">
+              <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-base font-semibold">{course.lastUpdated}</span>
+            </div>
+            <span className="text-xs text-muted-foreground">Lần cập nhật cuối</span>
+          </div>
+
+          {/* Stat 5: Language & Level */}
+          <div className="flex flex-col gap-1 md:px-3 last:md:pr-0">
+            <div className="flex items-center gap-1.5 font-bold text-foreground">
+              <Globe className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-base font-semibold">{course.language}</span>
+            </div>
+            <span className="text-xs text-muted-foreground">Cấp độ {course.level}</span>
+          </div>
         </div>
-
-        <div className="flex items-center gap-1.5 text-sm text-t-text-muted">
-          <Users className="h-4 w-4" aria-hidden />
-          <span>{course.enrolledCount.toLocaleString()} enrolled</span>
-        </div>
-
-        <div className="flex items-center gap-1.5 text-sm text-t-text-muted">
-          <Clock className="h-4 w-4" aria-hidden />
-          <span>{course.duration}</span>
-        </div>
-
-        <span
-          className={cn(
-            'rounded-full px-2.5 py-0.5 text-xs font-medium',
-            LEVEL_STYLES[course.level],
-          )}
-        >
-          {course.level}
-        </span>
-
-        <span className="text-sm text-t-text-muted">Updated {course.lastUpdated}</span>
-        <span className="text-sm text-t-text-muted">{course.language}</span>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Avatar className="h-10 w-10 shrink-0">
-          <AvatarFallback className="bg-t-bg-selected text-sm font-medium text-t-text-secondary">
+      {/* Instructor Profile Header */}
+      <div className="flex items-center justify-start gap-3 w-full mt-6">
+        <Avatar className="h-10 w-10 shrink-0 border border-border">
+          <AvatarFallback className="bg-muted text-sm font-semibold text-foreground">
             {initials}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-t-text-primary">{course.instructor.name}</p>
-          <p className="text-xs text-t-text-muted">{course.instructor.title}</p>
+          <p className="text-sm font-semibold text-foreground">{course.instructor.name}</p>
+          <p className="text-xs text-muted-foreground">{course.instructor.title}</p>
         </div>
         <a
           href="#instructor-tab"
-          className="shrink-0 text-sm font-medium text-t-accent transition-colors hover:text-t-accent-hover"
+          className="shrink-0 text-xs font-medium text-primary transition-colors hover:underline ml-2"
         >
-          View profile
+          Xem hồ sơ giảng viên →
         </a>
       </div>
     </div>

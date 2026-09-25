@@ -244,7 +244,7 @@ export default function AdminDashboardPage() {
               size="sm"
               className="cursor-pointer gap-1 text-xs text-primary hover:text-primary/90"
             >
-              <Link href={routePath.adminProgress}>
+              <Link href={routePath.lmsAdminActivities}>
                 Xem đầy đủ
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
