@@ -11,6 +11,7 @@ Chào mừng bạn đến với trung tâm tài liệu dự án **LogiX LMS**. T
 
 ### 📁 2. Kiến Trúc Hệ Thống (`01-architecture/`)
 - 🏛️ [Architecture_Analysis_Decoupled_Design.md](file:///c:/Projects/DigiFnb/Practice/LogiX/doc/01-architecture/Architecture_Analysis_Decoupled_Design.md): Đánh giá kiến trúc tách biệt Frontend (Next.js) & Backend (Express/C#/NestJS).
+- 🎓 [Course_Versioning_And_Certificate_Integrity_Architecture.md](file:///c:/Projects/DigiFnb/Practice/LogiX/doc/01-architecture/Course_Versioning_And_Certificate_Integrity_Architecture.md): Kiến trúc quản lý phiên bản khóa học & bảo toàn giá trị chứng chỉ (Course Versioning, Additive Progress, Recertification).
 - 🧬 [DDD_Architecture_Design.md](file:///c:/Projects/DigiFnb/Practice/LogiX/doc/01-architecture/DDD_Architecture_Design.md): Thiết kế phân tầng Clean Architecture / Domain-Driven Design cho Backend.
 - 🗄️ [Database_Design_Document.md](file:///c:/Projects/DigiFnb/Practice/LogiX/doc/01-architecture/Database_Design_Document.md): Thiết kế ERD & cấu trúc bảng dữ liệu PostgreSQL.
 

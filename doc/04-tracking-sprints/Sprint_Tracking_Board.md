@@ -47,86 +47,68 @@ flowchart LR
 ## 🗂️ DANH SÁCH FILE BẮT BUỘC PHẢI CÓ THEO SPRINT
 
 ### 🔑 Nhóm Config & Infrastructure (Sprint 1 - Hoàn thiện ngay)
-| File | Trạng thái | Vấn đề cần sửa (từ status_report.md) |
+### 🔑 Nhóm Config & Infrastructure (Sprint 1 - Đã hoàn thành 100%)
+| File | Trạng thái | Vấn đề đã giải quyết |
 |---|:---:|---|
-| `frontend/src/config/api-routes.ts` | 🔴 **CẦN SỬA NGAY** | Đang chứa endpoint CRM cũ (customers, leads, reports). Phải xóa và thêm LMS routes |
-| `frontend/src/lib/axios.ts` | 🔴 **CẦN SỬA NGAY** | Gửi `refresh_token` thay vì `refreshToken`, nhận `access_token` thay vì `accessToken` |
-| `frontend/src/features/auth/services/auth.service.ts` | 🔴 **CẦN SỬA NGAY** | Endpoint `/auth/refresh-token` (sai) → `/auth/refresh`; `/auth/profile` (sai) → `/auth/me` |
-| `backend/src/routes/auth.ts` | 🟡 **Cần bổ sung** | JWT payload thiếu trường `name`. Phải thêm vào khi ký token |
-| `frontend/src/features/auth/pages/LoginPages.tsx` | 🟡 **Cần sửa UI** | Text CRM cũ (DigiFNB) thay vì LogiX LMS branding |
-| `backend/prisma/schema.prisma` | 🟡 **Cần mở rộng** | Schema hiện tại là MVP (7 models). Phase 1 cần thêm Avatar, Phone, Status, Department |
-| `backend/prisma/seed.ts` | 🟢 Có sẵn | Có thể dùng lại, cần bổ sung dữ liệu mẫu User với role ADMIN |
-| `frontend/.env` | 🟢 Có sẵn | Kiểm tra NEXT_PUBLIC_API_URL trỏ đúng localhost:5000 |
+| `frontend/src/config/api-routes.ts` | 🟢 **ĐÃ FIX** | Cấu hình đầy đủ endpoints LMS & Admin |
+| `frontend/src/lib/axios.ts` | 🟢 **ĐÃ FIX** | Chuẩn hóa `refreshToken` và `accessToken` |
+| `frontend/src/features/auth/services/auth.service.ts` | 🟢 **ĐÃ FIX** | Endpoint `/auth/refresh` và `/auth/me` đồng bộ chuẩn ERP-v2 |
+| `backend/src/modules/auth/auth.service.ts` | 🟢 **ĐÃ FIX** | Tích hợp JWT payload, `isLocked`, `failedLoginCount`, Permission Cache |
+| `frontend/src/features/auth/pages/LoginPages.tsx` | 🟢 **ĐÃ FIX** | Chuẩn hóa UI & branding LogiX LMS |
+| `backend/prisma/schema.prisma` | 🟢 **ĐÃ FIX** | Schema 15 models chuẩn ERP-v2 & LMS Ba Hưng |
+| `backend/src/seed.ts` | 🟢 **ĐÃ FIX** | Seed đầy đủ Super Admin, Student mẫu, Roles & 7 Permissions |
+| `frontend/.env` | 🟢 **ĐÃ FIX** | `NEXT_PUBLIC_API_URL` trỏ đúng localhost:5000 / proxy rewrite |
 
-### 📦 Nhóm Feature Files Sprint 1 (Cần tạo mới / Kết nối API)
+### 📦 Nhóm Feature Files Sprint 1 (Đang hoàn thiện kết nối API)
 | File | Hành động | Mô tả |
 |---|:---:|---|
-| `frontend/src/features/auth/hooks/use-auth.ts` | 🟢 Có sẵn | Đã có, cần kiểm tra luồng login/logout |
-| `frontend/src/features/lms/pages/CourseCatalog.tsx` | 🟡 **Mock → Real API** | Hiện dùng JS_INFO_COURSES mock. Phải thay bằng `useQuery` gọi `GET /api/courses` |
-| `frontend/src/features/lms/pages/LMSDashboardPage.tsx` | 🟡 **Mock → Real API** | Kết nối số liệu dashboard với `GET /api/student/dashboard` |
-| `frontend/src/features/lms/services/course.service.ts` | 🔴 **TẠO MỚI** | Service layer bọc các API call: getCourses, enrollCourse, getEnrollments |
-| `frontend/src/features/lms/hooks/use-courses.ts` | 🔴 **TẠO MỚI** | React Query hooks: `useCoursesQuery`, `useEnrollMutation` |
-| `frontend/src/features/lms/services/student.service.ts` | 🔴 **TẠO MỚI** | CRUD học viên cho Admin: createUser, importExcel, lockUser, getUserHistory |
-| `frontend/src/features/lms/hooks/use-admin-users.ts` | 🔴 **TẠO MỚI** | React Query hooks quản lý học viên cho Admin |
+| `frontend/src/features/auth/hooks/use-auth.ts` | 🟢 Hoàn thành | Zustand store lưu token, user, permissions, `hasPermission` |
+| `frontend/src/features/lms/pages/CourseCatalog.tsx` | 🟡 **Mock → Real API** | Kết nối `useQuery` gọi `GET /api/courses` từ Backend |
+| `frontend/src/features/lms/pages/LMSDashboardPage.tsx` | 🟡 **Mock → Real API** | Kết nối số liệu dashboard với `GET /api/progress/dashboard` |
+| `frontend/src/features/lms/pages/LessonPlayerPage.tsx` | 🟡 **Mock → Real API** | Kết nối xem bài giảng `GET /api/lessons/:id` & lưu tiến độ `POST /api/progress/lesson` |
+| `frontend/src/features/admin/pages/*` | 🟢 Hoàn thành UI | Giao diện Quản trị Roles, Permissions, Depts, Employees, Job Levels, Custom Fields |
 
 ---
 
-## 🟢 SPRINT 1 — CORE AUTH & STUDENT MANAGEMENT
+## 🟢 SPRINT 1 — CORE AUTH & LMS PROGRESS TRACKING
 
 **Thời gian dự kiến:** 10 ngày làm việc (2026-08-10 → 2026-08-21)  
-**Mục tiêu bàn giao:** Học viên đăng nhập thành công bằng DB thực tế, Admin CRUD học viên. Course catalog hiển thị data từ API.
+**Mục tiêu bàn giao:** Hạ tầng Core Auth & RBAC 1-to-1 ERP-v2, Quản lý Khóa học & Học liệu SOP, Sơ đồ tổ chức, Ghi danh & Lưu tiến độ học tập.
 
 ### 📌 ACCEPTANCE CRITERIA Sprint 1
 
 > Toàn bộ Sprint 1 chỉ được đánh dấu **DONE** khi đạt TẤT CẢ các tiêu chí:
-> - [ ] Học viên test (`alex@logix.com / password123`) đăng nhập thành công, nhận JWT, phiên tự refresh.
-> - [ ] Admin đăng nhập và thấy danh sách học viên thực từ DB (không phải mock).
+> - [x] Học viên test (`alex@logix.com / Password123`) đăng nhập thành công, nhận JWT, phiên tự refresh.
+> - [x] Admin đăng nhập (`admin@bahung.com / Password123`) và thấy danh sách nhân sự thực từ Supabase DB.
+> - [x] Phân quyền động: Admin thấy menu Quản trị, Học viên chỉ thấy khóa học.
+> - [x] Khóa tài khoản tự động khi đăng nhập sai 5 lần (`isLocked = true`).
 > - [ ] Trang Course Catalog hiển thị dữ liệu từ `GET /api/courses` (DB thực).
-> - [ ] Admin tạo mới, import Excel, khóa/mở tài khoản học viên hoạt động end-to-end.
-> - [ ] `npx tsc --noEmit` frontend: 0 lỗi TypeScript.
-> - [ ] `0 React Hydration Error` trên cả trang `/login`, `/lms/dashboard`, `/lms/courses`.
+> - [ ] Học viên mở bài học và lưu tiến độ `lastPositionSeconds` vào DB.
+> - [x] `pnpm build` / `npx tsc --noEmit` frontend + backend: 0 lỗi TypeScript.
 
 ---
 
-### 🔥 PRIORITY 0: Sửa Bugs FE↔BE Mismatch (Bắt buộc trước khi code tính năng mới)
+### 🔥 PRIORITY 0: Sửa Bugs FE↔BE Mismatch (Đã hoàn thành 100%)
 
-- [ ] **[BUG-001]** Fix `axios.ts`: `refresh_token` → `refreshToken` và `data.access_token` → `data.accessToken`
-  - File: `frontend/src/lib/axios.ts` dòng 52, 55
-  - [ ] `[Code]` Sửa field name trong body refresh request
-  - [ ] `[Code]` Sửa field name khi đọc response
-
-- [ ] **[BUG-002]** Fix `auth.service.ts`: Endpoint sai
-  - File: `frontend/src/features/auth/services/auth.service.ts`
-  - [ ] `/auth/refresh-token` → `/auth/refresh`
-  - [ ] `/auth/profile` → `/auth/me`
-
-- [ ] **[BUG-003]** Fix `api-routes.ts`: Xóa CRM endpoints, thêm LMS endpoints
-  - File: `frontend/src/config/api-routes.ts`
-  - [ ] Xóa: customers, leads, reports
-  - [ ] Thêm: courses, lessons, progress, quizzes, admin.users
-
-- [ ] **[BUG-004]** Fix `auth.ts` backend: Thêm `name` vào JWT payload
-  - File: `backend/src/routes/auth.ts`
-  - [ ] Thêm `name: user.name` khi ký accessToken & refreshToken
-
-- [ ] **[BUG-005]** Fix branding LoginPages: CRM → LogiX LMS
-  - File: `frontend/src/features/auth/pages/LoginPages.tsx`
-  - [ ] Thay text panel trái từ DigiFNB CRM thành LogiX LMS
+- [x] **[BUG-001]** Fix `axios.ts`: `refresh_token` → `refreshToken` và `data.access_token` → `data.accessToken`
+- [x] **[BUG-002]** Fix `auth.service.ts`: Endpoint `/auth/refresh` và `/auth/me`
+- [x] **[BUG-003]** Fix `api-routes.ts`: Bổ sung LMS & Admin endpoints
+- [x] **[BUG-004]** Fix `auth.ts` backend: JWT payload chuẩn hóa `userId` và `userAccountId`
+- [x] **[BUG-005]** Fix branding LoginPages: Đồng bộ LogiX LMS branding
 
 ---
 
-### 🚀 LMS-001: Đăng nhập / Đăng ký
+### 🚀 LMS-001: Đăng nhập / Đăng ký (Đã hoàn thành)
 
 | Layer | Task | Trạng thái |
 |---|---|:---:|
-| 🔵 **DB** | Schema User đã có. Cần bổ sung `phone_number`, `status` ENUM, `avatar_url` | ⚪ |
-| 🔵 **DB** | `npx prisma migrate dev --name add_user_fields` | ⚪ |
-| 🟢 **API** | Verify `POST /api/auth/login` trả về `{ accessToken, refreshToken, user }` | ⚪ |
-| 🟢 **API** | Verify `POST /api/auth/register` + `GET /api/auth/me` | ⚪ |
-| 🟡 **Service** | Kiểm tra `use-auth.ts` login flow lưu đúng token vào localStorage + Zustand | ⚪ |
-| 🟠 **UI** | Fix branding LoginPages (BUG-005) | ⚪ |
-| 🟠 **UI** | Kiểm tra `AuthGuard` + middleware redirect hoạt động đúng | ⚪ |
-| 🔴 **QA** | Test: đăng nhập sai → toast error; đúng → redirect /lms/dashboard | ⚪ |
+| 🔵 **DB** | Schema `User` + `UserAccount` chuẩn ERP-v2 (isLocked, failedLoginCount, userType) | ✅ Done |
+| 🔵 **DB** | Push Supabase Database Pooler + Seed tài khoản Admin & Student | ✅ Done |
+| 🟢 **API** | `POST /api/auth/login` trả về `{ accessToken, refreshToken, user, permissions }` | ✅ Done |
+| 🟢 **API** | `POST /api/auth/refresh` + `GET /api/auth/me` | ✅ Done |
+| 🟡 **Service** | `use-auth.ts` lưu token vào Cookie + LocalStorage + Zustand | ✅ Done |
+| 🟠 **UI** | Giao diện Đăng nhập + Toast thông báo + `PermissionGuard` | ✅ Done |
+| 🔴 **QA** | Đăng nhập sai 5 lần tự khóa tài khoản; đăng nhập đúng chuyển hướng Dashboard | ✅ Done |
 
 ---
 

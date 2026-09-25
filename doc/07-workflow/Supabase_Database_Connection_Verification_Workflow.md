@@ -176,6 +176,7 @@ Kết quả xác minh gần nhất thu được từ hệ thống:
 | `Can't reach database server` | Sai IP / Supabase Pooler tạm thời gián đoạn | Kiểm tra kết nối Internet, đảm bảo dùng domain Pooler `aws-0-ap-southeast-1.pooler.supabase.com` |
 | `P1001: Connection timed out` | Sai Port (dùng port 5432 thay vì 6543 cho app query) | Kiểm tra `DATABASE_URL` trong `.env` phải có port `6543` và query parameter `?pgbouncer=true` |
 | `P1002: Database server was reached but timed out` | Sai password hoặc DB connection quota chạm ngưỡng | Kiểm tra lại password trong `DATABASE_URL` hoặc restart lại Supabase project |
+| `Error in PostgreSQL connection: Error { kind: Closed, cause: None }` | Supabase Pooler (PgBouncer) tự động đóng kết nối TCP socket khi idle (sau ~5-15 phút không có query) | **Bình thường (Benign)**. Prisma tự động tạo connection mới khi có request kế tiếp. Không ảnh hưởng hoạt động của hệ thống. |
 
 ---
 

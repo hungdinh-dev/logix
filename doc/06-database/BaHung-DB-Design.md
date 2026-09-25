@@ -1,761 +1,627 @@
-# CƠ SỞ DỮ LIỆU LMS-BAHUNG — THIẾT KẾ CHI TIẾT (DATABASE DESIGN DOCUMENT)
+# 🗄️ CƠ SỞ DỮ LIỆU LMS-BAHUNG — THIẾT KẾ & ĐẶC TẢ 111 CHỨC NĂNG (DATABASE DESIGN DOCUMENT v2.0)
+
 > **Dự án:** LMS-BaHung (Đào tạo Nội bộ F&B Chuỗi Cửa hàng & Xưởng Sản xuất)  
-> **Định hướng phát triển:** Đảm bảo bao phủ **100% chức năng LMS-001 đến LMS-111**, đồng thời thiết kế mở rộng sẵn sàng cho **LMS-Horeca (Commercial Sales & Migration)** kế thừa về sau.  
-> **Phiên bản:** v1.0.0  
-> **Thư mục lưu trữ:** `Practice/LogiX/doc/04-tracking-sprints/BaHung-DB-Design.md`
+> **Nguồn danh mục chức năng:** [Google Sheet - BaHung LMS (111 Chức năng)](https://docs.google.com/spreadsheets/d/12RLN5E-ptEI6NcNBEtyZMnwy_6JRORrutR27O5p97J4/edit?gid=1230744407#gid=1230744407)  
+> **Nguồn chân lý Database (Source of Truth):** [`backend/prisma/schema.prisma`](file:///c:/Projects/DigiFnb/Practice/LogiX/backend/prisma/schema.prisma) & [`backend/src/modules/`](file:///c:/Projects/DigiFnb/Practice/LogiX/backend/src/modules/)  
+> **Phiên bản:** v2.0.0 (Cập nhật đồng bộ 100% với Codebase & Google Sheet)  
+> **Ngày cập nhật:** 2026-08-28
 
 ---
 
-## 1. NGUYÊN TẮC VÀ CHIẾN LƯỢC THIẾT KẾ (DESIGN PRINCIPLES)
+## 1. NGUYÊN TẮC VÀ CHIẾN LƯỢC THIẾT KẾ CƠ SỞ DỮ LIỆU
 
 ### 1.1. Mục tiêu cốt lõi của LMS-BaHung
-1. **Phủ 100% 111 chức năng trong `LMS-BaHung List Function.md`:** Đáp ứng đào tạo Onboarding, An toàn Thực phẩm (ATTP), Đánh giá thực hành tại điểm (Mentor & QLCH), Ký xác nhận quy trình SOP, Lớp học tập trung, Gamification và Báo cáo.
-2. **Tích hợp HRM Chặt chẽ (HRM Gatekeeper):** Hỗ trợ tự động gán khóa học theo Sơ đồ tổ chức (Cửa hàng/Xưởng/Chức danh/Loại NV), bắn sự kiện trạng thái thử việc/chính thức và **chặn lịch xếp ca HRM nếu vi phạm/hết hạn ATTP**.
-3. **Mở rộng linh hoạt sang LMS-Horeca (Horeca-Ready Architecture):** 
-   - Mọi bảng Core đều tích hợp cờ phân loại (`is_commercial`, `is_internal`, `user_type`).
-   - Mọi bảng User/Course đều sẵn sàng kết nối với Module Thương mại (Định giá, Coupon, VNPay/MoMo) và Migration Engine về sau mà không cần đập đi xây lại Schema.
+1. **Phủ trọn vẹn 111 chức năng theo Google Sheet (`LMS-001` $\rightarrow$ `LMS-111`):** Bao gồm Đào tạo Khóa học & Học liệu SOP, An toàn Thực phẩm (ATTP) có thời hạn, Lộ trình Onboarding theo chức danh, Đánh giá thực hành tại điểm (Mentor & QLCH), Ký xác nhận quy trình SOP, Lớp học tập trung, Gamification và Báo cáo.
+2. **Tích hợp HRM Chặt chẽ (HRM Gatekeeper & Auto-Assign):** Hỗ trợ tự động gán khóa học theo Sơ đồ tổ chức (Cửa hàng / Xưởng sản xuất / Chức danh / Trạng thái nhân sự) và **cổng chặn xếp ca làm việc HRM nếu vi phạm/hết hạn chứng chỉ ATTP**.
+3. **Mở rộng linh hoạt sang LMS-Horeca (Commercial Sales & Migration):** Mọi bảng Core đều tích hợp cờ phân loại (`isCommercial`, `isInternal`, `userType`) sẵn sàng kết nối phân hệ Bán khóa học & Migration Engine mà không cần thay đổi cấu trúc bảng cốt lõi.
 
-### 1.2. Phân nhóm Bảng Dữ liệu (Schema Modules)
-Cơ sở dữ liệu được chia làm 8 phân khu logic (Logical Schemas/Prefixes):
-1. `sys_` & `auth_`: Quản trị Hệ thống, Tài khoản, Phân quyền RBAC & SSO.
-2. `org_`: Sơ đồ Tổ chức (Phòng ban, Cửa hàng, Xưởng sản xuất, Chức danh).
-3. `crs_`: Quản lý Khóa học, Học liệu (Video, PDF, SOP Rich Text, Versioning).
-4. `enr_` & `path_`: Lộ trình Onboarding, Ghi danh & Tiến độ Học tập.
-5. `quiz_` & `cert_`: Ngân hàng câu hỏi, Đánh giá Quiz, Chứng chỉ & Quản lý Tuân thủ ATTP.
-6. `eval_` & `cls_`: Đánh giá Thực hành (Mentor/QLCH) & Lớp học Đào tạo Tập trung.
-7. `sop_`, `srv_` & `gam_`: Ký xác nhận SOP, Khảo sát & Gamification (Điểm thưởng, Badge, Leaderboard).
-8. `int_` & `aud_`: Tích hợp HRM Webhooks, Đồng bộ Nhân sự & Nhật ký Thao tác (Audit Log).
+### 1.2. Phân vùng Thực thể (Logical Schemas & Table Prefixes)
+1. `auth_`: Quản trị Hệ thống, Tài khoản, Phân quyền RBAC chuẩn ERP-v2 (`auth_users`, `auth_user_accounts`, `auth_roles`, `auth_permissions`, `auth_user_roles`, `auth_role_permissions`).
+2. `org_`: Sơ đồ Tổ chức F&B (`org_stores`, `org_departments`, `org_positions`).
+3. `crs_`: Quản lý Khóa học, Chương & Bài học đa hình thái (`crs_categories`, `crs_courses`, `crs_modules`, `crs_lessons`).
+4. `quiz_`: Ngân hàng câu hỏi, Đánh giá trắc nghiệm & Lịch sử thi (`quiz_quizzes`, `quiz_questions`, `quiz_question_options`, `quiz_attempts`, `quiz_attempt_answers`).
+5. `enr_`: Ghi danh học viên & Theo dõi tiến độ chi tiết (`enr_course_enrollments`, `enr_lesson_progress`).
+6. `cert_` *(Phase 2)*: Quản lý Tuân thủ ATTP, Hạn hiệu lực & Cổng chặn ca HRM (`cert_types`, `cert_user_certificates`).
+7. `path_` *(Phase 2)*: Lộ trình Onboarding theo khối & Quy tắc tự động gán (`path_learning_paths`, `path_auto_assign_rules`).
+8. `eval_` & `cls_` *(Phase 3)*: Đánh giá Thực hành On-the-Job (Mentor/QLCH) & Lớp đào tạo tập trung (`eval_templates`, `eval_submissions`, `cls_classes`, `cls_attendances`).
+9. `sop_`, `srv_` & `gam_` *(Phase 3)*: Ký xác nhận SOP, Khảo sát chất lượng & Gamification (`sop_confirmations`, `srv_surveys`, `gam_leaderboard`, `gam_points`).
 
 ---
 
-## 2. MA TRẬN ÁP DỤNG DATABASE CHO 111 CHỨC NĂNG (FUNCTION-TO-TABLE MATRIX)
+## 2. MA TRẬN 111 CHỨC NĂNG VỚI CƠ SỞ DỮ LIỆU (THEO GOOGLE SHEET BAHUNG LMS)
 
 > [!NOTE]
-> Bảng dưới đây chứng minh mọi chức năng từ **LMS-001** đến **LMS-111** đều có Entity và Column tương ứng trong DB Design này.
+> Bảng dưới đây đối soát chính xác 1-to-1 từng mã chức năng từ **LMS-001** đến **LMS-111** trong Google Sheet với Thực thể / Bảng CSDL Prisma tương ứng.
 
-| Mã CN | Tên Chức Năng LMS-BaHung | Thực thể / Bảng Dữ Dụng Chính (Tables & Views) |
-|:---:|---|---|
-| **LMS-001** | Tạo danh mục chương trình đào tạo | `crs_categories` |
-| **LMS-002** | Tạo khóa học mới | `crs_courses` |
-| **LMS-003** | Sao chép khóa học | `crs_courses` (Clone logic via Stored Proc/Service) |
-| **LMS-004** | Ngưng / kích hoạt khóa học | `crs_courses.status` |
-| **LMS-005** | Gán khóa học theo chức danh | `enr_auto_assignment_rules` (`position_id`) |
-| **LMS-006** | Gán khóa học theo loại nhân sự | `enr_auto_assignment_rules` (`employment_type`) |
-| **LMS-007** | Gán khóa học theo cửa hàng | `enr_auto_assignment_rules` (`store_id`) |
-| **LMS-008** | Gán khóa học theo bộ phận sản xuất | `enr_auto_assignment_rules` (`factory_dept_id`) |
-| **LMS-009** | Đặt khóa học bắt buộc | `crs_courses.is_mandatory`, `enr_auto_assignment_rules.is_mandatory` |
-| **LMS-010** | Đặt khóa học tùy chọn | `crs_courses.is_mandatory = false` |
-| **LMS-011** | Cấu hình thời hạn hoàn thành | `crs_courses.duration_days`, `enr_course_enrollments.due_date` |
-| **LMS-012** | Cấu hình điểm đạt khóa học | `crs_courses.pass_score` |
-| **LMS-013** | Bài giảng dạng video | `crs_lessons` (`lesson_type = 'VIDEO'`, `video_url`, `duration_seconds`) |
-| **LMS-014** | Bài giảng dạng PDF | `crs_lessons` (`lesson_type = 'PDF'`, `document_url`) |
-| **LMS-015** | Bài giảng dạng trang văn bản | `crs_lessons` (`lesson_type = 'RICHTEXT'`, `body_html`) |
-| **LMS-016** | Bài giảng dạng hình ảnh / checklist | `crs_lessons` (`lesson_type = 'CHECKLIST'`, `checklist_items` JSONB) |
-| **LMS-017** | Sắp xếp thứ tự bài giảng | `crs_modules.sort_order`, `crs_lessons.sort_order` |
-| **LMS-018** | Ẩn / hiện bài giảng | `crs_lessons.is_visible` |
-| **LMS-019** | Gắn tài liệu SOP vận hành cửa hàng | `crs_lessons.sop_code`, `crs_lessons.sop_type = 'STORE'` |
-| **LMS-020** | Gắn tài liệu SOP sản xuất | `crs_lessons.sop_code`, `crs_lessons.sop_type = 'FACTORY'` |
-| **LMS-021** | Phiên bản hóa học liệu | `crs_lesson_versions` |
-| **LMS-022** | Tạo khóa đào tạo ATTP bắt buộc | `crs_courses.course_type = 'ATTP'` |
-| **LMS-023** | Ghi nhận hoàn thành ATTP nội bộ | `enr_course_enrollments`, `cert_user_certificates` |
-| **LMS-024** | Ghi nhận chứng chỉ ATTP ngoài | `cert_user_certificates` (`is_external = true`, `issuing_org`) |
-| **LMS-025** | Lưu ngày cấp chứng chỉ ATTP | `cert_user_certificates.issue_date` |
-| **LMS-026** | Lưu ngày hết hạn chứng chỉ ATTP | `cert_user_certificates.expiry_date` |
-| **LMS-027** | Cảnh báo chứng chỉ sắp hết hạn | `cert_notifications`, `cert_user_certificates.status = 'EXPIRING_SOON'` |
-| **LMS-028** | Cảnh báo chứng chỉ đã hết hạn | `cert_notifications`, `cert_user_certificates.status = 'EXPIRED'` |
-| **LMS-029** | Chặn xếp ca nếu thiếu ATTP | View `v_attp_shift_eligibility`, API Gate check |
-| **LMS-030** | In / xuất giấy xác nhận ATTP | `cert_user_certificates.certificate_code`, PDF Export Service |
-| **LMS-031** | Quản lý loại chứng chỉ khác | `cert_types` (ATTP, Professional, Safety, Operations) |
-| **LMS-032** | Gắn chứng chỉ vào hồ sơ học viên | `cert_user_certificates.user_id` FK → `auth_users.id` |
-| **LMS-033** | Lộ trình onboarding nhân viên CH | `path_learning_paths` (`target_role = 'STORE_STAFF'`) |
-| **LMS-034** | Lộ trình onboarding nhân viên SX | `path_learning_paths` (`target_role = 'FACTORY_STAFF'`) |
-| **LMS-035** | Lộ trình onboarding quản lý CH | `path_learning_paths` (`target_role = 'STORE_MANAGER'`) |
-| **LMS-036** | Lộ trình onboarding nhân viên TC | `path_learning_paths` (`target_role = 'REINFORCEMENT'`) |
-| **LMS-037** | Lộ trình onboarding học việc | `path_learning_paths` (`target_role = 'PROBATION'`) |
-| **LMS-038** | Tự gán lộ trình khi status Học việc | `path_auto_assign_rules` (`trigger_status = 'PROBATION'`) |
-| **LMS-039** | Tự gán lộ trình khi chính thức | `path_auto_assign_rules` (`trigger_status = 'OFFICIAL'`) |
-| **LMS-040** | Theo dõi % hoàn thành onboarding | `path_user_progress.completion_percentage` |
-| **LMS-041** | Cảnh báo chậm tiến độ onboarding | `path_user_reminders` |
-| **LMS-042** | Xác nhận hoàn tất onboarding | `path_user_progress.status = 'COMPLETED'`, `int_outbound_events` |
-| **LMS-043** | Checklist học tập song song HR | `path_onboarding_checklists` (`type = 'LEARNING'` vs `'HR'`) |
-| **LMS-044** | Ghi danh học viên thủ công | `enr_course_enrollments` (`source = 'MANUAL'`) |
-| **LMS-045** | Ghi danh hàng loạt theo cửa hàng | Bulk insert `enr_course_enrollments` by `store_id` |
-| **LMS-046** | Ghi danh hàng loạt theo bộ phận | Bulk insert `enr_course_enrollments` by `department_id` |
-| **LMS-047** | Hủy ghi danh học viên | `enr_course_enrollments.status = 'CANCELLED'` |
-| **LMS-048** | Xem danh sách khóa của tôi | Query `enr_course_enrollments` JOIN `crs_courses` |
-| **LMS-049** | Mở bài giảng để học | `enr_lesson_progress` record initialization |
-| **LMS-050** | Đánh dấu hoàn thành bài giảng | `enr_lesson_progress.is_completed = true` |
-| **LMS-051** | Lưu tiến độ học dở | `enr_lesson_progress.last_position_seconds` |
-| **LMS-052** | Học trên Web | Web API Endpoints |
-| **LMS-053** | Học trên App di động | Mobile API Endpoints |
-| **LMS-054** | Tải tài liệu học | `crs_lessons.allow_download = true` |
-| **LMS-055** | Ghi nhận thời gian học | `enr_study_logs.time_spent_seconds` |
-| **LMS-056** | Tạo ngân hàng câu hỏi | `quiz_question_categories`, `quiz_question_bank` |
-| **LMS-057** | Câu hỏi trắc nghiệm 1 đáp án | `quiz_question_bank` (`type = 'SINGLE_CHOICE'`), `quiz_question_options` |
-| **LMS-058** | Câu hỏi trắc nghiệm nhiều đáp án | `quiz_question_bank` (`type = 'MULTIPLE_CHOICE'`) |
-| **LMS-059** | Câu hỏi đúng/sai | `quiz_question_bank` (`type = 'TRUE_FALSE'`) |
-| **LMS-060** | Câu hỏi tự luận ngắn | `quiz_question_bank` (`type = 'SHORT_ANSWER'`) |
-| **LMS-061** | Tạo bài kiểm tra gắn khóa học | `quiz_quizzes.course_id` FK → `crs_courses.id` |
-| **LMS-062** | Cấu hình số lần làm lại | `quiz_quizzes.max_attempts` |
-| **LMS-063** | Cấu hình thời gian làm bài | `quiz_quizzes.time_limit_minutes` |
-| **LMS-064** | Xáo trộn câu hỏi | `quiz_quizzes.shuffle_questions` |
-| **LMS-065** | Học viên làm bài kiểm tra | `quiz_attempts` |
-| **LMS-066** | Chấm điểm tự động trắc nghiệm | `quiz_attempts.score`, `quiz_attempt_answers.is_correct` |
-| **LMS-067** | Chấm điểm thủ công tự luận | `quiz_attempt_answers.score`, `graded_by_user_id` |
-| **LMS-068** | Xem kết quả bài kiểm tra | Summary from `quiz_attempts` |
-| **LMS-069** | Xem lịch sử làm bài | Query list `quiz_attempts` |
-| **LMS-070** | Đạt / không đạt khóa theo điểm | `enr_course_enrollments.is_passed` |
-| **LMS-071** | Bảng xếp hạng điểm học tập | `gam_user_points`, `gam_leaderboards` |
-| **LMS-072** | Thử thách học tập tuần/tháng | `gam_challenges`, `gam_user_challenge_progress` |
-| **LMS-073** | Cộng điểm thưởng hoàn thành đúng hạn | `gam_point_logs` (`event_type = 'ON_TIME_BONUS'`) |
-| **LMS-074** | Huy hiệu hoàn thành khóa | `gam_badges`, `gam_user_badges` |
-| **LMS-075** | Báo cáo người dẫn đầu theo CH | Query `gam_user_points` GROUP BY `store_id` |
-| **LMS-076** | Phiếu đánh giá thực hành CH | `eval_templates` (`category = 'STORE'`) |
-| **LMS-077** | Phiếu đánh giá thực hành SX | `eval_templates` (`category = 'FACTORY'`) |
-| **LMS-078** | Mentor chấm đánh giá học việc | `eval_submissions`, `eval_submission_items` |
-| **LMS-079** | QLCH xác nhận đánh giá thực hành | `eval_submissions.manager_approval_status`, `manager_user_id` |
-| **LMS-080** | Gửi kết quả thực hành sang HRM | `int_outbound_events` (`event_type = 'PRACTICAL_EVAL_PASS'`) |
-| **LMS-081** | Lưu lịch sử đánh giá thực hành | Historical rows in `eval_submissions` |
-| **LMS-082** | Gán mentor (đồng bộ từ HRM) | `org_mentor_mentee_mappings` |
-| **LMS-083** | Tạo lớp đào tạo tập trung | `cls_training_classes` |
-| **LMS-084** | Mở điểm danh lớp đào tạo | `cls_class_sessions` |
-| **LMS-085** | Ghi nhận tham dự lớp | `cls_attendances` (`status = 'PRESENT'/'ABSENT'`) |
-| **LMS-086** | Gắn lớp với khóa học | `cls_training_classes.course_id` |
-| **LMS-087** | Thông báo lịch học | `cls_class_notifications` |
-| **LMS-088** | Đăng ký tham gia lớp học | `cls_class_registrations` |
-| **LMS-089** | Giới hạn sĩ số lớp | `cls_training_classes.max_capacity` |
-| **LMS-090** | Form xác nhận đã đọc SOP | `sop_acknowledgements` |
-| **LMS-091** | Ký xác nhận đã hiểu quy định | `sop_acknowledgements.digital_signature_blob`, `signed_at` |
-| **LMS-092** | Khảo sát mức độ hiểu bài | `srv_surveys` (`type = 'COMPREHENSION'`), `srv_responses` |
-| **LMS-093** | Khảo sát chất lượng khóa học | `srv_surveys` (`type = 'COURSE_RATING'`), `srv_responses` |
-| **LMS-094** | Báo cáo tỷ lệ hoàn thành theo CH | View `v_report_store_completion` |
-| **LMS-095** | Báo cáo tỷ lệ hoàn thành theo SX | View `v_report_factory_completion` |
-| **LMS-096** | Báo cáo chưa hoàn thành onboard | View `v_report_overdue_onboarding` |
-| **LMS-097** | Báo cáo chứng chỉ ATTP | View `v_report_attp_status` |
-| **LMS-098** | Báo cáo kết quả quiz theo khóa | View `v_report_quiz_analytics` |
-| **LMS-099** | Báo cáo thời gian đào tạo | View `v_report_learning_duration` |
-| **LMS-100** | Báo cáo mentor - số học việc đang kèm | View `v_report_mentor_workload` |
-| **LMS-101** | Xuất báo cáo ra Excel | System Report Service |
-| **LMS-102** | Phân quyền Admin LMS | `auth_roles`, `auth_permissions`, `auth_user_roles` |
-| **LMS-103** | Phân quyền Trainer | `auth_roles` (`code = 'TRAINER'`) |
-| **LMS-104** | Phân quyền xem báo cáo | `auth_roles` (`code = 'REPORT_VIEWER'`) |
-| **LMS-105** | Đồng bộ danh sách nhân sự từ HRM | `int_hrm_sync_logs`, `auth_users`, `org_departments` |
-| **LMS-106** | Đồng bộ trạng thái nhân sự từ HRM | `auth_users.employment_status` (`PROBATION`, `OFFICIAL`, `RESIGNED`) |
-| **LMS-107** | Gửi sự kiện hoàn thành khóa sang HRM | `int_outbound_events` (`event_type = 'COURSE_COMPLETED'`) |
-| **LMS-108** | Gửi sự kiện đạt đánh giá thực hành sang HRM | `int_outbound_events` (`event_type = 'PRACTICAL_PASSED'`) |
-| **LMS-109** | SSO với App nhân viên | `auth_sso_credentials`, OAuth2/OIDC Token Handler |
-| **LMS-110** | Nhật ký thao tác LMS (Audit log) | `aud_audit_logs` |
-| **LMS-111** | Sao lưu nội dung đào tạo | `sys_backups` metadata & System Storage |
-
----
-
-## 3. THIẾT KẾ CƠ SỞ DỮ LIỆU CHI TIẾT (DETAILED TABLE SPECIFICATIONS)
-
-```mermaid
-erDiagram
-    auth_users ||--o{ org_store_assignments : assigned_to
-    auth_users ||--o{ enr_course_enrollments : learns
-    crs_courses ||--o{ crs_modules : has
-    crs_modules ||--o{ crs_lessons : has
-    crs_courses ||--o{ enr_course_enrollments : enrolled
-    crs_lessons ||--o{ enr_lesson_progress : tracks
-    auth_users ||--o{ enr_lesson_progress : records
-    
-    auth_users ||--o{ cert_user_certificates : holds
-    cert_types ||--o{ cert_user_certificates : categorizes
-    
-    auth_users ||--o{ eval_submissions : student
-    auth_users ||--o{ eval_submissions : mentor
-    eval_templates ||--o{ eval_submissions : defines
-    
-    auth_users ||--o{ sop_acknowledgements : signs
-    crs_lessons ||--o| sop_acknowledgements : acknowledges
-    
-    auth_users ||--o{ int_outbound_events : triggers
-```
+| Mã CN | Nghiệp vụ lớn (Domain) | Tên Chức Năng (Google Sheet) | Mô Tả Chi Tiết | Đối Tượng | Bảng CSDL Prisma & Cột Ánh Xạ Tương Ứng | Trạng Thái |
+|:---:|---|---|---|---|---|:---:|
+| **LMS-001** | Quản lý khóa học | Quản lý danh mục khóa học | Tạo, sửa, xóa danh mục khóa học (Onboarding, ATTP, Nghiệp vụ CH, SX...) | Admin LMS / Nhân sự | `crs_categories` (`code`, `name`, `sortOrder`, `isActive`) | ✅ Done |
+| **LMS-002** | Quản lý khóa học | Tạo mới khóa học | Tạo khóa học với các thông tin cơ bản | Admin LMS / Trainer | `crs_courses` (`code`, `title`, `slug`, `categoryId`, `courseType`, `status`) | ✅ Done |
+| **LMS-003** | Quản lý khóa học | Sao chép khóa học | Clone course để tái sử dụng | Admin LMS | `CourseService.cloneCourse()` $\rightarrow$ Deep clone `Course`, `CourseModule`, `Lesson`, `Quiz` | 🔄 In Progress |
+| **LMS-004** | Quản lý khóa học | Xóa / Ẩn khóa học | Ẩn khóa học không cho hiển thị | Admin LMS | `crs_courses.status` (`'DRAFT'`, `'PUBLISHED'`, `'ARCHIVED'`) & `isActive` | ✅ Done |
+| **LMS-005** | Quản lý khóa học | Gán khóa học theo chức danh | Rule: QLCH phải học khóa X | Admin LMS | `crs_courses.targetPositionId` (FK $\rightarrow$ `org_positions.id`) | ✅ Done |
+| **LMS-006** | Quản lý khóa học | Gán khóa học theo loại nhân sự | Học việc / Chính thức / TC học khác nhau | Admin LMS | `crs_courses.targetEmploymentStatus` (`'PROBATION'`, `'OFFICIAL'`, `'TEMPORARY'`, `'ALL'`) | ✅ Done |
+| **LMS-007** | Quản lý khóa học | Gán khóa học theo cửa hàng | Khóa đặc thù CH / khu vực | Admin LMS | `crs_courses.targetStoreId` (FK $\rightarrow$ `org_stores.id`) | ✅ Done |
+| **LMS-008** | Quản lý khóa học | Gán khóa học theo bộ phận sản xuất | Khóa theo khâu kem / bao / cắt... | Admin LMS / Trưởng BP | `crs_courses.targetDepartmentId` (FK $\rightarrow$ `org_departments.id` - `isFactoryDept = true`) | ✅ Done |
+| **LMS-009** | Quản lý khóa học | Đặt khóa học bắt buộc | Bắt buộc hoàn thành mới qua cổng onboarding | Admin LMS | `crs_courses.isMandatory = true` | ✅ Done |
+| **LMS-010** | Quản lý khóa học | Đặt khóa học tùy chọn | Khóa khuyến nghị | Admin LMS | `crs_courses.isMandatory = false` | ✅ Done |
+| **LMS-011** | Quản lý khóa học | Cấu hình thời hạn hoàn thành khóa học | Deadline học | Admin LMS | `crs_courses.durationDays`, `enr_course_enrollments.dueDate` | ✅ Done |
+| **LMS-012** | Quản lý khóa học | Cấu hình điểm đạt khóa học | Pass score | Admin LMS | `crs_courses.passScore`, `quiz_quizzes.passScore` | ✅ Done |
+| **LMS-013** | Quản lý video đào tạo | Tải lên video | Upload video bài giảng trực tiếp lên server | Trainer / Admin LMS | `crs_lessons` (`lessonType = 'VIDEO'`, `videoProvider`, `videoUrl`, `videoDuration`) | ✅ Done |
+| **LMS-014** | Quản lý video đào tạo | Tạo bài giảng dạng tài liệu PDF | Upload PDF / slide | Trainer / Admin LMS | `crs_lessons` (`lessonType = 'PDF'`, `documentUrl`, `allowDownload`) | ✅ Done |
+| **LMS-015** | Quản lý video đào tạo | Tạo bài giảng dạng trang văn bản | Rich text lesson | Trainer / Admin LMS | `crs_lessons` (`lessonType = 'ARTICLE'`, `bodyHtml`, `estimatedReadTime`) | ✅ Done |
+| **LMS-016** | Quản lý video đào tạo | Tạo bài giảng dạng hình ảnh / checklist | Ảnh quy trình, SOP | Trainer / Admin LMS | `crs_lessons` (`lessonType = 'CHECKLIST'`, `checklistItems` JSON string) | ✅ Done |
+| **LMS-017** | Quản lý video đào tạo | Sắp xếp thứ tự bài giảng trong khóa | Ordering modules / lessons | Admin LMS | `crs_modules.sortOrder`, `crs_lessons.sortOrder` | ✅ Done |
+| **LMS-018** | Quản lý video đào tạo | Ẩn / hiện bài giảng | Kiểm soát nội dung phát hành | Admin LMS | `crs_lessons.isVisible` (`Boolean`) | ✅ Done |
+| **LMS-019** | Quản lý video đào tạo | Gắn tài liệu SOP vận hành cửa hàng | Gắn SOP CH vào khóa | Vận hành / LMS | `crs_lessons.sopCode`, `crs_lessons.sopType = 'STORE_SOP'`, `requiresSignature` | ✅ Done |
+| **LMS-020** | Quản lý video đào tạo | Gắn tài liệu SOP sản xuất | Gắn SOP xưởng vào khóa | SX / LMS | `crs_lessons.sopCode`, `crs_lessons.sopType = 'FACTORY_SOP'`, `requiresSignature` | ✅ Done |
+| **LMS-021** | Quản lý video đào tạo | Phiên bản hóa học liệu | Version document / lesson | Admin LMS | `crs_lessons` (`videoDuration`, `estimatedReadTime`, `createdAt`, `updatedAt`) | 🟡 Not Started |
+| **LMS-022** | ATTP & chứng chỉ | Tạo khóa đào tạo ATTP bắt buộc | Khóa an toàn thực phẩm | Admin LMS / QA | `crs_courses` (`courseType = 'ATTP'`, `isMandatory = true`) | ✅ Done |
+| **LMS-023** | ATTP & chứng chỉ | Ghi nhận hoàn thành khóa ATTP nội bộ | Pass khóa nội bộ | Hệ thống / Trainer | `enr_course_enrollments` (`isPassed = true`) $\rightarrow$ Cấp `cert_user_certificates` | 🔄 In Progress |
+| **LMS-024** | ATTP & chứng chỉ | Ghi nhận chứng chỉ ATTP bên ngoài | Upload / ghi chứng chỉ đi học ngoài | Nhân sự / LMS Admin | `cert_user_certificates` (`isExternal = true`, `certificateFileUrl`, `issuingOrganization`) | 🔄 In Progress |
+| **LMS-025** | ATTP & chứng chỉ | Lưu ngày cấp chứng chỉ ATTP | Effective date | Nhân sự / LMS | `cert_user_certificates.issueDate` | 🔄 In Progress |
+| **LMS-026** | ATTP & chứng chỉ | Lưu ngày hết hạn chứng chỉ ATTP | Expiry date | Nhân sự / LMS | `cert_user_certificates.expiryDate` | 🔄 In Progress |
+| **LMS-027** | ATTP & chứng chỉ | Cảnh báo chứng chỉ ATTP sắp hết hạn | Notify trước hạn 30/15/7 ngày | Hệ thống | `cert_user_certificates.status = 'EXPIRING_SOON'`, CronJob Alert | 🔄 In Progress |
+| **LMS-028** | ATTP & chứng chỉ | Cảnh báo chứng chỉ ATTP đã hết hạn | Block / cảnh báo mạnh | Hệ thống | `cert_user_certificates.status = 'EXPIRED'` | 🔄 In Progress |
+| **LMS-029** | ATTP & chứng chỉ | Chặn xếp ca nếu thiếu ATTP còn hiệu lực | Gate với HRM lịch ca | Hệ thống tích hợp HRM | API Gate Check `GET /api/compliance/attp-check/:userId` | 🟡 Not Started |
+| **LMS-030** | ATTP & chứng chỉ | In / xuất giấy xác nhận ATTP | Export certificate | Nhân sự / QA | PDF Generator Service (`certificateCode`, QR Code verification) | 🟡 Not Started |
+| **LMS-031** | ATTP & chứng chỉ | Quản lý loại chứng chỉ khác ngoài ATTP | Chứng chỉ nghề / khác | Admin LMS | `cert_types` (`code`, `name`, `defaultValidMonths`) | 🟡 Not Started |
+| **LMS-032** | ATTP & chứng chỉ | Gắn chứng chỉ vào hồ sơ học viên | Profile certificates | Hệ thống | `cert_user_certificates.userId` FK $\rightarrow$ `auth_users.id` | 🔄 In Progress |
+| **LMS-033** | Onboarding học tập | Tạo lộ trình onboarding cho nhân viên cửa hàng | Learning path CH | Admin LMS / Nhân sự | `path_learning_paths` (`targetScope = 'STORE_STAFF'`) | ✅ Done |
+| **LMS-034** | Onboarding học tập | Tạo lộ trình onboarding cho nhân viên sản xuất | Learning path SX | Admin LMS / SX | `path_learning_paths` (`targetScope = 'FACTORY_STAFF'`) | ✅ Done |
+| **LMS-035** | Onboarding học tập | Tạo lộ trình onboarding cho quản lý cửa hàng | Learning path QLCH | Admin LMS | `path_learning_paths` (`targetScope = 'STORE_MANAGER'`) | ✅ Done |
+| **LMS-036** | Onboarding học tập | Tạo lộ trình onboarding cho nhân viên tăng cường | Learning path TC | Admin LMS / Nhân sự | `path_learning_paths` (`targetScope = 'REINFORCEMENT'`) | ✅ Done |
+| **LMS-037** | Onboarding học tập | Tạo lộ trình onboarding cho học việc | Path riêng giai đoạn học việc | Admin LMS | `path_learning_paths` (`targetScope = 'PROBATION'`) | ✅ Done |
+| **LMS-038** | Onboarding học tập | Tự gán lộ trình khi nhân sự vào status Học việc | Auto-enroll từ HRM status | Hệ thống tích hợp HRM | `path_auto_assign_rules` (`triggerStatus = 'PROBATION'`) | ✅ Done |
+| **LMS-039** | Onboarding học tập | Tự gán lộ trình khi nhận việc chính thức | Auto-enroll khi chính thức | Hệ thống tích hợp HRM | `path_auto_assign_rules` (`triggerStatus = 'OFFICIAL'`) | ✅ Done |
+| **LMS-040** | Onboarding học tập | Theo dõi % hoàn thành lộ trình onboarding | Progress % | NV / QL / Nhân sự | `path_user_progress.completionPercentage` | ✅ Done |
+| **LMS-041** | Onboarding học tập | Cảnh báo học viên chậm tiến độ onboarding | Reminder | Hệ thống | `path_user_reminders` | 🔄 In Progress |
+| **LMS-042** | Onboarding học tập | Xác nhận hoàn tất onboarding học tập | Mark learning onboarding done $\rightarrow$ gửi HRM | Hệ thống / QL | `path_user_progress.status = 'COMPLETED'` | ✅ Done |
+| **LMS-043** | Onboarding học tập | Checklist học tập song song checklist HR | Phân biệt hạng mục học vs giấy tờ HR | Nhân sự / LMS | `path_onboarding_checklists` (`type = 'LEARNING'` vs `'HR'`) | ✅ Done |
+| **LMS-044** | Quản lý học viên | Thêm mới học viên | Tạo tài khoản học viên thủ công | Admin LMS / Nhân sự | `POST /api/users` $\rightarrow$ Insert `auth_users` & `auth_user_accounts` | ✅ Done |
+| **LMS-045** | Quản lý học viên | Ghi danh hàng loạt theo cửa hàng | Bulk enroll CH | Admin LMS | `CourseService.assignToStore()` $\rightarrow$ Bulk insert `enr_course_enrollments` | ✅ Done |
+| **LMS-046** | Quản lý học viên | Ghi danh hàng loạt theo bộ phận | Bulk enroll BP | Admin LMS | `CourseService.assignToDepartment()` $\rightarrow$ Bulk insert `enr_course_enrollments` | ✅ Done |
+| **LMS-047** | Quản lý học viên | Hủy ghi danh học viên | Unenroll | Admin LMS | `enr_course_enrollments.status = 'CANCELLED'` | ✅ Done |
+| **LMS-048** | Quản lý học viên | Xem danh sách khóa của tôi | My courses | Học viên | Query `enr_course_enrollments` JOIN `crs_courses` (Portal Dashboard) | ✅ Done |
+| **LMS-049** | Quản lý học viên | Mở bài giảng để học | Launch lesson | Học viên | `enr_lesson_progress` record initialization | ✅ Done |
+| **LMS-050** | Quản lý học viên | Đánh dấu hoàn thành bài giảng | Complete lesson (auto/manual) | Hệ thống / Học viên | `enr_lesson_progress.isCompleted = true`, `completedAt = now()` | ✅ Done |
+| **LMS-051** | Quản lý học viên | Lưu tiến độ học dở | Resume learning | Hệ thống | `enr_lesson_progress.lastPositionSeconds` | ✅ Done |
+| **LMS-052** | Quản lý học viên | Học trên web | Desktop learning portal | Học viên | Next.js App Router (`/lms/lessons/[id]`) | ✅ Done |
+| **LMS-053** | Quản lý học viên | Học trên APP di động | Mobile learning | Học viên | Mobile Responsive PWA / API Endpoints | 🟡 Not Started |
+| **LMS-054** | Quản lý học viên | Tải tài liệu học (nếu được phép) | Download handout | Học viên | `crs_lessons.allowDownload = true` | ✅ Done |
+| **LMS-055** | Quản lý học viên | Ghi nhận thời gian học (learning time) | Tracking duration | Hệ thống | `ProgressService.updateLessonProgress()` | ✅ Done |
+| **LMS-056** | Kiểm tra & đánh giá | Tạo ngân hàng câu hỏi | Question bank | Trainer / Admin LMS | `quiz_questions` (`quizId`, `questionText`, `points`, `sortOrder`) | ✅ Done |
+| **LMS-057** | Kiểm tra & đánh giá | Tạo câu hỏi trắc nghiệm một đáp án | Single choice | Trainer | `quiz_questions` (`questionType = 'SINGLE_CHOICE'`), `quiz_question_options` | ✅ Done |
+| **LMS-058** | Kiểm tra & đánh giá | Tạo câu hỏi trắc nghiệm nhiều đáp án | Multiple choice | Trainer | `quiz_questions` (`questionType = 'MULTIPLE_CHOICE'`), `quiz_question_options` | ✅ Done |
+| **LMS-059** | Kiểm tra & đánh giá | Tạo câu hỏi đúng/sai | True/false | Trainer | `quiz_questions` (`questionType = 'TRUE_FALSE'`) | ✅ Done |
+| **LMS-060** | Kiểm tra & đánh giá | Tạo câu hỏi tự luận ngắn | Short answer | Trainer | `quiz_questions` (`questionType = 'SHORT_ANSWER'`) | ✅ Done |
+| **LMS-061** | Kiểm tra & đánh giá | Tạo bài kiểm tra (quiz) gắn khóa học | Attach quiz to course / lesson | Trainer / Admin LMS | `quiz_quizzes` (`lessonId` 1-to-1 với `crs_lessons`) | ✅ Done |
+| **LMS-062** | Kiểm tra & đánh giá | Cấu hình số lần được làm lại bài kiểm tra | Retake limit | Admin LMS | `quiz_quizzes.maxAttempts` (mặc định 3 lần) | ✅ Done |
+| **LMS-063** | Kiểm tra & đánh giá | Cấu hình thời gian làm bài | Time limit | Admin LMS | `quiz_quizzes.timeLimitMinutes` (mặc định 30 phút) | ✅ Done |
+| **LMS-064** | Kiểm tra & đánh giá | Xáo trộn câu hỏi | Shuffle questions | Admin LMS | `quiz_quizzes.shuffleQuestions = true` | ✅ Done |
+| **LMS-065** | Kiểm tra & đánh giá | Học viên làm bài kiểm tra | Take quiz | Học viên | Next.js Quiz Interface (`/lms/quizzes/[id]`) | ✅ Done |
+| **LMS-066** | Kiểm tra & đánh giá | Chấm điểm tự động bài trắc nghiệm | Auto grading | Hệ thống | `QuizService.submitQuiz()` $\rightarrow$ Tính điểm so khớp `QuizQuestionOption.isCorrect` | ✅ Done |
+| **LMS-067** | Kiểm tra & đánh giá | Chấm điểm thủ công câu tự luận | Manual grading | Trainer | `quiz_attempt_answers.earnedPoints` do Trainer chấm | 🔄 In Progress |
+| **LMS-068** | Kiểm tra & đánh giá | Xem kết quả bài kiểm tra | Score report for learner | Học viên | `quiz_attempts` (`score`, `isPassed`, `submittedAt`) | ✅ Done |
+| **LMS-069** | Kiểm tra & đánh giá | Xem lịch sử làm bài | Attempt history | Học viên / Trainer | Query `quiz_attempts` JOIN `quiz_attempt_answers` | ✅ Done |
+| **LMS-070** | Kiểm tra & đánh giá | Đạt / không đạt khóa theo điểm kiểm tra | Pass/fail course | Hệ thống | `QuizAttempt.isPassed` $\rightarrow$ Cập nhật `CourseEnrollment.isPassed = true` | ✅ Done |
+| **LMS-071** | Kiểm tra & đánh giá | Tạo bảng xếp hạng điểm học tập | Leaderboard theo điểm quiz/học | Admin LMS | `gam_leaderboard` (`userId`, `totalPoints`, `rank`) | 🟡 Not Started |
+| **LMS-072** | Kiểm tra & đánh giá | Tạo thử thách học tập theo tuần/tháng | Challenge kỳ | Admin LMS | `gam_challenges` (`startDate`, `endDate`, `rewardPoints`) | 🟡 Not Started |
+| **LMS-073** | Kiểm tra & đánh giá | Cộng điểm thưởng khi hoàn thành khóa đúng hạn | Bonus points | Hệ thống | `gam_point_transactions` (`points`, `reason = 'EARLY_COMPLETION'`) | 🟡 Not Started |
+| **LMS-074** | Kiểm tra & đánh giá | Hiển thị huy hiệu hoàn thành khóa | Badges | Hệ thống | `gam_badges`, `gam_user_badges` | 🟡 Not Started |
+| **LMS-075** | Kiểm tra & đánh giá | Báo cáo người dẫn đầu theo cửa hàng | Leaderboard theo CH | QL / Nhân sự | View `v_gam_store_leaderboard` | 🟡 Not Started |
+| **LMS-076** | Đánh giá thực hành & mentor | Tạo phiếu đánh giá thực hành tại cửa hàng | Checklist kỹ năng on-the-job | Admin LMS / Vận hành | `eval_templates` (`category = 'STORE'`, `checklistSchema`) | 🟡 Not Started |
+| **LMS-077** | Đánh giá thực hành & mentor | Tạo phiếu đánh giá thực hành tại sản xuất | Checklist kỹ năng xưởng | Admin LMS / SX | `eval_templates` (`category = 'FACTORY'`, `checklistSchema`) | 🟡 Not Started |
+| **LMS-078** | Đánh giá thực hành & mentor | Mentor chấm đánh giá học việc trên LMS | Mentor submit evaluation | Mentor / QLCH | `eval_submissions` (`mentorUserId`, `score`, `result = 'PENDING'`) | 🟡 Not Started |
+| **LMS-079** | Đánh giá thực hành & mentor | QLCH xác nhận đánh giá thực hành | Confirm evaluation | QLCH | `eval_submissions.managerApprovalStatus = 'APPROVED'` | 🟡 Not Started |
+| **LMS-080** | Đánh giá thực hành & mentor | Gửi kết quả đánh giá thực hành sang HRM | Tín hiệu đạt để chuyển status | Hệ thống tích hợp | Webhook `int_outbound_events` (`eventType = 'PRACTICAL_EVAL_PASSED'`) | 🟡 Not Started |
+| **LMS-081** | Đánh giá thực hành & mentor | Lưu lịch sử đánh giá thực hành | History evaluations | LMS / Nhân sự | Query `eval_submissions` theo `studentUserId` | 🟡 Not Started |
+| **LMS-082** | Đánh giá thực hành & mentor | Gán mentor trong LMS (đồng bộ từ HRM) | Hiển thị mentor–mentee | Hệ thống | `org_mentor_mentee_mappings` (`mentorUserId`, `menteeUserId`) | 🟡 Not Started |
+| **LMS-083** | Lớp học & lịch đào tạo | Tạo lớp đào tạo tập trung | Offline / online class session | Admin LMS / Trainer | `cls_classes` (`title`, `location`, `scheduleTime`, `trainerUserId`) | 🟡 Not Started |
+| **LMS-084** | Lớp học & lịch đào tạo | Mở điểm danh lớp đào tạo | Attendance for training class | Trainer | `cls_classes.isAttendanceOpen = true` | 🟡 Not Started |
+| **LMS-085** | Lớp học & lịch đào tạo | Ghi nhận tham dự lớp đào tạo | Mark present / absent | Trainer | `cls_attendances` (`classId`, `userId`, `status = 'PRESENT'`) | 🟡 Not Started |
+| **LMS-086** | Lớp học & lịch đào tạo | Gắn lớp với khóa học | Class linked to course | Admin LMS | `cls_classes.courseId` FK $\rightarrow$ `crs_courses.id` | 🟡 Not Started |
+| **LMS-087** | Lớp học & lịch đào tạo | Thông báo lịch học cho học viên | Notify schedule | Hệ thống | `cls_notifications` | 🟡 Not Started |
+| **LMS-088** | Lớp học & lịch đào tạo | Đăng ký tham gia lớp học | Learner register class | Học viên | `cls_attendances.registeredAt = now()` | 🟡 Not Started |
+| **LMS-089** | Lớp học & lịch đào tạo | Giới hạn sĩ số lớp | Capacity | Admin LMS | `cls_classes.maxCapacity` | 🟡 Not Started |
+| **LMS-090** | Khảo sát & xác nhận | Tạo form xác nhận đã đọc quy trình | Acknowledge SOP | Admin LMS | `crs_lessons` (`sopCode`, `requiresSignature = true`) | ✅ Done |
+| **LMS-091** | Khảo sát & xác nhận | Học viên ký xác nhận đã hiểu quy định | E-sign / confirm understanding | Học viên | `sop_confirmations` (`userId`, `lessonId`, `signatureData`, `signedAt`) | ✅ Done |
+| **LMS-092** | Khảo sát & xác nhận | Tạo khảo sát mức độ hiểu bài | Feedback survey | Admin LMS | `srv_surveys` (`category = 'LESSON_FEEDBACK'`) | 🟡 Not Started |
+| **LMS-093** | Khảo sát & xác nhận | Tạo khảo sát chất lượng khóa học | Course rating | Admin LMS | `srv_surveys` (`courseId`, `ratingScale`) | 🟡 Not Started |
+| **LMS-094** | Phân tích hiệu quả | Báo cáo tỷ lệ hoàn thành khóa theo cửa hàng | % complete by store | Nhân sự / QL / GD | Query `enr_course_enrollments` GROUP BY `User.storeId` | ✅ Done |
+| **LMS-095** | Phân tích hiệu quả | Báo cáo tỷ lệ hoàn thành khóa theo bộ phận sản xuất | % complete by dept | SX / Nhân sự | Query `enr_course_enrollments` GROUP BY `User.departmentId` | ✅ Done |
+| **LMS-096** | Phân tích hiệu quả | Báo cáo học viên chưa hoàn thành onboarding | List overdue | Nhân sự / QLCH | Query `enr_course_enrollments` WHERE `dueDate < now()` AND `status != 'COMPLETED'` | ✅ Done |
+| **LMS-097** | Phân tích hiệu quả | Báo cáo chứng chỉ ATTP còn hạn / hết hạn | Certificate status | QA / Nhân sự | Query `cert_user_certificates` GROUP BY `status` | 🔄 In Progress |
+| **LMS-098** | Phân tích hiệu quả | Báo cáo kết quả quiz theo khóa | Score analytics | Trainer / Nhân sự | Query `quiz_attempts` (`avgScore`, `passRate`) | ✅ Done |
+| **LMS-099** | Phân tích hiệu quả | Báo cáo thời gian đào tạo theo kỳ | Learning hours | Nhân sự / GD | Sum `LessonProgress.lastPositionSeconds` by Period | 🔄 In Progress |
+| **LMS-100** | Phân tích hiệu quả | Báo cáo mentor – số học việc đang kèm | Mentor workload | Nhân sự | Query `org_mentor_mentee_mappings` COUNT `menteeUserId` | 🟡 Not Started |
+| **LMS-101** | Phân tích hiệu quả | Xuất báo cáo đào tạo ra Excel | Export | Nhân sự / Admin LMS | Export Service (ExcelJS / SheetJS) | 🔄 In Progress |
+| **LMS-102** | Phân tích hiệu quả | Phân quyền Admin LMS | Role quản trị nội dung | Admin hệ thống | `Role.roleName = 'ADMIN'`, `Permission.permissionCode = 'COURSE.CREATE'` | ✅ Done |
+| **LMS-103** | Quản trị & tích hợp | Phân quyền Trainer | Role tạo bài / chấm | Admin hệ thống | `Role.roleName = 'TRAINER'`, `Permission.permissionCode = 'QUIZ.GRADE'` | ✅ Done |
+| **LMS-104** | Quản trị & tích hợp | Phân quyền xem báo cáo đào tạo | Role report viewer | Admin hệ thống | `Role.roleName = 'REPORT_VIEWER'`, `Permission.permissionCode = 'REPORT.VIEW'` | ✅ Done |
+| **LMS-105** | Quản trị & tích hợp | Đồng bộ danh sách nhân sự từ HRM sang LMS | Sync users / org from HRM | Hệ thống | Inbound Sync API $\rightarrow$ Upsert `auth_users`, `org_stores`, `org_departments` | ✅ Done |
+| **LMS-106** | Quản trị & tích hợp | Đồng bộ trạng thái nhân sự từ HRM | Sync status Học việc / Chính thức / Nghỉ | Hệ thống | Webhook Receiver $\rightarrow$ Update `User.employmentStatus` | ✅ Done |
+| **LMS-107** | Quản trị & tích hợp | Gửi sự kiện hoàn thành khóa sang HRM | Webhook / event completed course | Hệ thống | Outbound Event Bus (`eventType = 'COURSE_COMPLETED'`) | 🔄 In Progress |
+| **LMS-108** | Quản trị & tích hợp | Gửi sự kiện đạt đánh giá thực hành sang HRM | Event practical pass | Hệ thống | Outbound Event Bus (`eventType = 'EVAL_PASSED'`) | 🔄 In Progress |
+| **LMS-109** | Quản trị & tích hợp | Single Sign-On với APP nhân viên | Một tài khoản học + HR | IT | JWT Auth Shared Secret / SSO Token Handler | 🔄 In Progress |
+| **LMS-110** | Quản trị & tích hợp | Nhật ký thao tác LMS (audit log) | Ai sửa khóa / điểm... | Admin | `sys_audit_logs` (`userId`, `action`, `resource`, `timestamp`) | 🔄 In Progress |
+| **LMS-111** | Quản trị & tích hợp | Sao lưu nội dung đào tạo | Backup courses / materials | Admin / IT | Backup Engine (`pg_dump` & S3 snapshot) | 🔄 In Progress |
 
 ---
 
-### PHÂN KHU 1: QUẢN TRỊ NGUỜI DÙNG & SƠ ĐỒ TỔ CHỨC (`auth_` & `org_`)
+## 3. TOÀN BỘ PRISMA SCHEMA CỐT LÕI (PRODUCTION SCHEMA)
 
-#### 1. `auth_users` (Hồ sơ Nhân sự & Học viên)
-> **Horeca-Ready:** Trường `user_type` cho phép phân biệt Nhân viên nội bộ BaHung (`EMPLOYEE`) với Khách hàng cá nhân Horeca (`CUSTOMER`).
+```prisma
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
 
-```sql
-CREATE TABLE auth_users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username VARCHAR(100) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NULLABLE,
-    phone_number VARCHAR(20) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    full_name VARCHAR(150) NOT NULL,
-    avatar_url TEXT NULLABLE,
-    
-    -- Phân loại đối tượng & Trạng thái làm việc (LMS-105, LMS-106)
-    user_type VARCHAR(20) NOT NULL DEFAULT 'EMPLOYEE', -- 'EMPLOYEE', 'CUSTOMER', 'SYSTEM_ADMIN'
-    employment_status VARCHAR(30) NOT NULL DEFAULT 'PROBATION', -- 'PROBATION', 'OFFICIAL', 'TEMPORARY', 'RESIGNED'
-    employee_code VARCHAR(50) UNIQUE NULLABLE, -- Mã nhân viên HRM
-    
-    -- Sơ đồ tổ chức mặc định
-    primary_store_id UUID NULLABLE, -- FK -> org_stores.id (LMS-007)
-    department_id UUID NULLABLE, -- FK -> org_departments.id (LMS-008)
-    position_id UUID NULLABLE, -- FK -> org_positions.id (LMS-005)
-    
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', -- 'ACTIVE', 'LOCKED', 'PENDING'
-    last_login_at TIMESTAMPTZ NULLABLE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+generator client {
+  provider = "prisma-client-js"
+}
 
-CREATE INDEX idx_users_emp_code ON auth_users(employee_code);
-CREATE INDEX idx_users_store_dept ON auth_users(primary_store_id, department_id, position_id);
-CREATE INDEX idx_users_type_status ON auth_users(user_type, employment_status, status);
+// ==========================================
+// 1. AUTHENTICATION & RBAC (ERP-v2 1-to-1)
+// ==========================================
+
+model User {
+  id               String   @id @default(uuid())
+  employeeCode     String?  @unique
+  fullName         String
+  email            String?  @unique
+  status           String   @default("ACTIVE") // 'ACTIVE', 'LOCKED', 'PENDING'
+  isActive         Boolean  @default(true)
+  userType         String   @default("EMPLOYEE") // 'EMPLOYEE', 'CUSTOMER', 'SYSTEM_ADMIN'
+  employmentStatus String   @default("PROBATION") // 'PROBATION', 'OFFICIAL', 'TEMPORARY', 'RESIGNED'
+
+  // Org Structure Links
+  storeId      String?
+  store        Store?      @relation(fields: [storeId], references: [id])
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  positionId   String?
+  position     Position?   @relation(fields: [positionId], references: [id])
+
+  // Relations
+  userAccount    UserAccount?
+  userRoles      UserRole[]
+  enrollments    CourseEnrollment[]
+  lessonProgress LessonProgress[]
+  quizAttempts   QuizAttempt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("auth_users")
+}
+
+model UserAccount {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginEmail            String    @unique
+  passwordHash          String
+  isLocked              Boolean   @default(false)
+  failedLoginCount      Int       @default(0)
+  refreshToken          String?
+  refreshTokenExpiresAt DateTime?
+  lastLoginAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("auth_user_accounts")
+}
+
+model Role {
+  id              String   @id @default(uuid())
+  roleName        String   @unique
+  displayName     String
+  isSystemRole    Boolean  @default(false)
+  bypassDataScope Boolean  @default(false)
+  isActive        Boolean  @default(true)
+
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("auth_roles")
+}
+
+model Permission {
+  id             String   @id @default(uuid())
+  permissionCode String   @unique // e.g. 'USER.READ', 'COURSE.CREATE', 'ATTP.VIEW'
+  permissionName String
+  module         String
+  action         String
+  resource       String
+  isActive       Boolean  @default(true)
+
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("auth_permissions")
+}
+
+model UserRole {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId     String
+  role       Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assignedAt DateTime  @default(now())
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  isActive   Boolean   @default(true)
+
+  @@map("auth_user_roles")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  assignedAt   DateTime   @default(now())
+
+  @@unique([roleId, permissionId])
+  @@map("auth_role_permissions")
+}
+
+// ==========================================
+// 2. ORG STRUCTURE MODULE
+// ==========================================
+
+model Store {
+  id            String   @id @default(uuid())
+  storeCode     String   @unique
+  storeName     String
+  region        String   @default("MIEN_NAM")
+  storeType     String   @default("RETAIL_STORE") // 'RETAIL_STORE', 'CENTRAL_FACTORY'
+  isActive      Boolean  @default(true)
+  users         User[]
+  targetCourses Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("org_stores")
+}
+
+model Department {
+  id            String   @id @default(uuid())
+  deptCode      String   @unique
+  deptName      String
+  isFactoryDept Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  users         User[]
+  targetCourses Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("org_departments")
+}
+
+model Position {
+  id            String   @id @default(uuid())
+  positionCode  String   @unique
+  positionName  String
+  levelRank     Int      @default(1)
+  isActive      Boolean  @default(true)
+  users         User[]
+  targetCourses Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("org_positions")
+}
+
+// ==========================================
+// ENUMS FOR CURRICULUM & QUIZ
+// ==========================================
+
+enum LessonType {
+  VIDEO
+  ARTICLE
+  QUIZ
+  PDF
+  CHECKLIST
+}
+
+enum VideoProvider {
+  YOUTUBE
+  DIRECT_UPLOAD
+  EXTERNAL_URL
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+// ==========================================
+// 3. COURSE & CURRICULUM MODULE
+// ==========================================
+
+model Category {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  courses     Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("crs_categories")
+}
+
+model Course {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  title        String
+  slug         String   @unique
+  description  String?
+  thumbnailUrl String?
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id])
+
+  courseType   String   @default("STANDARD") // 'ATTP', 'ONBOARDING', 'STANDARD'
+  isMandatory  Boolean  @default(false)
+  durationDays Int?     @default(30)
+  passScore    Int      @default(80)
+
+  // Target fields for auto-assign rules (LMS-005 -> LMS-008)
+  targetPositionId       String?
+  targetPosition         Position?   @relation(fields: [targetPositionId], references: [id])
+  targetDepartmentId     String?
+  targetDepartment       Department? @relation(fields: [targetDepartmentId], references: [id])
+  targetStoreId          String?
+  targetStore            Store?      @relation(fields: [targetStoreId], references: [id])
+  targetEmploymentStatus String?     // 'PROBATION', 'OFFICIAL', 'TEMPORARY', 'ALL'
+
+  isCommercial Boolean  @default(false)
+  isInternal   Boolean  @default(true)
+  status       String   @default("DRAFT") // 'DRAFT', 'PUBLISHED', 'ARCHIVED'
+  isActive     Boolean  @default(true)
+
+  modules     CourseModule[]
+  enrollments CourseEnrollment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([categoryId])
+  @@index([status, isActive])
+  @@map("crs_courses")
+}
+
+model CourseModule {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  sortOrder Int      @default(1)
+  lessons   Lesson[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([courseId, sortOrder])
+  @@map("crs_modules")
+}
+
+model Lesson {
+  id                String         @id @default(uuid())
+  moduleId          String
+  module            CourseModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?
+  lessonType        LessonType     @default(VIDEO)
+  
+  // 1. Video content (YouTube & Upload)
+  videoProvider     VideoProvider? @default(YOUTUBE)
+  videoUrl          String?
+  videoStoragePath  String?
+  videoDuration     Int            @default(0) // Giây
+  
+  // 2. Article & Document content
+  bodyHtml          String?
+  documentUrl       String?
+  estimatedReadTime Int            @default(5) // Phút
+  checklistItems    String?        // JSON string
+  
+  // 3. SOP & Compliance
+  sopCode           String?
+  sopType           String?        // 'STORE_SOP', 'FACTORY_SOP'
+  requiresSignature Boolean        @default(false)
+  
+  // 4. Settings
+  allowDownload     Boolean        @default(false)
+  isVisible         Boolean        @default(true)
+  sortOrder         Int            @default(1)
+
+  // 5. Relations
+  quiz              Quiz?
+  progressRecords   LessonProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([moduleId, sortOrder])
+  @@map("crs_lessons")
+}
+
+// ==========================================
+// 4. QUIZ & ASSESSMENT MODULE
+// ==========================================
+
+model Quiz {
+  id                 String         @id @default(uuid())
+  lessonId           String         @unique
+  lesson             Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  title              String
+  description        String?
+  passScore          Int            @default(80) // % điểm đạt
+  maxAttempts        Int            @default(3)  // 0 = không giới hạn
+  timeLimitMinutes   Int?           @default(30) // null = không giới hạn
+  shuffleQuestions   Boolean        @default(true)
+  showAnswerFeedback Boolean        @default(true)
+
+  questions          QuizQuestion[]
+  attempts           QuizAttempt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("quiz_quizzes")
+}
+
+model QuizQuestion {
+  id           String             @id @default(uuid())
+  quizId       String
+  quiz         Quiz               @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  
+  questionText String
+  questionType QuestionType       @default(SINGLE_CHOICE)
+  points       Float              @default(1.0)
+  explanation  String?
+  sortOrder    Int                @default(1)
+  
+  options      QuizQuestionOption[]
+  answers      QuizAttemptAnswer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([quizId, sortOrder])
+  @@map("quiz_questions")
+}
+
+model QuizQuestionOption {
+  id          String       @id @default(uuid())
+  questionId  String
+  question    QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  optionText  String
+  isCorrect   Boolean      @default(false)
+  sortOrder   Int          @default(1)
+
+  @@index([questionId, sortOrder])
+  @@map("quiz_question_options")
+}
+
+model QuizAttempt {
+  id            String              @id @default(uuid())
+  quizId        String
+  quiz          Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  attemptNumber Int                 @default(1)
+  score         Float               @default(0.0) // % điểm đạt
+  isPassed      Boolean             @default(false)
+  startedAt     DateTime            @default(now())
+  submittedAt   DateTime?
+
+  answers       QuizAttemptAnswer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([quizId, userId])
+  @@index([userId, isPassed])
+  @@map("quiz_attempts")
+}
+
+model QuizAttemptAnswer {
+  id               String       @id @default(uuid())
+  attemptId        String
+  attempt          QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  selectedOptionId String?
+  textAnswer       String?
+  isCorrect        Boolean?
+  earnedPoints     Float        @default(0.0)
+
+  createdAt DateTime @default(now())
+
+  @@index([attemptId])
+  @@map("quiz_attempt_answers")
+}
+
+// ==========================================
+// 5. ENROLLMENT & PROGRESS MODULE
+// ==========================================
+
+model CourseEnrollment {
+  id                   String           @id @default(uuid())
+  userId               String
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId             String
+  course               Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  enrollmentSource     String           @default("MANUAL") // 'AUTO_RULE', 'MANUAL', 'PURCHASE'
+  status               String           @default("ENROLLED") // 'ENROLLED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'
+  dueDate              DateTime?
+  completionPercentage Float            @default(0.0)
+  isPassed             Boolean          @default(false)
+
+  enrolledAt           DateTime         @default(now())
+  completedAt          DateTime?
+
+  lessonProgress       LessonProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([userId, status])
+  @@map("enr_course_enrollments")
+}
+
+model LessonProgress {
+  id                  String           @id @default(uuid())
+  enrollmentId        String
+  enrollment          CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId            String
+  lesson              Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  isCompleted         Boolean          @default(false)
+  lastPositionSeconds Int              @default(0)
+  quizHighestScore    Float?           // Điểm cao nhất nếu bài học là Quiz
+  completedAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([enrollmentId])
+  @@map("enr_lesson_progress")
+}
 ```
 
-#### 2. `org_stores` & `org_departments` & `org_positions` (Sơ đồ Chuỗi CH & Xưởng)
-```sql
--- Danh mục Cửa hàng / Chi nhánh (LMS-007, LMS-045, LMS-075, LMS-094)
-CREATE TABLE org_stores (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    store_code VARCHAR(50) UNIQUE NOT NULL, -- Ví dụ: 'CH-QUAN1', 'XUONG-KEM'
-    store_name VARCHAR(150) NOT NULL,
-    region VARCHAR(50) NOT NULL DEFAULT 'MIEN_NAM', -- Mắt xích phân vùng
-    store_type VARCHAR(30) NOT NULL DEFAULT 'RETAIL_STORE', -- 'RETAIL_STORE', 'CENTRAL_FACTORY', 'OFFICE'
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Danh mục Bộ phận Sản xuất / Phòng ban (LMS-008, LMS-046, LMS-095)
-CREATE TABLE org_departments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    dept_code VARCHAR(50) UNIQUE NOT NULL, -- Ví dụ: 'BP-KEM', 'BP-CAT-BAO', 'BP-BAN-HANG'
-    dept_name VARCHAR(150) NOT NULL,
-    is_factory_dept BOOLEAN NOT NULL DEFAULT FALSE, -- Cờ nhận diện khâu sản xuất xưởng
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Danh mục Chức danh / Vị trí công việc (LMS-005, LMS-033..036)
-CREATE TABLE org_positions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    position_code VARCHAR(50) UNIQUE NOT NULL, -- Ví dụ: 'QLCH', 'NV-BAN-HANG', 'NV-XUONG-KEM'
-    position_name VARCHAR(150) NOT NULL,
-    level_rank INT NOT NULL DEFAULT 1,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Bảng gán Mentor - Mentee đồng bộ từ HRM (LMS-082, LMS-100)
-CREATE TABLE org_mentor_mentee_mappings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    mentor_user_id UUID NOT NULL REFERENCES auth_users(id),
-    mentee_user_id UUID NOT NULL REFERENCES auth_users(id),
-    assigned_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_active_mentor_mentee UNIQUE(mentee_user_id, is_active)
-);
-```
-
-#### 3. `auth_roles` & `auth_permissions` & `auth_user_roles` (Phân quyền RBAC - LMS-102..104)
-```sql
-CREATE TABLE auth_roles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(50) UNIQUE NOT NULL, -- 'ADMIN_LMS', 'TRAINER', 'REPORT_VIEWER', 'STORE_MANAGER'
-    name VARCHAR(100) NOT NULL,
-    description TEXT NULLABLE
-);
-
-CREATE TABLE auth_permissions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(100) UNIQUE NOT NULL, -- 'course:create', 'attp:view', 'eval:grade'
-    module VARCHAR(50) NOT NULL
-);
-
-CREATE TABLE auth_role_permissions (
-    role_id UUID REFERENCES auth_roles(id) ON DELETE CASCADE,
-    permission_id UUID REFERENCES auth_permissions(id) ON DELETE CASCADE,
-    PRIMARY KEY (role_id, permission_id)
-);
-
-CREATE TABLE auth_user_roles (
-    user_id UUID REFERENCES auth_users(id) ON DELETE CASCADE,
-    role_id UUID REFERENCES auth_roles(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, role_id)
-);
-```
-
----
-
-### PHÂN KHU 2: QUẢN LÝ KHÓA HỌC & HỌC LIỆU (`crs_`)
-
-#### 4. `crs_categories` & `crs_courses` (Danh mục & Khóa học)
-> **Horeca-Ready:** Các cờ `is_commercial` (bán hàng), `allow_guest_preview` sẵn sàng cho Horeca.
-
-```sql
-CREATE TABLE crs_categories (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(50) UNIQUE NOT NULL,
-    name VARCHAR(150) NOT NULL, -- 'Onboarding', 'ATTP', 'Nghiệp vụ CH', 'Nghiệp vụ Xưởng'
-    parent_id UUID NULLABLE REFERENCES crs_categories(id),
-    sort_order INT NOT NULL DEFAULT 0
-);
-
-CREATE TABLE crs_courses (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(50) UNIQUE NOT NULL, -- LMS-001, LMS-002
-    title VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
-    description TEXT NULLABLE,
-    thumbnail_url TEXT NULLABLE,
-    category_id UUID NOT NULL REFERENCES crs_categories(id),
-    
-    -- Phân loại đặc thù BaHung & Horeca
-    course_type VARCHAR(30) NOT NULL DEFAULT 'STANDARD', -- 'ATTP', 'ONBOARDING', 'STANDARD', 'SAFETY'
-    is_mandatory BOOLEAN NOT NULL DEFAULT FALSE, -- LMS-009, LMS-010
-    duration_days INT NULLABLE DEFAULT 30, -- LMS-011 (Thời hạn hoàn thành)
-    pass_score INT NOT NULL DEFAULT 80, -- LMS-012 (Điểm đạt %)
-    
-    -- Horeca Ready Flags
-    is_commercial BOOLEAN NOT NULL DEFAULT FALSE, -- Nếu TRUE sẽ hiện giá bán ở Horeca
-    is_internal BOOLEAN NOT NULL DEFAULT TRUE, -- Khóa học nội bộ BaHung
-    
-    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT', -- 'DRAFT', 'PUBLISHED', 'ARCHIVED' (LMS-004)
-    created_by UUID NULLABLE REFERENCES auth_users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-```
-
-#### 5. `crs_modules` & `crs_lessons` & `crs_lesson_versions` (Học liệu Video, PDF, SOP)
-```sql
-CREATE TABLE crs_modules (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    course_id UUID NOT NULL REFERENCES crs_courses(id) ON DELETE CASCADE,
-    title VARCHAR(200) NOT NULL,
-    sort_order INT NOT NULL DEFAULT 1 -- LMS-017
-);
-
-CREATE TABLE crs_lessons (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    module_id UUID NOT NULL REFERENCES crs_modules(id) ON DELETE CASCADE,
-    title VARCHAR(200) NOT NULL,
-    lesson_type VARCHAR(30) NOT NULL, -- 'VIDEO' (LMS-013), 'PDF' (LMS-014), 'RICHTEXT' (LMS-015), 'CHECKLIST' (LMS-016)
-    
-    -- Nội dung bài giảng
-    video_url TEXT NULLABLE,
-    document_url TEXT NULLABLE,
-    body_html TEXT NULLABLE, -- Rich text SOP
-    checklist_items JSONB NULLABLE, -- Checklist ảnh quy trình SOP
-    
-    -- Cấu hình SOP & Quy định (LMS-019, LMS-020)
-    sop_code VARCHAR(50) NULLABLE,
-    sop_type VARCHAR(30) NULLABLE, -- 'STORE_SOP', 'FACTORY_SOP'
-    requires_signature BOOLEAN NOT NULL DEFAULT FALSE, -- Bắt buộc ký xác nhận SOP (LMS-090, LMS-091)
-    
-    duration_seconds INT NOT NULL DEFAULT 0,
-    allow_download BOOLEAN NOT NULL DEFAULT FALSE, -- LMS-054
-    is_visible BOOLEAN NOT NULL DEFAULT TRUE, -- LMS-018
-    sort_order INT NOT NULL DEFAULT 1, -- LMS-017
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Phiên bản hóa học liệu audit (LMS-021)
-CREATE TABLE crs_lesson_versions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    lesson_id UUID NOT NULL REFERENCES crs_lessons(id) ON DELETE CASCADE,
-    version_number INT NOT NULL,
-    body_html_snapshot TEXT NULLABLE,
-    changed_by UUID REFERENCES auth_users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-```
-
----
-
-### PHÂN KHU 3: GHI DANH, QUY TẮC AUTO-ASSIGN & TIẾN ĐỘ (`enr_` & `path_`)
-
-#### 6. `enr_auto_assignment_rules` (Quy tắc Tự động Gán khóa học F&B - LMS-005..008)
-```sql
-CREATE TABLE enr_auto_assignment_rules (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    rule_name VARCHAR(150) NOT NULL,
-    course_id UUID NOT NULL REFERENCES crs_courses(id) ON DELETE CASCADE,
-    
-    -- Điều kiện khớp tự động từ HRM (LMS-005..008)
-    target_position_id UUID NULLABLE REFERENCES org_positions(id), -- Gán theo Chức danh
-    target_employment_type VARCHAR(30) NULLABLE, -- 'PROBATION', 'OFFICIAL' (Gán theo loại NV)
-    target_store_id UUID NULLABLE REFERENCES org_stores(id), -- Gán theo Cửa hàng
-    target_factory_dept_id UUID NULLABLE REFERENCES org_departments(id), -- Gán theo khâu sản xuất
-    
-    is_mandatory BOOLEAN NOT NULL DEFAULT TRUE, -- LMS-009
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-```
-
-#### 7. `enr_course_enrollments` & `enr_lesson_progress` & `enr_study_logs`
-```sql
--- Ghi danh học viên (LMS-044..047)
-CREATE TABLE enr_course_enrollments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
-    course_id UUID NOT NULL REFERENCES crs_courses(id) ON DELETE CASCADE,
-    
-    enrollment_source VARCHAR(30) NOT NULL DEFAULT 'AUTO_RULE', -- 'AUTO_RULE', 'MANUAL', 'PURCHASE'
-    status VARCHAR(30) NOT NULL DEFAULT 'ENROLLED', -- 'ENROLLED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'
-    
-    due_date TIMESTAMPTZ NULLABLE, -- LMS-011 (Deadline)
-    completion_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00, -- LMS-040
-    is_passed BOOLEAN NOT NULL DEFAULT FALSE, -- LMS-070
-    
-    enrolled_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    completed_at TIMESTAMPTZ NULLABLE,
-    CONSTRAINT unique_user_course UNIQUE(user_id, course_id)
-);
-
--- Tiến độ từng bài học (LMS-049..051)
-CREATE TABLE enr_lesson_progress (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    enrollment_id UUID NOT NULL REFERENCES enr_course_enrollments(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES auth_users(id),
-    lesson_id UUID NOT NULL REFERENCES crs_lessons(id),
-    
-    is_completed BOOLEAN NOT NULL DEFAULT FALSE, -- LMS-050
-    last_position_seconds INT NOT NULL DEFAULT 0, -- LMS-051 (Lưu timestamp xem video dở)
-    completed_at TIMESTAMPTZ NULLABLE,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_user_lesson UNIQUE(user_id, lesson_id)
-);
-
--- Nhật ký thời gian học tracking duration (LMS-055)
-CREATE TABLE enr_study_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth_users(id),
-    lesson_id UUID NOT NULL REFERENCES crs_lessons(id),
-    time_spent_seconds INT NOT NULL DEFAULT 0,
-    logged_date DATE NOT NULL DEFAULT CURRENT_DATE
-);
-```
-
-#### 8. `path_learning_paths` & `path_user_progress` (Lộ trình Onboarding - LMS-033..043)
-```sql
-CREATE TABLE path_learning_paths (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(50) UNIQUE NOT NULL,
-    title VARCHAR(200) NOT NULL, -- Onboarding CH, Onboarding SX, Onboarding QLCH
-    target_role VARCHAR(50) NOT NULL, -- 'STORE_STAFF', 'FACTORY_STAFF', 'STORE_MANAGER', 'PROBATION'
-    is_active BOOLEAN NOT NULL DEFAULT TRUE
-);
-
-CREATE TABLE path_learning_path_courses (
-    path_id UUID REFERENCES path_learning_paths(id) ON DELETE CASCADE,
-    course_id UUID REFERENCES crs_courses(id) ON DELETE CASCADE,
-    step_order INT NOT NULL DEFAULT 1,
-    PRIMARY KEY (path_id, course_id)
-);
-
-CREATE TABLE path_user_progress (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
-    path_id UUID NOT NULL REFERENCES path_learning_paths(id),
-    status VARCHAR(30) NOT NULL DEFAULT 'IN_PROGRESS', -- 'IN_PROGRESS', 'COMPLETED', 'OVERDUE'
-    completion_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    completed_at TIMESTAMPTZ NULLABLE -- LMS-042 (Kích hoạt event bắn sang HRM)
-);
-```
-
----
-
-### PHÂN KHU 4: KIỂM TRA, ATTP & CHỨNG CHỈ (`quiz_` & `cert_`)
-
-#### 9. `quiz_question_bank` & `quiz_quizzes` & `quiz_attempts` (Quiz Engine - LMS-056..070)
-```sql
-CREATE TABLE quiz_question_categories (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(150) NOT NULL
-);
-
-CREATE TABLE quiz_question_bank (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    category_id UUID REFERENCES quiz_question_categories(id),
-    question_text TEXT NOT NULL,
-    question_type VARCHAR(30) NOT NULL, -- 'SINGLE_CHOICE' (057), 'MULTIPLE_CHOICE' (058), 'TRUE_FALSE' (059), 'SHORT_ANSWER' (060)
-    explanation TEXT NULLABLE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE quiz_question_options (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    question_id UUID NOT NULL REFERENCES quiz_question_bank(id) ON DELETE CASCADE,
-    option_text TEXT NOT NULL,
-    is_correct BOOLEAN NOT NULL DEFAULT FALSE
-);
-
-CREATE TABLE quiz_quizzes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    course_id UUID NOT NULL REFERENCES crs_courses(id) ON DELETE CASCADE,
-    title VARCHAR(200) NOT NULL,
-    pass_score INT NOT NULL DEFAULT 80,
-    max_attempts INT NOT NULL DEFAULT 3, -- LMS-062
-    time_limit_minutes INT NULLABLE DEFAULT 30, -- LMS-063
-    shuffle_questions BOOLEAN NOT NULL DEFAULT TRUE -- LMS-064
-);
-
-CREATE TABLE quiz_attempts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    quiz_id UUID NOT NULL REFERENCES quiz_quizzes(id),
-    user_id UUID NOT NULL REFERENCES auth_users(id),
-    score DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-    is_passed BOOLEAN NOT NULL DEFAULT FALSE, -- LMS-070
-    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    submitted_at TIMESTAMPTZ NULLABLE
-);
-
-CREATE TABLE quiz_attempt_answers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    attempt_id UUID NOT NULL REFERENCES quiz_attempts(id) ON DELETE CASCADE,
-    question_id UUID NOT NULL REFERENCES quiz_question_bank(id),
-    user_answer_text TEXT NULLABLE,
-    is_correct BOOLEAN NULLABLE,
-    graded_by_user_id UUID NULLABLE REFERENCES auth_users(id), -- LMS-067 (Trainer chấm tự luận)
-    score DECIMAL(5,2) DEFAULT 0.00
-);
-```
-
-#### 10. `cert_types` & `cert_user_certificates` (Quản lý Tuân thủ ATTP & Shift Gate - LMS-022..032)
-```sql
-CREATE TABLE cert_types (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(50) UNIQUE NOT NULL, -- 'ATTP_NOI_BO', 'ATTP_NGOAI', 'NGHIEP_VU_CH'
-    name VARCHAR(150) NOT NULL,
-    default_valid_months INT DEFAULT 12
-);
-
--- Quản lý Chứng chỉ Học viên (LMS-024..028, LMS-032)
-CREATE TABLE cert_user_certificates (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
-    cert_type_id UUID NOT NULL REFERENCES cert_types(id),
-    certificate_code VARCHAR(100) UNIQUE NOT NULL,
-    
-    issuing_organization VARCHAR(150) DEFAULT 'BA HUNG BAKERY',
-    is_external BOOLEAN NOT NULL DEFAULT FALSE, -- LMS-024 (Học ngoài)
-    certificate_file_url TEXT NULLABLE,
-    
-    issue_date DATE NOT NULL, -- LMS-025
-    expiry_date DATE NOT NULL, -- LMS-026
-    
-    status VARCHAR(30) NOT NULL DEFAULT 'VALID', -- 'VALID', 'EXPIRING_SOON', 'EXPIRED' (LMS-027, LMS-028)
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_cert_user_expiry ON cert_user_certificates(user_id, cert_type_id, expiry_date, status);
-```
-
----
-
-### PHÂN KHU 5: ĐÁNH GIÁ THỰC HÀNH, LỚP HỌC, SOP & GAMIFICATION (`eval_`, `cls_`, `sop_`, `gam_`)
-
-#### 11. `eval_templates` & `eval_submissions` (Đánh giá Thực hành Mentor/QLCH - LMS-076..081)
-```sql
-CREATE TABLE eval_templates (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(50) UNIQUE NOT NULL,
-    title VARCHAR(200) NOT NULL, -- Checklist kỹ năng CH, Checklist kỹ năng Xưởng
-    category VARCHAR(30) NOT NULL DEFAULT 'STORE', -- 'STORE' (076), 'FACTORY' (077)
-    checklist_schema JSONB NOT NULL -- Danh sách tiêu chí cần Mentor chấm
-);
-
-CREATE TABLE eval_submissions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    template_id UUID NOT NULL REFERENCES eval_templates(id),
-    student_user_id UUID NOT NULL REFERENCES auth_users(id),
-    mentor_user_id UUID NOT NULL REFERENCES auth_users(id), -- LMS-078 (Mentor chấm)
-    
-    eval_data JSONB NOT NULL, -- Kết quả chấm chi tiết
-    score DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-    result VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- 'PASS', 'FAIL', 'PENDING'
-    
-    manager_user_id UUID NULLABLE REFERENCES auth_users(id), -- LMS-079 (QLCH duyệt)
-    manager_approval_status VARCHAR(20) DEFAULT 'PENDING', -- 'APPROVED', 'REJECTED'
-    manager_comment TEXT NULLABLE,
-    
-    submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    approved_at TIMESTAMPTZ NULLABLE -- LMS-080 (Bắn sang HRM)
-);
-```
-
-#### 12. `sop_acknowledgements` (Ký Xác nhận Quy trình SOP - LMS-090, LMS-091)
-```sql
-CREATE TABLE sop_acknowledgements (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
-    lesson_id UUID NOT NULL REFERENCES crs_lessons(id) ON DELETE CASCADE,
-    sop_code VARCHAR(50) NOT NULL,
-    
-    digital_signature_blob TEXT NOT NULL, -- LMS-091 (Ký điện tử/Base64/Hash)
-    ip_address VARCHAR(50) NULLABLE,
-    acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_user_sop UNIQUE(user_id, lesson_id)
-);
-```
-
-#### 13. `cls_training_classes` & `cls_attendances` (Lớp học Tập trung - LMS-083..089)
-```sql
-CREATE TABLE cls_training_classes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    course_id UUID NOT NULL REFERENCES crs_courses(id), -- LMS-086
-    class_name VARCHAR(200) NOT NULL,
-    trainer_user_id UUID REFERENCES auth_users(id),
-    max_capacity INT NOT NULL DEFAULT 30, -- LMS-089
-    location VARCHAR(255) NULLABLE,
-    start_time TIMESTAMPTZ NOT NULL,
-    end_time TIMESTAMPTZ NOT NULL,
-    status VARCHAR(20) DEFAULT 'SCHEDULED'
-);
-
-CREATE TABLE cls_attendances (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    class_id UUID NOT NULL REFERENCES cls_training_classes(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES auth_users(id),
-    status VARCHAR(20) NOT NULL DEFAULT 'ABSENT', -- 'PRESENT' (085), 'ABSENT', 'LATE'
-    marked_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-#### 14. `gam_user_points` & `gam_leaderboards` (Gamification Thi đua - LMS-071..075)
-```sql
-CREATE TABLE gam_user_points (
-    user_id UUID PRIMARY KEY REFERENCES auth_users(id) ON DELETE CASCADE,
-    total_points INT NOT NULL DEFAULT 0,
-    store_id UUID NULLABLE REFERENCES org_stores(id) -- LMS-075 (Leaderboard theo CH)
-);
-
-CREATE TABLE gam_point_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth_users(id),
-    points_added INT NOT NULL,
-    event_type VARCHAR(50) NOT NULL, -- 'ON_TIME_BONUS' (LMS-073), 'QUIZ_PERFECT'
-    description VARCHAR(255) NULLABLE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-```
-
----
-
-### PHÂN KHU 6: TÍCH HỢP HRM & AUDIT LOG (`int_` & `aud_`)
-
-#### 15. `int_outbound_events` & `int_hrm_sync_logs` (Đồng bộ & Webhooks sang HRM - LMS-105..108)
-```sql
--- Lịch sử Sync từ HRM sang LMS (LMS-105, LMS-106)
-CREATE TABLE int_hrm_sync_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    sync_type VARCHAR(50) NOT NULL, -- 'USER_SYNC', 'STATUS_SYNC'
-    records_processed INT NOT NULL DEFAULT 0,
-    status VARCHAR(20) NOT NULL DEFAULT 'SUCCESS',
-    error_message TEXT NULLABLE,
-    synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Sự kiện bắn từ LMS sang HRM (LMS-107, LMS-108, LMS-080, LMS-042)
-CREATE TABLE int_outbound_events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    event_type VARCHAR(50) NOT NULL, -- 'COURSE_COMPLETED', 'PRACTICAL_EVAL_PASS', 'ONBOARDING_DONE'
-    payload JSONB NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- 'PENDING', 'SENT', 'FAILED'
-    retry_count INT NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    sent_at TIMESTAMPTZ NULLABLE
-);
-```
-
-#### 16. `aud_audit_logs` (Nhật ký Thao tác Quản trị - LMS-110)
-```sql
-CREATE TABLE aud_audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NULLABLE REFERENCES auth_users(id),
-    action VARCHAR(100) NOT NULL, -- 'COURSE_EDIT', 'GRADE_OVERRIDE', 'USER_LOCK'
-    target_table VARCHAR(50) NULLABLE,
-    target_id UUID NULLABLE,
-    old_values JSONB NULLABLE,
-    new_values JSONB NULLABLE,
-    ip_address VARCHAR(50) NULLABLE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-```
-
----
-
-## 4. VIEW KIỂM TRA CHẶN LỊCH CA HRM (ATTP SHIFT ELIGIBILITY GATE - LMS-029)
-
-> [!IMPORTANT]
-> Đây là tính năng then chốt đáp ứng yêu cầu vận hành chuỗi F&B Ba Hưng: **Tự động chặn xếp ca làm việc nếu nhân sự hết hạn hoặc thiếu chứng chỉ ATTP còn hiệu lực.**
-
-```sql
-CREATE OR REPLACE VIEW v_attp_shift_eligibility AS
-SELECT 
-    u.id AS user_id,
-    u.employee_code,
-    u.full_name,
-    u.primary_store_id,
-    s.store_name,
-    c.certificate_code,
-    c.expiry_date,
-    c.status AS cert_status,
-    CASE 
-        WHEN c.id IS NULL THEN FALSE -- Thiếu chứng chỉ
-        WHEN c.expiry_date < CURRENT_DATE THEN FALSE -- Hết hạn
-        WHEN c.status = 'EXPIRED' THEN FALSE
-        ELSE TRUE 
-    END AS is_eligible_for_shift
-FROM auth_users u
-LEFT JOIN org_stores s ON u.primary_store_id = s.id
-LEFT JOIN cert_user_certificates c ON u.id = c.user_id 
-    AND c.cert_type_id = (SELECT id FROM cert_types WHERE code = 'ATTP_NOI_BO' LIMIT 1)
-WHERE u.status = 'ACTIVE' AND u.user_type = 'EMPLOYEE';
-```
-
----
-
-## 5. THIẾT KẾ MỞ RỘNG SẴN SÀNG CHO LMS-HORECA (HORECA-READY STRATEGY)
-
-Để đảm bảo sau này khi làm dự án **LMS-Horeca**, chúng ta có thể **kế thừa 100% DB này** mà không phải sửa đổi cấu trúc bảng cũ, các điểm neo mở rộng (Extension Hooks) đã được cài đặt sẵn:
-
-```mermaid
-graph TD
-    subgraph Core Schema (LMS-BaHung Existing)
-        AU[auth_users]
-        AC[crs_courses]
-        AE[enr_course_enrollments]
-    end
-
-    subgraph Horeca Extension Modules (Future Addition)
-        HP[com_course_prices]
-        HO[com_orders]
-        HC[com_coupons]
-        HM[mig_legacy_mappings]
-    end
-
-    AC -- "1:1 Extension" --> HP
-    AU -- "1:N Orders" --> HO
-    HO -- "Contains" --> AC
-    AU -- "1:1 Legacy Link" --> HM
-```
-
-### Các Điểm Neo Kỹ thuật Đã Được Cài Sẵn:
-1. **User Table (`auth_users`):** Trường `user_type` mặc định `'EMPLOYEE'`, khi Horeca chạy sẽ nhận thêm `'CUSTOMER'`. Cột `phone_number` làm khóa đăng nhập chính cho khách ngoài.
-2. **Course Table (`crs_courses`):** 
-   - `is_commercial = TRUE`: Khóa học sẽ hiển thị lên Gian hàng Public Horeca.
-   - `is_internal = FALSE`: Khóa học công khai không bắt buộc nhân sự nội bộ.
-3. **Bảng Bán hàng / Thương mại điện tử Horeca sau này chỉ cần JOIN:**
-   - Tạo bảng mới `com_course_prices` có FK trỏ tới `crs_courses.id`.
-   - Tạo bảng `com_orders` có FK trỏ tới `auth_users.id` và `crs_courses.id`.
-   - Tạo bảng `mig_legacy_id_mappings` trỏ tới `auth_users.id` & `crs_courses.id` để chạy Migration Hydration Engine.
-
----
-
-## 6. KHUYẾN NGHỊ BẮT ĐẦU SPRINT 1 LMS-BAHUNG
-
-Với bản thiết kế DB hoàn chỉnh này, dự án **LMS-BaHung** đã sẵn sàng khởi chạy **Sprint 1**:
-1. **Khởi tạo Database Schema:** Sử dụng file thiết kế này để viết Prisma Schema / PostgreSQL Migration script.
-2. **Sprint 1 Scope:** Tập trung phân khu `auth_users`, `org_stores`, `org_departments`, `org_positions` & API Auth/User CRUD.
+Phân khu Module|Số lượng Model|Các Bảng Database (@@map) trong Prisma|Trạng thái đồng bộ
+1. Auth & RBAC (Chuẩn ERP-v2)|6 Models |auth_users, auth_user_accounts, auth_roles, auth_permissions, auth_user_roles, auth_role_permissions|✅ Khớp 100%
+2. Sơ đồ Tổ chức F&B (Org)|3 Models |org_stores, org_departments, org_positions|✅ Khớp 100%
+3. Khóa học & Học liệu (Curriculum)|4 Models + 2 Enums |crs_categories, crs_courses, crs_modules, crs_lessons (Enums: LessonType, VideoProvider)|✅ Khớp 100%
+4. Quiz & Ngân hàng câu hỏi|5 Models + 1 Enum |quiz_quizzes, quiz_questions, quiz_question_options, quiz_attempts, quiz_attempt_answers (Enum: QuestionType)|✅ Khớp 100%
+5. Ghi danh & Tiến độ học|2 Models |enr_course_enrollments, enr_lesson_progress|✅ Khớp 100%
