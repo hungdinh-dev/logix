@@ -62,3 +62,46 @@ export const authenticateToken = async (
     return res.status(401).json({ error: 'Unauthorized: Invalid token' })
   }
 }
+
+export const optionalAuthenticateToken = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authHeader = req.headers.authorization
+    const token = authHeader && authHeader.split(' ')[1]
+
+    if (!token) {
+      return next()
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET) as any
+    if (!decoded || !decoded.userId) {
+      return next()
+    }
+
+    const userAccount = await prisma.userAccount.findUnique({
+      where: { id: decoded.userAccountId || decoded.id },
+      include: { user: true },
+    })
+
+    if (userAccount && userAccount.user && userAccount.user.isActive && !userAccount.isLocked) {
+      req.user = {
+        id: userAccount.user.id,
+        userAccountId: userAccount.id,
+        loginEmail: userAccount.loginEmail,
+        email: userAccount.user.email,
+        employeeCode: userAccount.user.employeeCode,
+        userType: userAccount.user.userType,
+        fullName: userAccount.user.fullName,
+      }
+    }
+
+    next()
+  } catch (error) {
+    // Silently continue for optional auth
+    next()
+  }
+}
+

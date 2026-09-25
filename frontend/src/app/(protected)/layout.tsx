@@ -10,7 +10,18 @@ import { useSidebarStore } from '@/stores/sidebar.store'
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isLessonPlayer = pathname?.includes('/lessons/')
+  const isQuizPlayer = pathname?.includes('/quizzes/')
   const isCollapsed = useSidebarStore((state) => state.isCollapsed)
+
+  if (isQuizPlayer) {
+    return (
+      <AuthGuard>
+        <div className="bg-background text-foreground flex h-screen w-screen overflow-hidden transition-colors duration-200">
+          <main className="bg-background text-foreground flex-1 overflow-y-auto h-full w-full">{children}</main>
+        </div>
+      </AuthGuard>
+    )
+  }
 
   if (isLessonPlayer) {
     return (
