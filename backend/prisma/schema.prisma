@@ -38,10 +38,17 @@ model User {
   quizAttempts   QuizAttempt[]
   activityLogs   LmsActivityLog[]
   certificates   UserCertificate[]
+  lessonComments        LessonComment[]
+  commentLikes          LessonCommentLike[]
+  notifications         Notification[]      @relation("UserNotifications")
+  triggeredNotifications Notification[]     @relation("NotificationActor")
+  replyToComments       LessonComment[]     @relation("CommentReplyToUser")
   
   // Auditing Relations
+  instructedCourses     Course[]            @relation("CourseInstructor")
   createdCourses Course[]          @relation("CourseCreatedBy")
   updatedCourses Course[]          @relation("CourseUpdatedBy")
+  createdBanks   QuestionBank[]    @relation("QuestionBankCreatedBy")
   auditLogs      AuditLog[]
 
   createdAt DateTime @default(now())
@@ -190,6 +197,11 @@ enum LessonType {
   CHECKLIST
 }
 
+enum ResourceType {
+  EXTERNAL_LINK
+  DOCUMENT_FILE
+}
+
 enum VideoProvider {
   YOUTUBE
   DIRECT_UPLOAD
@@ -209,6 +221,12 @@ enum ProgressionMode {
   LINEAR_MODULE
 }
 
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
 // ==========================================
 // 3. COURSE & CURRICULUM MODULE
 // ==========================================
@@ -219,8 +237,9 @@ model Category {
   name        String
   description String?
   sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
+  isActive    Boolean        @default(true)
   courses     Course[]
+  questionBanks QuestionBank[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -239,9 +258,15 @@ model Course {
   category     Category @relation(fields: [categoryId], references: [id])
 
   courseType      String          @default("STANDARD") // 'ATTP', 'ONBOARDING', 'STANDARD'
+  level           CourseLevel     @default(BEGINNER)
   isMandatory     Boolean         @default(false)
   durationDays    Int?            @default(30)
   progressionMode ProgressionMode @default(LINEAR_LESSON)
+  learningOutcomes String[]       @default([])
+
+  // Chuyên gia / Giảng viên phụ trách (SME)
+  instructorId    String?         @map("instructor_id")
+  instructor      User?           @relation("CourseInstructor", fields: [instructorId], references: [id], onDelete: SetNull)
 
   // Target fields for auto-assign rules (LMS-005 -> LMS-008)
   targetPositionId       String?
@@ -254,6 +279,8 @@ model Course {
 
   isCommercial Boolean  @default(false)
   isInternal   Boolean  @default(true)
+  price        Int?     @default(0) // Giá bán tham khảo (VND) nếu thương mại
+  originalPrice Int?    @default(0) // Giá niêm yết trước giảm (VND)
   status       String   @default("DRAFT") // 'DRAFT', 'PUBLISHED', 'ARCHIVED'
   isActive     Boolean  @default(true)
 
@@ -276,6 +303,7 @@ model Course {
   updatedAt DateTime @default(now()) @updatedAt
 
   @@index([categoryId])
+  @@index([instructorId])
   @@index([status, isActive])
   @@index([createdBy])
   @@index([updatedBy])
@@ -332,6 +360,8 @@ model Lesson {
   quiz              Quiz?
   progressRecords   LessonProgress[]
   activityLogs      LmsActivityLog[]
+  comments          LessonComment[]
+  resources         LessonResource[]
 
 
   createdAt DateTime @default(now())
@@ -339,6 +369,87 @@ model Lesson {
 
   @@index([moduleId, sortOrder])
   @@map("crs_lessons")
+}
+
+model LessonResource {
+  id             String       @id @default(uuid())
+  lessonId       String       @map("lesson_id")
+  lesson         Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  title          String
+  description    String?
+  resourceType   ResourceType @default(DOCUMENT_FILE) @map("resource_type")
+
+  url            String
+  storagePath    String?      @map("storage_path")
+  fileSizeBytes  Int?         @map("file_size_bytes")
+  fileExtension  String?      @map("file_extension") // pdf, docx, xlsx, zip, etc.
+
+  sortOrder      Int          @default(1) @map("sort_order")
+  isDownloadable Boolean      @default(true) @map("is_downloadable")
+  downloadCount  Int          @default(0) @map("download_count")
+
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at")
+
+  @@index([lessonId, sortOrder])
+  @@map("crs_lesson_resources")
+}
+
+model LessonComment {
+  id                String               @id @default(uuid())
+  lessonId          String               @map("lesson_id")
+  lesson            Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  userId            String               @map("user_id")
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentId          String?              @map("parent_id")
+  parent            LessonComment?       @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies           LessonComment[]      @relation("CommentReplies")
+  content           String
+  isInstructorReply Boolean              @default(false) @map("is_instructor_reply")
+  isPinned          Boolean              @default(false) @map("is_pinned")
+  replyToUserId     String?              @map("reply_to_user_id")
+  replyToUser       User?                @relation("CommentReplyToUser", fields: [replyToUserId], references: [id], onDelete: SetNull)
+  likesCount        Int                  @default(0) @map("likes_count")
+  likes             LessonCommentLike[]
+
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @default(now()) @updatedAt
+
+  @@index([lessonId, parentId])
+  @@index([userId])
+  @@map("crs_lesson_comments")
+}
+
+model LessonCommentLike {
+  id         String        @id @default(uuid())
+  commentId  String        @map("comment_id")
+  comment    LessonComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId     String        @map("user_id")
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime      @default(now())
+
+  @@unique([commentId, userId])
+  @@map("crs_lesson_comment_likes")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actorId   String?  @map("actor_id")
+  actor     User?    @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  type      String   @default("COMMENT_REPLY") // 'COMMENT_REPLY', 'COMMENT_MENTION', 'COURSE_ASSIGNED'
+  title     String
+  content   String
+  linkUrl   String?  @map("link_url")
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("sys_notifications")
 }
 
 // ==========================================
@@ -360,6 +471,7 @@ model Quiz {
 
   questions          QuizQuestion[]
   attempts           QuizAttempt[]
+  poolRules          QuizPoolRule[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -440,6 +552,98 @@ model QuizAttemptAnswer {
 
   @@index([attemptId])
   @@map("quiz_attempt_answers")
+}
+
+// ==========================================
+// 4.1 QUESTION BANK & POOLING MODULE
+// ==========================================
+
+model QuestionBank {
+  id              String         @id @default(uuid())
+  code            String         @unique
+  name            String
+  description     String?
+  categoryId      String?
+  category        Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  
+  syncSource      String         @default("MANUAL") // 'MANUAL', 'GOOGLE_SHEETS', 'EXCEL'
+  googleSheetUrl  String?
+  lastSyncedAt    DateTime?
+  totalQuestions  Int            @default(0)
+  isActive        Boolean        @default(true)
+
+  questions       BankQuestion[]
+  poolRules       QuizPoolRule[]
+
+  createdBy       String?        @map("created_by")
+  createdByUser   User?          @relation("QuestionBankCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @default(now()) @updatedAt
+
+  @@index([categoryId])
+  @@index([code])
+  @@map("quiz_question_banks")
+}
+
+model BankQuestion {
+  id              String               @id @default(uuid())
+  questionBankId  String               @map("question_bank_id")
+  bank            QuestionBank         @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
+
+  externalCode    String?              @map("external_code") // e.g. Q01, ATTP-05
+  questionText    String               @map("question_text")
+  questionType    QuestionType         @default(SINGLE_CHOICE) @map("question_type")
+  difficulty      String               @default("MEDIUM") // 'EASY', 'MEDIUM', 'HARD'
+  points          Float                @default(1.0)
+  explanation     String?
+  tags            String?              // e.g. "bep, bar, attp"
+  isActive        Boolean              @default(true) @map("is_active")
+  version         Int                  @default(1)
+
+  options         BankQuestionOption[]
+
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @default(now()) @updatedAt
+
+  @@index([questionBankId, isActive])
+  @@index([externalCode])
+  @@map("quiz_bank_questions")
+}
+
+model BankQuestionOption {
+  id              String         @id @default(uuid())
+  questionId      String         @map("question_id")
+  question        BankQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  optionText      String         @map("option_text")
+  isCorrect       Boolean        @default(false) @map("is_correct")
+  sortOrder       Int            @default(1) @map("sort_order")
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @default(now()) @updatedAt
+
+  @@index([questionId, sortOrder])
+  @@map("quiz_bank_question_options")
+}
+
+model QuizPoolRule {
+  id               String       @id @default(uuid())
+  quizId           String       @map("quiz_id")
+  quiz             Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  questionBankId   String       @map("question_bank_id")
+  bank             QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
+
+  selectCount      Int          @default(10) @map("select_count")
+  difficultyFilter String?      @map("difficulty_filter") // null or 'EASY', 'MEDIUM', 'HARD'
+  tagFilter        String?      @map("tag_filter") // null or tag keyword
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @default(now()) @updatedAt
+
+  @@index([quizId])
+  @@index([questionBankId])
+  @@map("quiz_pool_rules")
 }
 
 // ==========================================
