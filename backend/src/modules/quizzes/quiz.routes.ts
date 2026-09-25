@@ -5,6 +5,7 @@ import {
   createQuestionSchema,
   updateQuestionSchema,
   reorderQuestionsSchema,
+  submitQuizSchema,
 } from './quiz.dto'
 import { validateRequest } from '../../common/middlewares/validate.middleware'
 import { asyncHandler } from '../../common/utils/async-handler'
@@ -14,8 +15,22 @@ import { requirePermission } from '../../middlewares/permission.middleware'
 const router = Router()
 
 // ==========================================
-// Quiz Routes (LMS-061 -> LMS-064)
+// Quiz Routes (LMS-061 -> LMS-069)
 // ==========================================
+
+// Học viên lấy đề thi để làm bài (LMS-065) - Hỗ trợ cả quizId lẫn lessonId
+router.get('/:id/take', authenticateToken, asyncHandler(quizController.getQuizForTake))
+
+// Học viên nộp bài thi (LMS-066)
+router.post(
+  '/:id/submit',
+  authenticateToken,
+  validateRequest(submitQuizSchema),
+  asyncHandler(quizController.submitQuiz)
+)
+
+// Học viên xem lịch sử các lần thi (LMS-069)
+router.get('/:id/attempts', authenticateToken, asyncHandler(quizController.getUserQuizAttempts))
 
 // Lấy Quiz theo Lesson ID (Tự động khởi tạo nếu chưa có)
 router.get('/lessons/:lessonId', asyncHandler(quizController.getQuizByLessonId))

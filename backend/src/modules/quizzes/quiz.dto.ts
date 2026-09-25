@@ -52,7 +52,23 @@ export const reorderQuestionsSchema = z.object({
   }),
 })
 
+export const submitQuizAnswerItemSchema = z.object({
+  questionId: z.string().min(1, 'ID câu hỏi là bắt buộc'),
+  selectedOptionId: z.string().nullable().optional(),
+  selectedOptionIds: z.array(z.string()).optional(),
+  textAnswer: z.string().nullable().optional(),
+})
+
+export const submitQuizSchema = z.object({
+  body: z.object({
+    answers: z.array(submitQuizAnswerItemSchema).default([]),
+    timeSpentSeconds: z.number().min(0).optional().default(0),
+  }),
+})
+
 export type UpdateQuizConfigDto = z.infer<typeof updateQuizConfigSchema>['body']
 export type CreateQuestionDto = z.infer<typeof createQuestionSchema>['body']
 export type UpdateQuestionDto = z.infer<typeof updateQuestionSchema>['body']
 export type ReorderQuestionsDto = z.infer<typeof reorderQuestionsSchema>['body']
+export type SubmitQuizAnswerItemDto = z.infer<typeof submitQuizAnswerItemSchema>
+export type SubmitQuizDto = z.infer<typeof submitQuizSchema>['body']

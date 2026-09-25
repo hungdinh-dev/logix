@@ -54,6 +54,24 @@ export class QuizController {
     const preview = await quizService.getQuizPreview(req.params.id)
     return res.json(ApiResponse.success(preview, 'Xem trước đề thi thành công'))
   }
+
+  // Học viên lấy đề thi để làm bài (LMS-065)
+  public getQuizForTake = async (req: AuthenticatedRequest, res: Response) => {
+    const data = await quizService.getQuizForTake(req.user!.id, req.params.id)
+    return res.json(ApiResponse.success(data, 'Lấy đề thi làm bài thành công'))
+  }
+
+  // Học viên nộp bài thi (LMS-066)
+  public submitQuiz = async (req: AuthenticatedRequest, res: Response) => {
+    const result = await quizService.submitQuiz(req.user!.id, req.params.id, req.body)
+    return res.json(ApiResponse.success(result, 'Nộp bài kiểm tra thành công'))
+  }
+
+  // Học viên xem lịch sử các lần thi (LMS-069)
+  public getUserQuizAttempts = async (req: AuthenticatedRequest, res: Response) => {
+    const history = await quizService.getUserQuizAttempts(req.user!.id, req.params.id)
+    return res.json(ApiResponse.success(history, 'Lấy lịch sử làm bài thành công'))
+  }
 }
 
 export const quizController = new QuizController()
